@@ -4,7 +4,7 @@ A comprehensive web application providing real-time analysis and impact assessme
 
 ## 🚀 Features
 
-- **Real-time Tariff Analysis**: Track & analyze current and proposed tariffs across different countries and industries
+- **Real-time Tariff Analysis**: Track & analyze current & proposed tariffs across different countries and industries
 - **Market Impact Assessment**: Visualize the potential impact of tariffs on specific markets and sectors
 - **News Integration**: Stay updated with the latest trade policy news and developments
 - **AI-powered Insights**: Get insights and recommendations based on tariff data and news
@@ -67,14 +67,13 @@ The project follows a modern full-stack architecture with clear separation betwe
 
 - Node.js (v18 or later)
 - npm (v9 or later)
-- Git
 
 ## 🚀 Getting Started
 
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/FredAmartey-Northeastern/TariffWars.git
+   git clone https://github.com/FredAmartey/TariffWars.git
    cd TariffWars
    ```
 
