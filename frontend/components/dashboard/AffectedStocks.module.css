@@ -1,0 +1,159 @@
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes slideDown {
+  0% {
+    opacity: 0;
+    transform: perspective(1000px) rotateX(30deg) translateY(-50px);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(1000px) rotateX(0) translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  0% {
+    opacity: 0;
+    transform: perspective(1000px) rotateX(-30deg) translateY(50px);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(1000px) rotateX(0) translateY(0);
+  }
+}
+
+@keyframes slideOutLeft {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  backface-visibility: hidden;
+}
+
+.animate-slideDown {
+  animation: slideDown 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  backface-visibility: hidden;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  backface-visibility: hidden;
+}
+
+.animate-slideLeft {
+  animation: slideOutLeft 400ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-slideRight {
+  animation: slideOutRight 400ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-slideInLeft {
+  animation: slideInLeft 400ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-slideInRight {
+  animation: slideInRight 400ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.cardContainer {
+  display: flex;
+  gap: 1rem;
+  transition: transform 400ms cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+/* Add a class for when we need to disable transition during reset */
+.noTransition {
+  transition: none !important;
+}
+
+.card {
+  flex: 0 0 280px;
+  opacity: 1;
+  transition: transform 400ms cubic-bezier(0.2, 0, 0.2, 1),
+    opacity 400ms cubic-bezier(0.2, 0, 0.2, 1), box-shadow 400ms cubic-bezier(0.2, 0, 0.2, 1);
+  will-change: transform;
+  cursor: pointer;
+  margin-top: 8px; /* Add space at top to prevent clipping on hover */
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 0 25px 5px rgba(79, 70, 229, 0.4); /* Indigo/blue glow effect */
+}

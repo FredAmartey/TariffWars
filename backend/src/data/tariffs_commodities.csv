@@ -1,0 +1,33 @@
+Commodity,From,To,Rate,Change,Status,Nature,Effective Date
+All Imports,USA,"All U.S. trading partners (except China)",10%,+10%,Active,New,"April 5, 2025"
+Chinese Goods,USA,China,125%,+105%,Active,Additional,"April 9, 2025"
+All Imports (Retaliation),China,USA,125%,+91%,Active,Reciprocal,"April 12, 2025"
+Steel & Aluminum,USA,"Canada, China, Mexico, Germany, France, Italy, Spain, Japan, South Korea",25%,+8%,Active,Additional,"March 12, 2025"
+Automobiles,USA,"Japan, Germany, South Korea, Mexico, Canada, United Kingdom",25%,+25%,Active,New,"April 3, 2025"
+Canned Beer & Cans,USA,"China, Mexico, Germany, France, Italy, Spain",25%,+25%,Active,New,"April 4, 2025"
+Clothing & Footwear,USA,"China, Vietnam, Cambodia, Bangladesh, Indonesia",60%,+40%,Active,Additional,"April 5, 2025"
+"Rare Earth Minerals (Samarium, Gadolinium, Terbium, Dysprosium, Lutetium, Scandium, Yttrium)",China,USA,Restricted,—,Active,Additional,"April 4, 2025"
+Dairy Products,USA,Canada,250%,+250%,Threatened,New,TBD
+Agricultural Products,China,USA,12%,+8%,Active,Additional,"March 10, 2025"
+Venezuela Oil Tariff,USA,"Countries buying Venezuelan oil",25%,+25%,Active,New,"April 2, 2025"
+Lumber,USA,Canada,14.5%,—,Threatened,New,TBD
+Solar Panels,USA,China,20%,+20%,Threatened,New,"April 15, 2025"
+Furniture,USA,China,30%,+30%,Threatened,New,"April 20, 2025"
+Pharmaceuticals,USA,"China, Germany, France, Italy, Spain",25%,+25%,Threatened,New,TBD
+Semiconductors (Taiwan chip industry exempted),USA,"China, South Korea, Japan",25%,+25%,Threatened,New,TBD
+Copper,USA,"China, India, Germany, France",25%,+25%,Under Investigation,New,TBD
+Automobile Parts,USA,"Japan, Germany, South Korea, Mexico, Canada, United Kingdom",25%,+25%,Threatened,New,"May 3, 2025"
+"Wine, Champagne & Spirits",USA,"France, Italy, Spain",200%,+200%,Threatened,New,TBD
+EU Goods,EU,USA,20%,+20%,Paused,Reciprocal,"July 9, 2025"
+Canadian Goods,Canada,USA,25%,+25%,Active,Reciprocal,"March 13, 2025"
+Mexican Goods,Mexico,USA,25%,+25%,Active,Reciprocal,"March 9, 2025"
+Taiwan Imports,USA,Taiwan,10%,+10%,Paused,New,"April 9, 2025"
+South Korean Goods,USA,South Korea,10%,+10%,Paused,New,"April 9, 2025"
+Japanese Goods,USA,Japan,10%,+10%,Paused,New,"April 9, 2025"
+Vietnamese Imports,USA,Vietnam,10%,+10%,Paused,New,"April 9, 2025"
+Cambodian Imports,USA,Cambodia,10%,+10%,Paused,New,"April 9, 2025"
+Chicken Imports (Specific Companies),China,USA,Restricted,—,Active,New,"April 4, 2025"
+Small Value Chinese Goods (<$800),USA,China,90% or $75/item,+90%,Active,New,"May 1, 2025"
+Energy Products,Canada,USA,10%,+10%,Active,New,"April 9, 2025"
+U.S. Exports to China,China,USA,84%,+84%,Active,Reciprocal,"April 10, 2025"
+Global Tariff Pause (except China),USA,"All countries except China",10%,—,Active,Temporary,"April 9, 2025"
