@@ -337,38 +337,21 @@ export class TariffService {
         data = filteredData;
       }
 
-      const sortedData = [...data];
-
+      // --- Use the dedicated sortRates method ---
+      let sortedData = data; // Use 'data' which contains either cached or newly filtered data
       if (sortBy && validSortFields.includes(sortBy as any)) {
-        const typedSortBy = sortBy as keyof TariffEntry;
-        sortedData.sort((a, b) => {
-          const aValue = a[typedSortBy];
-          const bValue = b[typedSortBy];
-
-          if (aValue == null && bValue == null) return 0;
-          if (aValue == null) return sortOrder === "desc" ? -1 : 1;
-          if (bValue == null) return sortOrder === "desc" ? 1 : -1;
-
-          if (typeof aValue === "boolean" && typeof bValue === "boolean") {
-            return (aValue === bValue ? 0 : aValue ? 1 : -1) * (sortOrder === "desc" ? -1 : 1);
-          }
-          if (typeof aValue === "boolean") return -1;
-          if (typeof bValue === "boolean") return 1;
-
-          if (typeof aValue === "number" && typeof bValue === "number") {
-            return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
-          }
-
-          const aStr = String(aValue).toLowerCase();
-          const bStr = String(bValue).toLowerCase();
-
-          if (sortOrder === "asc") {
-            return aStr.localeCompare(bStr);
-          } else {
-            return bStr.localeCompare(aStr);
-          }
-        });
+        console.log(
+          `[getTariffRates] Sorting data by ${sortBy} (${sortOrder}) using sortRates method.`
+        );
+        sortedData = this.sortRates(data, sortBy, sortOrder); // Pass 'data', not 'sortedData' initially
+      } else {
+        // If no sort is specified, maybe keep original order or default sort?
+        // For now, let's assume we use the data as is if no sorting is requested.
+        console.log(
+          "[getTariffRates] No valid sort field provided, skipping dedicated sort method."
+        );
       }
+      // --- End of using dedicated sortRates method ---
 
       const totalItems = sortedData.length;
       const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -425,6 +408,46 @@ export class TariffService {
         const bParsed = this.parseChangeValue(bVal);
         const result = sortDirection === "asc" ? aParsed - bParsed : bParsed - aParsed;
         return result;
+      } else if (typedSortField === "rate" || typedSortField === "rateDisplay") {
+        // Always use the numeric 'rate' field for comparison
+        const aNum = a.rate ?? 0;
+        const bNum = b.rate ?? 0;
+        return sortDirection === "asc" ? aNum - bNum : bNum - aNum;
+      } else if (typedSortField === "effectiveDate") {
+        const parseDate = (dateStr: string): number | null => {
+          if (!dateStr || dateStr === "N/A" || dateStr === "TBD") {
+            return null; // Treat invalid/TBD dates consistently
+          }
+          const date = new Date(dateStr);
+          return isNaN(date.getTime()) ? null : date.getTime();
+        };
+
+        const aTime = parseDate(a.effectiveDate);
+        const bTime = parseDate(b.effectiveDate);
+
+        // Handle nulls (place them at the end regardless of sort order)
+        if (aTime === null && bTime === null) return 0;
+        if (aTime === null) return 1; // a is null, put it after b
+        if (bTime === null) return -1; // b is null, put it after a
+
+        // Compare valid dates
+        return sortDirection === "asc" ? aTime - bTime : bTime - aTime;
+      } else if (typedSortField === "countrysTariffOnUS") {
+        const parsePercentage = (val: string | number | undefined | null): number => {
+          if (typeof val === "number") return val;
+          if (typeof val !== "string" || !val || val === "N/A" || val === "–" || val === "-")
+            return 0;
+          try {
+            const numStr = val.replace(/%$/, "").trim();
+            const num = parseFloat(numStr);
+            return isNaN(num) ? 0 : num;
+          } catch {
+            return 0;
+          }
+        };
+        const aNum = parsePercentage(a.countrysTariffOnUS);
+        const bNum = parsePercentage(b.countrysTariffOnUS);
+        return sortDirection === "asc" ? aNum - bNum : bNum - aNum;
       }
 
       const aValue = a[typedSortField];
