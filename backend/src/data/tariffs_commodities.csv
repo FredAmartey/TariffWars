@@ -1,33 +1,36 @@
 Commodity,From,To,Rate,Change,Status,Nature,Effective Date
-All Imports,USA,"All U.S. trading partners (except China)",10%,+10%,Active,New,"April 5, 2025"
-Chinese Goods,USA,China,125%,+105%,Active,Additional,"April 9, 2025"
-All Imports (Retaliation),China,USA,125%,+91%,Active,Reciprocal,"April 12, 2025"
-Steel & Aluminum,USA,"Canada, China, Mexico, Germany, France, Italy, Spain, Japan, South Korea",25%,+8%,Active,Additional,"March 12, 2025"
-Automobiles,USA,"Japan, Germany, South Korea, Mexico, Canada, United Kingdom",25%,+25%,Active,New,"April 3, 2025"
-Canned Beer & Cans,USA,"China, Mexico, Germany, France, Italy, Spain",25%,+25%,Active,New,"April 4, 2025"
-Clothing & Footwear,USA,"China, Vietnam, Cambodia, Bangladesh, Indonesia",60%,+40%,Active,Additional,"April 5, 2025"
-"Rare Earth Minerals (Samarium, Gadolinium, Terbium, Dysprosium, Lutetium, Scandium, Yttrium)",China,USA,Restricted,—,Active,Additional,"April 4, 2025"
-Dairy Products,USA,Canada,250%,+250%,Threatened,New,TBD
-Agricultural Products,China,USA,12%,+8%,Active,Additional,"March 10, 2025"
-Venezuela Oil Tariff,USA,"Countries buying Venezuelan oil",25%,+25%,Active,New,"April 2, 2025"
-Lumber,USA,Canada,14.5%,—,Threatened,New,TBD
-Solar Panels,USA,China,20%,+20%,Threatened,New,"April 15, 2025"
-Furniture,USA,China,30%,+30%,Threatened,New,"April 20, 2025"
-Pharmaceuticals,USA,"China, Germany, France, Italy, Spain",25%,+25%,Threatened,New,TBD
-Semiconductors (Taiwan chip industry exempted),USA,"China, South Korea, Japan",25%,+25%,Threatened,New,TBD
-Copper,USA,"China, India, Germany, France",25%,+25%,Under Investigation,New,TBD
-Automobile Parts,USA,"Japan, Germany, South Korea, Mexico, Canada, United Kingdom",25%,+25%,Threatened,New,"May 3, 2025"
-"Wine, Champagne & Spirits",USA,"France, Italy, Spain",200%,+200%,Threatened,New,TBD
-EU Goods,EU,USA,20%,+20%,Paused,Reciprocal,"July 9, 2025"
-Canadian Goods,Canada,USA,25%,+25%,Active,Reciprocal,"March 13, 2025"
-Mexican Goods,Mexico,USA,25%,+25%,Active,Reciprocal,"March 9, 2025"
-Taiwan Imports,USA,Taiwan,10%,+10%,Paused,New,"April 9, 2025"
-South Korean Goods,USA,South Korea,10%,+10%,Paused,New,"April 9, 2025"
-Japanese Goods,USA,Japan,10%,+10%,Paused,New,"April 9, 2025"
-Vietnamese Imports,USA,Vietnam,10%,+10%,Paused,New,"April 9, 2025"
-Cambodian Imports,USA,Cambodia,10%,+10%,Paused,New,"April 9, 2025"
-Chicken Imports (Specific Companies),China,USA,Restricted,—,Active,New,"April 4, 2025"
-Small Value Chinese Goods (<$800),USA,China,90% or $75/item,+90%,Active,New,"May 1, 2025"
-Energy Products,Canada,USA,10%,+10%,Active,New,"April 9, 2025"
-U.S. Exports to China,China,USA,84%,+84%,Active,Reciprocal,"April 10, 2025"
-Global Tariff Pause (except China),USA,"All countries except China",10%,—,Active,Temporary,"April 9, 2025"
+"All Imports (Section 122 surcharge, expires July 24, 2026)",USA,"All countries (USMCA-qualifying goods exempt)",10%,—,Active,Temporary,"February 24, 2026"
+"All Imports (IEEPA reciprocal tariffs, struck down by Supreme Court)",USA,"All U.S. trading partners",10%-50%,—,Ended,New,"April 5, 2025"
+"Fentanyl Tariffs (IEEPA, struck down by Supreme Court)",USA,"Canada, Mexico, China",20%-35%,—,Ended,New,"March 4, 2025"
+"Steel & Aluminum (UK at 25%)",USA,Global,50%,+25%,Active,Additional,"June 4, 2025"
+"Copper (semi-finished and derivative products)",USA,Global,50%,+50%,Active,New,"July 30, 2025"
+"Automobiles & Parts (Japan, South Korea, EU at 15%; UK quota)",USA,Global,25%,—,Active,New,"April 3, 2025"
+Semiconductors,USA,Global,25%,+25%,Active,New,"January 14, 2026"
+"Pharmaceuticals (patented; EU, Japan, South Korea, Switzerland capped at 15%)",USA,Global,100%,+100%,Active,New,"July 31, 2026"
+"Softwood Lumber & Timber",USA,Global,10%,+10%,Active,New,"October 14, 2025"
+"Upholstered Furniture, Kitchen Cabinets & Vanities",USA,Global,25%,+25%,Active,New,"October 14, 2025"
+"Medium & Heavy-Duty Trucks (buses at 10%)",USA,Global,25%,+25%,Active,New,"October 17, 2025"
+"Chinese Goods (Section 301: EVs 100%, solar 50%, semiconductors 50%)",USA,China,7.5%-100%,—,Active,Additional,"July 6, 2018"
+"Solar Panels (Section 301 four-year review)",USA,China,50%,+30%,Active,Additional,"September 27, 2024"
+"STS Cranes & Cargo Handling Equipment (Section 301)",USA,China,100%,—,Suspended,New,"November 9, 2025"
+"Port Fees on Chinese-Built Vessels (Section 301)",USA,China,N/A,—,Suspended,Additional,"April 17, 2025"
+"All US Goods (retaliation; one-year truce to Nov 10, 2026)",China,USA,10%,-24%,Active,Reciprocal,"November 10, 2025"
+"US Agricultural Products (retaliatory tariffs suspended to Dec 31, 2026)",China,USA,10%-15%,—,Suspended,Reciprocal,"March 10, 2025"
+"Rare Earth Minerals Export Controls (suspended one year)",China,USA,Restricted,—,Suspended,Additional,"November 10, 2025"
+"US Steel & Aluminum (surtaxes; remission extended to July 2027)",Canada,USA,25%,—,Active,Reciprocal,"March 13, 2025"
+"EU Goods (US-EU deal ceiling)",USA,European Union,15%,+5%,Active,New,"July 1, 2026"
+"US Industrial Goods (EU duty removal under deal)",EU,USA,0%,—,Active,Reciprocal,"July 1, 2026"
+"Japanese Automobiles & Parts (Section 232 reduced under framework)",USA,Japan,15%,-10%,Active,Additional,"September 16, 2025"
+"South Korean Automobiles & Parts (Section 232 reduced under deal)",USA,South Korea,15%,-10%,Active,Additional,"November 2025"
+"Imports from 60 Countries (Section 301 forced-labor investigation)",USA,"China + 59 other countries",10%-12.5%,—,Proposed,New,TBD
+"Manufactured Goods (Section 301 excess-capacity investigation)",USA,"EU, Japan, Mexico, Vietnam, India + 11 others",N/A,—,Under Investigation,New,TBD
+"Pharmaceuticals (Section 301: German drug pricing)",USA,Germany,N/A,—,Under Investigation,New,TBD
+"All Goods from DST-Enacting Countries",USA,"Countries enacting digital services taxes",100%,+100%,Threatened,New,TBD
+"Brazilian Goods (Section 301 proposed)",USA,Brazil,25%,+25%,Proposed,New,TBD
+"Nicaraguan Goods (Section 301; 10% in 2027, 15% in 2028)",USA,Nicaragua,0%,—,Active,New,"January 1, 2026"
+"Small-Value Imports (<$800; de minimis suspended)",USA,Global,N/A,—,Active,Additional,"August 29, 2025"
+"Dairy Products (threat lapsed)",USA,Canada,250%,—,Ended,New,TBD
+"Wine, Champagne & Spirits (superseded by EU deal)",USA,"France, Italy, Spain",200%,—,Ended,New,TBD
+"Venezuela Oil Secondary Tariffs (IEEPA, terminated)",USA,"Countries buying Venezuelan oil",25%,—,Ended,New,"April 2, 2025"
+"Robotics, Wind Turbines, Drones, PPE, Polysilicon (Section 232 probes)",USA,Global,N/A,—,Under Investigation,New,TBD
+"Critical Minerals (Section 232: negotiations directed)",USA,Global,N/A,—,Under Investigation,New,"January 14, 2026"
