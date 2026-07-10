@@ -1,12 +1,12 @@
 import React, { useState, useContext, useEffect } from "react";
 import { TariffStats } from "./dashboard/TariffStats";
 import { TariffTable } from "./dashboard/TariffTable";
+import { DataFreshness } from "./dashboard/DataFreshness";
 import { NewsFeed } from "./NewsFeed";
 import { AIInsights } from "./dashboard/AIInsights";
 import { DetailedMarketAnalysis } from "./dashboard/DetailedMarketAnalysis";
 import { ThemeContext } from "../App";
 import { useNotifications } from "../context/NotificationsContext";
-import { format } from "date-fns";
 import {
   DownloadIcon,
   TrendingUpIcon,
@@ -20,8 +20,6 @@ import {
   ChevronDownIcon,
 } from "lucide-react";
 import { AffectedStocks } from "./dashboard/AffectedStocks";
-import { apiService } from "../services/api";
-import { NewsArticle as NewsArticleType } from "../types";
 
 interface CollapsibleHeaderProps {
   title: string;
@@ -84,10 +82,6 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [filters, setFilters] = useState<Array<{ field: string; value: string }>>([]);
 
-  const [newsArticles, setNewsArticles] = useState<NewsArticleType[]>([]);
-  const [isLoadingNews, setIsLoadingNews] = useState(true);
-  const [newsError, setNewsError] = useState<string | null>(null);
-
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -105,36 +99,6 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
     setIsNewsOpen(!isMobile);
   }, [isMobile]);
 
-  useEffect(() => {
-    const fetchNews = async () => {
-      setIsLoadingNews(true);
-      setNewsError(null);
-      try {
-        const response = await apiService.getNewsArticles({});
-
-        if (response && Array.isArray(response.data)) {
-          setNewsArticles(response.data);
-        } else {
-          console.warn("Received unexpected news data format:", response);
-          setNewsArticles([]);
-          setNewsError("Unexpected data format received for news.");
-        }
-      } catch (err: any) {
-        const errorMessage =
-          err.response?.data?.message ||
-          err.message ||
-          "Failed to load news. Please check the API connection.";
-        setNewsError(errorMessage);
-        console.error("Error fetching news in Dashboard via apiService:", err);
-        setNewsArticles([]);
-      } finally {
-        setIsLoadingNews(false);
-      }
-    };
-
-    fetchNews();
-  }, []);
-
   const handleExport = (format: string) => {
     const exportFormat = format.toLowerCase() === "csv" ? "csv" : "json";
 
@@ -146,23 +110,6 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
 
     window.open(exportUrl, "_blank");
   };
-
-  const getLatestNewsDate = () => {
-    if (!newsArticles || newsArticles.length === 0) {
-      return null;
-    }
-    const sortedArticles = [...newsArticles]
-      .map((article) => ({ ...article, parsedDate: new Date(article.date) }))
-      .filter((article) => !isNaN(article.parsedDate.getTime()))
-      .sort((a, b) => b.parsedDate.getTime() - a.parsedDate.getTime());
-
-    if (sortedArticles.length === 0) {
-      return null;
-    }
-    return sortedArticles[0].parsedDate;
-  };
-
-  const latestNewsDate = getLatestNewsDate();
 
   return (
     <div className="space-y-8">
@@ -245,25 +192,6 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
                   Current Tariff Rates
                 </h3>
               </div>
-              <div className="flex space-x-2">
-                {isLoadingNews ? (
-                  <span className="text-xs text-gray-500 italic">Loading date...</span>
-                ) : newsError ? (
-                  <span className="text-xs text-red-500 italic" title={newsError}>
-                    Date unavailable (error)
-                  </span>
-                ) : latestNewsDate ? (
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      isDarkMode ? "bg-green-900/50 text-green-300" : "bg-green-100 text-green-800"
-                    }`}
-                  >
-                    Last Updated: {format(latestNewsDate, "MM/dd/yyyy")}
-                  </span>
-                ) : (
-                  <span className="text-xs text-gray-500 italic">No news data</span>
-                )}
-              </div>
             </div>
             <TariffTable
               searchTerm={searchTerm}
@@ -275,6 +203,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
               onPageChange={setCurrentPage}
               onTotalPagesChange={setTotalPages}
             />
+            <DataFreshness />
           </div>
         </div>
         <div
