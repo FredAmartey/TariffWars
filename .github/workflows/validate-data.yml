@@ -1,0 +1,23 @@
+name: validate-data
+
+on:
+  push:
+    paths:
+      - "backend/src/data/**"
+  pull_request:
+    paths:
+      - "backend/src/data/**"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Full npm ci pulls puppeteer/playwright; the validator only needs csv-parse.
+      - run: npm install --no-save --no-audit --no-fund csv-parse
+      - run: node scripts/validate-data.mjs --base HEAD~1
