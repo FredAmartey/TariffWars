@@ -1,4 +1,6 @@
 import express from "express";
+import fs from "fs/promises";
+import path from "path";
 import { TariffService } from "../services/tariffService";
 import { TariffEntry } from "../types/tariff";
 import { TariffQueryParams } from "../types/tariff";
@@ -109,6 +111,22 @@ export const tariffRoutes = (tariffService: TariffService) => {
       res.status(500).json({
         error: "Export Failed",
         message: error.message || `Could not export data as ${format}.`,
+      });
+    }
+  });
+
+  router.get("/meta", async (_req, res) => {
+    try {
+      // Same __dirname-relative pattern tariffService uses for the CSVs,
+      // so it resolves identically under ts-node-dev, tsc dist, and Vercel.
+      const metaPath = path.resolve(__dirname, "../data/meta.json");
+      const content = await fs.readFile(metaPath, "utf8");
+      res.json(JSON.parse(content));
+    } catch (error: any) {
+      console.error("Error in /meta endpoint:", error);
+      res.status(500).json({
+        error: "Internal Server Error",
+        message: "Could not load data metadata",
       });
     }
   });
