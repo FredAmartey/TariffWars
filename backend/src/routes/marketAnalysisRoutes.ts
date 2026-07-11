@@ -31,7 +31,19 @@ export const marketAnalysisRoutes = (tariffService: TariffService, newsService: 
   router.use((req, res, next) => {
     res.removeHeader("X-Powered-By");
 
-    res.setHeader("Cache-Control", "no-store");
+    if (req.query.refresh === "true") {
+      // Manual refresh must regenerate and must not seed the CDN cache.
+      res.setHeader("Cache-Control", "no-store");
+    } else {
+      // These responses are OpenAI-generated from CSVs that change weekly.
+      // Let Vercel's edge cache serve them: first hit after expiry pays the
+      // generation latency, everyone else gets CDN-speed responses. Browsers
+      // always revalidate (max-age=0) so a fresh deploy shows up immediately.
+      res.setHeader(
+        "Cache-Control",
+        "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
+      );
+    }
 
     if (req.query.refresh && req.query.refresh !== "true" && req.query.refresh !== "false") {
       return res.status(400).json({ error: "Invalid refresh parameter" });
