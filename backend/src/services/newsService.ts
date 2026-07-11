@@ -152,6 +152,22 @@ export class NewsService {
     }
   }
 
+  // NewsAPI matches loosely (body text included), so a bond story that mentions
+  // tariffs once slips through; require the topic in the headline/summary and
+  // drop the same headline syndicated across outlets.
+  private static readonly RELEVANCE =
+    /tariff|trade war|trade deal|trade talk|customs|dut(y|ies)|import|export|sanction|trade polic/i;
+
+  private dedupe(articles: MappedNewsArticle[]): MappedNewsArticle[] {
+    const seen = new Set<string>();
+    return articles.filter((a) => {
+      const key = (a.title || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
   private mapToFrontendArticle(article: MappedNewsArticle): FrontendNewsArticle {
     return {
       id: article.id || article.url || Math.random().toString(),
@@ -170,7 +186,9 @@ export class NewsService {
       const response = await axios.get(this.scrapingDogUrl, {
         params: {
           api_key: this.scrapingDogApiKey,
-          query: "import tariffs OR export tariffs OR trade tariffs OR customs duty OR trade war",
+          query: "US tariffs trade",
+          country: "us",
+          results: 30,
         },
       });
 
@@ -180,17 +198,19 @@ export class NewsService {
         throw new Error("ScrapingDog API returned an error or unexpected response structure");
       }
 
-      const articles = response.data.news_results.map((article: any, index: number) => ({
-        id: `scrapingdog-${index}-${Date.now()}`,
-        title: article.title,
-        summary: article.snippet,
-        url: article.url,
-        date: article.lastUpdated,
-        imageUrl: article.imgSrc,
-        source: {
-          name: article.source,
-        },
-      }));
+      const articles = this.dedupe(
+        response.data.news_results.map((article: any, index: number) => ({
+          id: `scrapingdog-${index}-${Date.now()}`,
+          title: article.title,
+          summary: article.snippet,
+          url: article.url,
+          date: article.lastUpdated,
+          imageUrl: article.imgSrc,
+          source: {
+            name: article.source,
+          },
+        }))
+      );
 
       this.cachedArticles = articles;
       this.lastFetchTime = now;
@@ -210,10 +230,11 @@ export class NewsService {
     try {
       const response = await axios.get(this.apiUrl + "/everything", {
         params: {
-          q: "import tariffs OR export tariffs OR trade tariffs OR customs duty OR trade war",
+          q: '"tariff" OR "tariffs" OR "trade war" OR "customs duty" OR "trade deal"',
+          searchIn: "title,description",
           language: "en",
           sortBy: "publishedAt",
-          pageSize: 30,
+          pageSize: 50,
           apiKey: this.apiKey,
         },
       });
@@ -228,21 +249,30 @@ export class NewsService {
         return [];
       }
 
-      const articles = response.data.articles
-        .map((article: any, index: number) => ({
-          id: `newsapi-${index}-${Date.now()}`,
-          title: article.title || "No Title",
-          summary: article.description || "No Description",
-          url: article.url,
-          date: article.publishedAt,
-          imageUrl:
-            article.urlToImage ||
-            this.fallbackImages[Math.floor(Math.random() * this.fallbackImages.length)],
-          source: {
-            name: article.source?.name || "Unknown Source",
-          },
-        }))
-        .filter((article: MappedNewsArticle) => article.url);
+      const articles = this.dedupe(
+        response.data.articles
+          .map((article: any, index: number) => ({
+            id: `newsapi-${index}-${Date.now()}`,
+            title: article.title || "No Title",
+            summary: article.description || "No Description",
+            url: article.url,
+            date: article.publishedAt,
+            imageUrl:
+              article.urlToImage ||
+              this.fallbackImages[Math.floor(Math.random() * this.fallbackImages.length)],
+            source: {
+              name: article.source?.name || "Unknown Source",
+            },
+          }))
+          .filter(
+            (article: MappedNewsArticle) =>
+              article.url && NewsService.RELEVANCE.test(`${article.title} ${article.summary}`)
+          )
+      );
+
+      if (articles.length === 0) {
+        throw new Error("NewsAPI returned no relevant articles");
+      }
 
       this.cachedArticles = articles;
       this.lastFetchTime = Date.now();
@@ -254,7 +284,8 @@ export class NewsService {
         console.log("Using cached data due to NewsAPI error.");
         return this.cachedArticles;
       }
-      return [];
+      // Propagate so getTariffNews falls back to ScrapingDog.
+      throw error;
     }
   }
 }

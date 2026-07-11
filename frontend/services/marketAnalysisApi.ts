@@ -40,7 +40,9 @@ export interface AIInsight {
 // Create a secure Axios instance with defaults
 const secureAxios = axios.create({
   baseURL: "/projects/tariff-wars", // Re-enable base URL for API requests under sub-path
-  timeout: 10000, // 10 second timeout to prevent hanging requests
+  // Vercel serverless cold start + four parallel requests can exceed 10s;
+  // 30s keeps the modal alive through a cold hit.
+  timeout: 30000,
   headers: {
     Accept: "application/json",
     "Content-Type": "application/json",
