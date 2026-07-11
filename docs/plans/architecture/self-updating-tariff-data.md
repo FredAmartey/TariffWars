@@ -1,6 +1,6 @@
 # Self-Updating Tariff Data
 
-**Status:** Approved design, pre-implementation
+**Status:** Implemented and live (merged to main 2026-07-10, PR #2; weekly routine trig_011ZtcHBzu5AZeeHighC4GUB armed for Mondays 06:00 ET)
 **Date:** 2026-07-10
 **Owner:** Fred Amartey
 

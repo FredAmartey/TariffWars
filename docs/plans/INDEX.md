@@ -8,8 +8,8 @@ Single source of truth for all plans in this repo.
 
 ## Active implementation plans
 
-- [self-updating-tariff-data.md](implementations/self-updating-tariff-data.md): 7 tasks; validator + meta.json, CI backstop, meta endpoint, freshness stamp, July 2026 data refresh, weekly /schedule routine, verification + PR.
+(none)
 
 ## Completed
 
-(none)
+- self-updating-tariff-data (2026-07-10): all 7 tasks shipped in PR #2; plan file deleted per lifecycle, insights folded into the architecture doc and docs/lessons.md.
