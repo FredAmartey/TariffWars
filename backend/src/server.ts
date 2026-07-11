@@ -5,7 +5,6 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { TariffService } from "./services/tariffService";
 import { NewsService } from "./services/newsService";
-import { DataRefreshService } from "./services/dataRefreshService";
 import { TariffEntry } from "./types/tariff";
 import { NewsArticle } from "./types/news";
 import { tariffRoutes } from "./routes/tariffRoutes";
@@ -132,10 +131,6 @@ const apiLimiter = rateLimit({
 // Initialize services
 const tariffService = new TariffService();
 const newsService = new NewsService();
-const dataRefreshService = new DataRefreshService();
-
-// Start scheduled data refresh
-dataRefreshService.startScheduling();
 
 // Set up routes
 console.log("Setting up routes...");
@@ -191,7 +186,6 @@ const server = app
 // Handle graceful shutdown
 process.on("SIGTERM", () => {
   console.log("Received SIGTERM. Performing graceful shutdown...");
-  dataRefreshService.stopScheduling();
   server.close(() => {
     console.log("Server closed");
     process.exit(0);
@@ -200,7 +194,6 @@ process.on("SIGTERM", () => {
 
 process.on("SIGINT", () => {
   console.log("Received SIGINT. Performing graceful shutdown...");
-  dataRefreshService.stopScheduling();
   server.close(() => {
     console.log("Server closed");
     process.exit(0);
@@ -211,7 +204,6 @@ process.on("SIGINT", () => {
 process.on("uncaughtException", (error) => {
   console.error("Uncaught Exception:", error);
   // Perform graceful shutdown
-  dataRefreshService.stopScheduling();
   server.close(() => {
     console.log("Server closed due to uncaught exception");
     process.exit(1);

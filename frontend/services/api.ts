@@ -130,6 +130,19 @@ class ApiService {
       };
     }
   }
+
+  async getTariffMeta(): Promise<{
+    lastUpdated: string;
+    sources: Array<{ name: string; url: string }>;
+  } | null> {
+    try {
+      const response = await apiClient.get("/api/tariffs/meta");
+      return response.data;
+    } catch (error) {
+      console.error("Error in getTariffMeta service call:", error);
+      return null;
+    }
+  }
 }
 
 export const apiService = new ApiService();

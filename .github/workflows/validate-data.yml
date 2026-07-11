@@ -1,0 +1,29 @@
+name: validate-data
+
+on:
+  push:
+    paths:
+      - "backend/src/data/**"
+  pull_request:
+    paths:
+      - "backend/src/data/**"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Full npm ci pulls puppeteer/playwright; the validator only needs csv-parse.
+      - run: npm install --no-save --no-audit --no-fund csv-parse
+      - run: node scripts/validate-data.mjs --base HEAD~1
+        env:
+          # PR runs check out the synthetic merge commit, whose auto-generated
+          # message can never carry the [churn-reviewed] marker; PRs are
+          # human-gated anyway, so only schema checks run there. Push events
+          # (the weekly agent's path to main) keep the full churn guard.
+          CHURN_OVERRIDE: ${{ github.event_name == 'pull_request' && '1' || '' }}
