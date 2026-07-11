@@ -132,6 +132,16 @@ const apiLimiter = rateLimit({
 const tariffService = new TariffService();
 const newsService = new NewsService();
 
+// fredamartey.com serves the app under /projects/tariff-wars via reverse
+// proxy, and the frontend's API base URL carries that prefix; accept those
+// requests as if they arrived at bare /api.
+app.use((req, _res, next) => {
+  if (req.url.startsWith("/projects/tariff-wars/api/")) {
+    req.url = req.url.slice("/projects/tariff-wars".length);
+  }
+  next();
+});
+
 // Set up routes
 console.log("Setting up routes...");
 
