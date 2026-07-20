@@ -1,6 +1,18 @@
 {
-  "lastUpdated": "2026-07-10",
+  "lastUpdated": "2026-07-20",
   "sources": [
+    {
+      "name": "USTR: Section 301 Action on Brazil's Unreasonable Acts, Policies, and Practices",
+      "url": "https://ustr.gov/about/policy-offices/press-office/press-releases/2026/july/ustr-section-301-action-brazils-unreasonable-acts-policies-and-practices"
+    },
+    {
+      "name": "EY: USTR issues Notice of Action imposing 25% Section 301 tariffs on imports from Brazil, effective 22 July 2026",
+      "url": "https://taxnews.ey.com/news/2026-1530-ustr-issues-notice-of-action-imposing-25-percent-section-301-tariffs-on-imports-from-brazil-effective-22-july-2026"
+    },
+    {
+      "name": "Thompson Hine SmarTrade: USTR Imposes 25% Section 301 Tariff on Certain Imports from Brazil",
+      "url": "https://www.thompsonhinesmartrade.com/2026/07/ustr-imposes-25-section-301-tariff-on-certain-imports-from-brazil/"
+    },
     {
       "name": "Baker Botts Trump Tariff Tracker (July 2, 2026)",
       "url": "https://ourtake.bakerbotts.com/post/102n7tq/trump-tariff-tracker-july-2-2026"
@@ -10,20 +22,24 @@
       "url": "https://taxfoundation.org/research/all/federal/trump-tariffs-trade-war/"
     },
     {
-      "name": "Trade Compliance Resource Hub Trump 2.0 Tariff Tracker",
-      "url": "https://www.tradecomplianceresourcehub.com/2026/06/03/trump-2-0-tariff-tracker/"
+      "name": "Yale Budget Lab: Introducing the Tariff Rate Tracker",
+      "url": "https://budgetlab.yale.edu/research/introducing-tariff-rate-tracker-open-source-tool-daily-effective-tariff-rates"
     },
     {
-      "name": "Federal Register: US-China Economic and Trade Arrangement",
-      "url": "https://www.federalregister.gov/documents/2025/11/07/2025-19826/modifying-reciprocal-tariff-rates-consistent-with-the-economic-and-trade-arrangement-between-the"
+      "name": "USTR: Section 301 Structural Excess Capacity and Production in Manufacturing Sectors",
+      "url": "https://ustr.gov/trade-topics/enforcement/section-301-investigations/section-301-structural-excess-capacity-and-production-manufacturing-sectors"
     },
     {
-      "name": "White & Case: Section 122 Tariff Replaces IEEPA Tariffs",
-      "url": "https://www.whitecase.com/insight-alert/trump-administration-imposes-10-section-122-tariff-plan-replace-ieepa-tariffs"
+      "name": "Skadden: US Trade Court Strikes Down Section 122 Tariffs, but Ruling's Fate Is Uncertain",
+      "url": "https://www.skadden.com/insights/publications/2026/05/us-trade-court-strikes-down-section-122-tariffs"
     },
     {
-      "name": "Baker McKenzie: USMCA Joint Review Outcome",
-      "url": "https://globalimportblog.bakermckenzie.com/2026/07/06/u-s-declines-to-renew-the-usmca-t-mec-cusma-setting-stage-for-annual-review-cycles-and-continued-negotiations/"
+      "name": "Chatham House: US refusal to renew USMCA trade deal brings uncertainty for Mexico",
+      "url": "https://www.chathamhouse.org/2026/07/us-refusal-renew-usmca-trade-deal-brings-uncertainty-mexico-treaty-far-dead"
+    },
+    {
+      "name": "Reuters/Axios: Trump threatens Canada with steeper tariff costs over wildfire smoke",
+      "url": "https://www.axios.com/2026/07/17/canada-wildfire-smoke-trump-tariffs"
     }
   ]
 }
