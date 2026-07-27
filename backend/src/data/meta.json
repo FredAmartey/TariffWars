@@ -1,45 +1,53 @@
 {
-  "lastUpdated": "2026-07-20",
+  "lastUpdated": "2026-07-27",
   "sources": [
     {
-      "name": "USTR: Section 301 Action on Brazil's Unreasonable Acts, Policies, and Practices",
-      "url": "https://ustr.gov/about/policy-offices/press-office/press-releases/2026/july/ustr-section-301-action-brazils-unreasonable-acts-policies-and-practices"
+      "name": "USTR: Takes Action in Forced Labor Section 301 Investigations",
+      "url": "https://ustr.gov/about/policy-offices/press-office/press-releases/2026/july/ustr-takes-action-forced-labor-section-301-investigations"
     },
     {
-      "name": "EY: USTR issues Notice of Action imposing 25% Section 301 tariffs on imports from Brazil, effective 22 July 2026",
-      "url": "https://taxnews.ey.com/news/2026-1530-ustr-issues-notice-of-action-imposing-25-percent-section-301-tariffs-on-imports-from-brazil-effective-22-july-2026"
+      "name": "Federal Register: Notice of Determinations and Actions in Section 301 Investigations Related to Forced Labor (60 economies)",
+      "url": "https://www.federalregister.gov/documents/2026/06/05/2026-11296/notice-of-determinations-and-request-for-comments-concerning-actions-in-section-301-investigations"
     },
     {
-      "name": "Thompson Hine SmarTrade: USTR Imposes 25% Section 301 Tariff on Certain Imports from Brazil",
-      "url": "https://www.thompsonhinesmartrade.com/2026/07/ustr-imposes-25-section-301-tariff-on-certain-imports-from-brazil/"
+      "name": "Global Trade Alert: Forced-Labour Section 301 Tariffs on 60 Economies Take Effect on 24 July — Overview of the Final Action",
+      "url": "https://globaltradealert.org/blog/forced-labour-section-301-final-action"
     },
     {
-      "name": "Baker Botts Trump Tariff Tracker (July 2, 2026)",
-      "url": "https://ourtake.bakerbotts.com/post/102n7tq/trump-tariff-tracker-july-2-2026"
+      "name": "Dimerco: US Tariff Update 2026",
+      "url": "https://dimerco.com/us-tariff-update-2026/"
     },
     {
-      "name": "Tax Foundation Tariff Tracker",
-      "url": "https://taxfoundation.org/research/all/federal/trump-tariffs-trade-war/"
+      "name": "NPR: A defiant Trump imposes replacement tariffs on biggest U.S. trading partners",
+      "url": "https://www.npr.org/2026/07/24/nx-s1-5905783/trump-tariff-trade-global-canada"
     },
     {
-      "name": "Yale Budget Lab: Introducing the Tariff Rate Tracker",
-      "url": "https://budgetlab.yale.edu/research/introducing-tariff-rate-tracker-open-source-tool-daily-effective-tariff-rates"
+      "name": "TIME: Trump's New Tariffs on Over 80 Countries, Explained",
+      "url": "https://time.com/article/2026/07/24/trump-tariffs-forced-labor-explainer/"
     },
     {
-      "name": "USTR: Section 301 Structural Excess Capacity and Production in Manufacturing Sectors",
-      "url": "https://ustr.gov/trade-topics/enforcement/section-301-investigations/section-301-structural-excess-capacity-and-production-manufacturing-sectors"
+      "name": "NBC News: US sets tariffs on 60 trade partners as temporary duties expire",
+      "url": "https://www.nbcnews.com/business/economy/trump-tariffs-60-countries-forced-labor-rcna588972"
     },
     {
-      "name": "Skadden: US Trade Court Strikes Down Section 122 Tariffs, but Ruling's Fate Is Uncertain",
-      "url": "https://www.skadden.com/insights/publications/2026/05/us-trade-court-strikes-down-section-122-tariffs"
+      "name": "Trivium China: US imposes new forced labor tariffs on China and other trade partners",
+      "url": "https://triviumchina.com/2026/07/24/us-imposes-new-forced-labor-tariffs-on-china-and-other-trade-partners/"
     },
     {
-      "name": "Chatham House: US refusal to renew USMCA trade deal brings uncertainty for Mexico",
-      "url": "https://www.chathamhouse.org/2026/07/us-refusal-renew-usmca-trade-deal-brings-uncertainty-mexico-treaty-far-dead"
+      "name": "Yale Budget Lab: The State of U.S. Tariffs",
+      "url": "https://budgetlab.yale.edu/research/state-us-tariffs"
     },
     {
-      "name": "Reuters/Axios: Trump threatens Canada with steeper tariff costs over wildfire smoke",
-      "url": "https://www.axios.com/2026/07/17/canada-wildfire-smoke-trump-tariffs"
+      "name": "Global Import Blog (Baker McKenzie): US Proposes Additional 50% Tariffs on Canadian Origin Goods, Effective August 19",
+      "url": "https://globalimportblog.bakermckenzie.com/2026/07/21/us-proposes-additional-50-tariffs-on-canadian-origin-goods-effective-august-19/"
+    },
+    {
+      "name": "Crowell & Moring: Section 232 Tariffs on Patented Pharmaceutical Imports; Tiered Rate Structure Takes Effect Beginning July 31, 2026",
+      "url": "https://www.crowell.com/en/insights/client-alerts/trump-administration-imposes-section-232-tariffs-on-patented-pharmaceutical-imports-tiered-rate-structure-takes-effect-beginning-july-31-2026"
+    },
+    {
+      "name": "France 24: Trump announces 100% tariffs on imported generic pharmaceutical drugs",
+      "url": "https://www.france24.com/en/americas/20260722-trump-announces-100-tariffs-on-imported-generic-pharmaceutical-drugs"
     }
   ]
 }

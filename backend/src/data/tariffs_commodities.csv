@@ -1,5 +1,5 @@
 Commodity,From,To,Rate,Change,Status,Nature,Effective Date
-"All Imports (Section 122 surcharge, expires July 24, 2026)",USA,"All countries (USMCA-qualifying goods exempt)",10%,—,Active,Temporary,"February 24, 2026"
+"All Imports (Section 122 surcharge, expired July 24, 2026)",USA,"All countries (USMCA-qualifying goods exempt)",10%,—,Ended,Temporary,"February 24, 2026"
 "All Imports (IEEPA reciprocal tariffs 10%-50%, struck down by Supreme Court)",USA,"All U.S. trading partners",50%,—,Ended,New,"April 5, 2025"
 "Fentanyl Tariffs (IEEPA 20%-35%, struck down by Supreme Court)",USA,"Canada, Mexico, China",35%,—,Ended,New,"March 4, 2025"
 "Steel & Aluminum (UK at 25%)",USA,Global,50%,+25%,Active,Additional,"June 4, 2025"
@@ -22,11 +22,12 @@ Semiconductors,USA,Global,25%,+25%,Active,New,"January 14, 2026"
 "US Industrial Goods (EU duty removal under deal)",EU,USA,0%,—,Active,Reciprocal,"July 1, 2026"
 "Japanese Automobiles & Parts (Section 232 reduced under framework)",USA,Japan,15%,-10%,Active,Additional,"September 16, 2025"
 "South Korean Automobiles & Parts (Section 232 reduced under deal)",USA,South Korea,15%,-10%,Active,Additional,"November 2025"
-"Imports from 60 Countries (Section 301 forced-labor, proposed 10%-12.5%)",USA,"China + 59 other countries",12.5%,—,Proposed,New,TBD
+"Imports from 60 Economies (Section 301 forced-labor: 10% for 17 committed economies incl. Canada/Mexico/UK/India, 12.5% default; EU/Japan/Korea/Taiwan/Switzerland compound-capped)",USA,"60 Economies (99.4% of US imports; replaced expired Sec. 122 baseline)",12.5%,—,Active,New,"July 24, 2026"
 "Manufactured Goods (Section 301 excess-capacity investigation)",USA,"EU, Japan, Mexico, Vietnam, India + 11 others",N/A,—,Under Investigation,New,TBD
 "Pharmaceuticals (Section 301: German drug pricing)",USA,Germany,N/A,—,Under Investigation,New,TBD
 "All Goods from DST-Enacting Countries",USA,"Countries enacting digital services taxes",100%,+100%,Threatened,New,TBD
 "Brazilian Goods (Section 301: digital trade, IP, deforestation)",USA,Brazil,25%,+25%,Active,New,"July 22, 2026"
+"Canadian Motor Vehicles, Alcohol & Dairy (Section 338, overrides USMCA)",USA,Canada,50%,+50%,Proposed,New,"August 19, 2026"
 "Nicaraguan Goods (Section 301; 10% in 2027, 15% in 2028)",USA,Nicaragua,0%,—,Active,New,"January 1, 2026"
 "Small-Value Imports (<$800; de minimis suspended)",USA,Global,N/A,—,Active,Additional,"August 29, 2025"
 "Dairy Products (threat lapsed)",USA,Canada,250%,—,Ended,New,TBD
@@ -34,3 +35,4 @@ Semiconductors,USA,Global,25%,+25%,Active,New,"January 14, 2026"
 "Venezuela Oil Secondary Tariffs (IEEPA, terminated)",USA,"Countries buying Venezuelan oil",25%,—,Ended,New,"April 2, 2025"
 "Robotics, Wind Turbines, Drones, PPE, Polysilicon (Section 232 probes)",USA,Global,N/A,—,Under Investigation,New,TBD
 "Critical Minerals (Section 232: negotiations directed)",USA,Global,N/A,—,Under Investigation,New,"January 14, 2026"
+"Generic Pharmaceuticals (0% for 2 years from Aug 2026, then 100%, then 200% from 2028)",USA,Global,0%,—,Proposed,New,"August 1, 2026"
