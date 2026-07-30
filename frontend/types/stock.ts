@@ -1,7 +1,10 @@
+/** A flat day is neither a tariff win nor a loss, so it gets its own state. */
+export type StockDirection = "positive" | "negative" | "neutral";
+
 export interface StockData {
   symbol: string;
   name: string;
-  impact: "positive" | "negative";
+  impact: StockDirection;
   percentage: number;
   reason: string;
   sector: string;
@@ -9,22 +12,23 @@ export interface StockData {
   change: number;
   changePercent: number;
   volume: number;
-  marketCap: number;
+  /** Millions of USD. Null when the provider has no profile for the symbol. */
+  marketCap: number | null;
   previousClose?: number;
   dayHigh?: number;
   dayLow?: number;
-  tradeCount?: number; // Number of trades
+  tradeCount?: number;
   index?: number;
 }
 
-export interface YahooFinanceQuote {
+/** Shape returned by our own /api/stocks/quotes proxy. */
+export interface StockQuote {
   symbol: string;
-  shortName: string;
-  longName: string;
-  regularMarketPrice: number;
-  regularMarketChange: number;
-  regularMarketChangePercent: number;
-  regularMarketVolume: number;
-  marketCap: number;
-  sector?: string;
+  price: number;
+  previousClose: number;
+  change: number;
+  changePercent: number;
+  dayHigh: number;
+  dayLow: number;
+  marketCap: number | null;
 }

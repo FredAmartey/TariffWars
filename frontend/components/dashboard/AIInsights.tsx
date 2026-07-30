@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from "react";
+import { useState, useContext, useEffect } from "react";
 import { ThemeContext } from "../../App";
 import {
   BrainIcon,
@@ -118,11 +118,13 @@ export const AIInsights = ({ showDetailedAnalysis }: AIInsightsProps) => {
         <button
           onClick={refreshAnalysis}
           disabled={isLoading}
+          aria-label={isLoading ? "Refreshing AI insights" : "Refresh AI insights"}
           className={`p-1 rounded-full ${
             isDarkMode ? "bg-gray-700 hover:bg-gray-600" : "bg-gray-200 hover:bg-gray-300"
           } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
         >
           <RefreshCwIcon
+            aria-hidden="true"
             className={`h-4 w-4 ${isDarkMode ? "text-gray-300" : "text-gray-600"} ${
               isLoading ? "animate-spin" : ""
             }`}

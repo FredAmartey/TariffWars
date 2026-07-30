@@ -20,6 +20,7 @@ import {
   ChevronDownIcon,
 } from "lucide-react";
 import { AffectedStocks } from "./dashboard/AffectedStocks";
+import { Modal } from "./Modal";
 
 interface CollapsibleHeaderProps {
   title: string;
@@ -73,14 +74,16 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
   const { addNotification } = useNotifications();
   const { toggleTheme } = useContext(ThemeContext);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [exportDataset, setExportDataset] = useState<"product" | "country">("product");
   const [showMarketAnalysis, setShowMarketAnalysis] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(5);
-  const [totalPages, setTotalPages] = useState(0);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortField, setSortField] = useState<string>("effectiveDate");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
-  const [filters, setFilters] = useState<Array<{ field: string; value: string }>>([]);
+  // TariffTable owns its own search, sort and filter state; these setters
+  // were never called, so the values here could only ever be the defaults.
+  const itemsPerPage = 5;
+  const searchTerm = "";
+  const sortField = "effectiveDate";
+  const sortDirection: "asc" | "desc" = "desc";
+  const filters: Array<{ field: string; value: string }> = [];
 
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -105,23 +108,32 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
     addNotification(`Preparing ${format.toUpperCase()} export...`, "info");
     setShowExportModal(false);
 
-    const exportUrl = `${window.location.origin}/projects/tariff-wars/api/tariffs/export?format=${exportFormat}`;
-    console.log("Triggering export download from URL:", exportUrl);
+    // The modal promises "the current tariff data", so pass along which table
+    // is open and what is being searched. It used to always export the
+    // commodity list unfiltered, even from the Countries tab.
+    const params = new URLSearchParams({ format: exportFormat, dataset: exportDataset });
+    if (searchTerm) params.set("search", searchTerm);
 
-    window.open(exportUrl, "_blank");
+    window.open(
+      `${window.location.origin}/projects/tariff-wars/api/tariffs/export?${params}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
   };
 
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2
+          {/* The page heading. This was an h2 while the news widget below
+              supplied the document's only h1, inverting the outline. */}
+          <h1
             className={`text-3xl font-bold tracking-tight ${
               isDarkMode ? "text-white" : "text-gray-800"
             }`}
           >
             Global Tariff Insights
-          </h2>
+          </h1>
           <p className={`mt-1 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
             Real-time analysis and impact assessment of international trade policies
           </p>
@@ -201,7 +213,8 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
               page={currentPage}
               itemsPerPage={itemsPerPage}
               onPageChange={setCurrentPage}
-              onTotalPagesChange={setTotalPages}
+              onTotalPagesChange={() => {}}
+              onDatasetChange={setExportDataset}
             />
             <DataFreshness />
           </div>
@@ -222,8 +235,11 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
               isMobile={isMobile}
               isDarkMode={isDarkMode}
             />
+            {/* The header derives this id from the title, so it must match
+                "AI Market Analysis" exactly. It said "collapsible-ai-analysis",
+                pointing aria-controls at an element that did not exist. */}
             <div
-              id="collapsible-ai-analysis"
+              id="collapsible-ai-market-analysis"
               className={`${!isAiAnalysisOpen && isMobile ? "hidden" : "block"}`}
             >
               <AIInsights showDetailedAnalysis={() => setShowMarketAnalysis(true)} />
@@ -353,80 +369,84 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
           </div>
         </div>
       </div>
-      {showExportModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div
-            className={`rounded-xl p-6 max-w-md w-full ${
-              isDarkMode ? "bg-gray-800 border border-gray-700" : "bg-white shadow-xl"
-            }`}
-          >
-            <h3 className={`text-lg font-bold mb-4 ${isDarkMode ? "text-white" : "text-gray-800"}`}>
-              Export Data
-            </h3>
-            <p className={`mb-4 text-sm ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
-              Choose a format to export the current tariff data:
-            </p>
-            <div className="space-y-3">
-              {["CSV", "JSON"].map((format) => (
-                <button
-                  key={format}
-                  onClick={() => handleExport(format)}
-                  className={`w-full p-3 flex items-center justify-between rounded-lg ${
-                    isDarkMode
-                      ? "bg-gray-700 hover:bg-gray-600 text-white"
-                      : "bg-gray-100 hover:bg-gray-200 text-gray-800"
-                  }`}
-                >
-                  <span>Export as {format}</span>
-                  <DownloadIcon className="h-4 w-4" />
-                </button>
-              ))}
-            </div>
-            <div className="mt-6 flex justify-end">
+      <Modal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        title="Export Data"
+        isDarkMode={isDarkMode}
+      >
+        <div className="p-6">
+          <h3 className={`text-lg font-bold mb-4 ${isDarkMode ? "text-white" : "text-gray-800"}`}>
+            Export Data
+          </h3>
+          <p className={`mb-4 text-sm ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
+            Export the {exportDataset === "country" ? "countries" : "commodities"} table
+            {searchTerm ? ` matching "${searchTerm}"` : ""}:
+          </p>
+          <div className="space-y-3">
+            {["CSV", "JSON"].map((format) => (
               <button
-                onClick={() => setShowExportModal(false)}
-                className={`px-4 py-2 rounded-md ${
+                key={format}
+                onClick={() => handleExport(format)}
+                className={`w-full p-3 flex items-center justify-between rounded-lg ${
                   isDarkMode
                     ? "bg-gray-700 hover:bg-gray-600 text-white"
-                    : "bg-gray-200 hover:bg-gray-300 text-gray-700"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-800"
                 }`}
               >
-                Cancel
+                <span>Export as {format}</span>
+                <DownloadIcon className="h-4 w-4" aria-hidden="true" />
               </button>
-            </div>
+            ))}
           </div>
-        </div>
-      )}
-      {showMarketAnalysis && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div
-            className={`rounded-xl overflow-hidden w-full max-w-4xl max-h-[90vh] flex flex-col ${
-              isDarkMode ? "bg-gray-800 border border-gray-700" : "bg-white shadow-xl"
-            }`}
-          >
-            <div
-              className={`p-4 border-b ${
-                isDarkMode ? "border-gray-700 bg-gray-700/50" : "border-gray-200 bg-gray-50"
-              } flex justify-between items-center`}
+          <div className="mt-6 flex justify-end">
+            <button
+              onClick={() => setShowExportModal(false)}
+              className={`px-4 py-2 rounded-md ${
+                isDarkMode
+                  ? "bg-gray-700 hover:bg-gray-600 text-white"
+                  : "bg-gray-200 hover:bg-gray-300 text-gray-700"
+              }`}
             >
-              <h3 className={`text-lg font-bold ${isDarkMode ? "text-white" : "text-gray-800"}`}>
-                Detailed Market Analysis
-              </h3>
-              <button
-                onClick={() => setShowMarketAnalysis(false)}
-                className={`p-2 rounded-full ${
-                  isDarkMode ? "hover:bg-gray-600" : "hover:bg-gray-200"
-                }`}
-              >
-                <XIcon className={`h-5 w-5 ${isDarkMode ? "text-gray-300" : "text-gray-500"}`} />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6">
-              <DetailedMarketAnalysis />
-            </div>
+              Cancel
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
+      <Modal
+        isOpen={showMarketAnalysis}
+        onClose={() => setShowMarketAnalysis(false)}
+        title="Detailed Market Analysis"
+        isDarkMode={isDarkMode}
+        widthClass="max-w-4xl"
+      >
+        <div className="overflow-hidden max-h-[90vh] flex flex-col">
+          <div
+            className={`p-4 border-b ${
+              isDarkMode ? "border-gray-700 bg-gray-700/50" : "border-gray-200 bg-gray-50"
+            } flex justify-between items-center`}
+          >
+            <h3 className={`text-lg font-bold ${isDarkMode ? "text-white" : "text-gray-800"}`}>
+              Detailed Market Analysis
+            </h3>
+            <button
+              onClick={() => setShowMarketAnalysis(false)}
+              aria-label="Close market analysis"
+              className={`p-2 rounded-full ${
+                isDarkMode ? "hover:bg-gray-600" : "hover:bg-gray-200"
+              }`}
+            >
+              <XIcon
+                className={`h-5 w-5 ${isDarkMode ? "text-gray-300" : "text-gray-500"}`}
+                aria-hidden="true"
+              />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-6">
+            <DetailedMarketAnalysis />
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

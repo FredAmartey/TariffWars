@@ -1,5 +1,6 @@
 import axios from "axios";
 import type { TariffEntry, NewsArticle } from "../types/index";
+import type { StockQuote } from "../types/stock";
 
 // Create a simple Axios instance
 const apiClient = axios.create({
@@ -66,15 +67,10 @@ class ApiService {
       });
       return response.data;
     } catch (error) {
+      // Returning an empty page here made every outage look like "no tariffs
+      // match", and the caller cached that empty answer. Let it surface.
       console.error("Error in getTariffRates service call:", error);
-      // Return empty result set on error
-      return {
-        data: [],
-        total: 0,
-        page: params.page || 1,
-        itemsPerPage: params.itemsPerPage || 10,
-        totalPages: 0,
-      };
+      throw error;
     }
   }
 
@@ -122,27 +118,38 @@ class ApiService {
       }
     } catch (error) {
       console.error("Error in getNewsArticles service call:", error);
-      return {
-        data: [],
-        total: 0,
-        page: params.page || 1,
-        itemsPerPage: params.itemsPerPage || 10,
-      };
+      throw error;
     }
   }
 
   async getTariffMeta(): Promise<{
     lastUpdated: string;
     sources: Array<{ name: string; url: string }>;
-  } | null> {
+  }> {
     try {
       const response = await apiClient.get("/api/tariffs/meta");
       return response.data;
     } catch (error) {
       console.error("Error in getTariffMeta service call:", error);
-      return null;
+      throw error;
     }
+  }
+
+  /**
+   * Market quotes, proxied by our backend so the provider credential stays
+   * server-side. Errors propagate: a failed fetch is an outage to report, not
+   * an empty market.
+   */
+  async getStockQuotes(): Promise<{ quotes: StockQuote[]; capturedAt: string | null }> {
+    const response = await apiClient.get("/api/stocks/quotes");
+    if (!response.data || !Array.isArray(response.data.quotes)) {
+      throw new Error("Invalid data format received from the stock API.");
+    }
+    return { quotes: response.data.quotes, capturedAt: response.data.capturedAt ?? null };
   }
 }
 
 export const apiService = new ApiService();
+export const stockApi = {
+  getQuotes: () => apiService.getStockQuotes(),
+};

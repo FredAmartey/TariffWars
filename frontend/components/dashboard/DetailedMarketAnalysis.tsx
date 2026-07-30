@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from "react";
+import { useState, useContext, useEffect } from "react";
 import { ThemeContext } from "../../App";
 import {
   TrendingUpIcon,
@@ -29,6 +29,7 @@ export const DetailedMarketAnalysis = () => {
   const [marketPredictions, setMarketPredictions] = useState<MarketPrediction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [allFailed, setAllFailed] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,17 +37,33 @@ export const DetailedMarketAnalysis = () => {
         setIsLoading(true);
         setError(null);
 
-        const [overview, commodities, regions, predictions] = await Promise.all([
+        // allSettled, not all: one failing tab used to discard the three that
+        // succeeded and replace the whole modal with a single error.
+        const [overview, commodities, regions, predictions] = await Promise.allSettled([
           marketAnalysisApi.getMarketOverview(),
           marketAnalysisApi.getCommodityAnalysis(),
           marketAnalysisApi.getRegionalAnalysis(),
           marketAnalysisApi.getMarketPredictions(),
         ]);
 
-        setMarketOverview(overview);
-        setCommodityAnalysis(commodities);
-        setRegionalAnalysis(regions);
-        setMarketPredictions(predictions);
+        if (overview.status === "fulfilled") setMarketOverview(overview.value);
+        if (commodities.status === "fulfilled") setCommodityAnalysis(commodities.value ?? []);
+        if (regions.status === "fulfilled") setRegionalAnalysis(regions.value ?? []);
+        if (predictions.status === "fulfilled") setMarketPredictions(predictions.value ?? []);
+
+        const failed = [
+          overview.status === "rejected" ? "overview" : null,
+          commodities.status === "rejected" ? "commodities" : null,
+          regions.status === "rejected" ? "regional analysis" : null,
+          predictions.status === "rejected" ? "predictions" : null,
+        ].filter(Boolean);
+
+        setAllFailed(failed.length === 4);
+        if (failed.length === 4) {
+          setError("Failed to load market analysis data");
+        } else if (failed.length > 0) {
+          setError(`Could not load ${failed.join(", ")}. The other sections are up to date.`);
+        }
       } catch (err) {
         console.error("Error fetching market analysis data:", err);
         setError("Failed to load market analysis data");
@@ -67,10 +84,30 @@ export const DetailedMarketAnalysis = () => {
       );
     }
 
-    if (error) {
+    // A partial failure still has sections worth showing, so the banner sits
+    // above the content rather than replacing it.
+    const banner = error ? (
+      <div className="p-3 mb-4 rounded-lg text-sm text-red-500 bg-red-500/10" role="status">
+        {error}
+      </div>
+    ) : null;
+
+    // Only a total failure replaces the modal. Judging this by "no overview and
+    // no commodities" hid working Regional and Predictions tabs whenever the
+    // commodity call legitimately returned an empty array.
+    if (allFailed) {
       return <div className={`p-4 text-center text-red-500`}>{error}</div>;
     }
 
+    return (
+      <>
+        {banner}
+        {renderTab()}
+      </>
+    );
+  };
+
+  const renderTab = () => {
     switch (activeTab) {
       case "overview":
         return <OverviewTab isDarkMode={isDarkMode} data={marketOverview} />;
@@ -144,7 +181,6 @@ const OverviewTab = ({
 
   const {
     averageTariffRate,
-    yearOverYearChange,
     highRiskSectors,
     growthOpportunities,
     manufacturingImpact,
@@ -419,42 +455,23 @@ const RegionsTab = ({ isDarkMode, data }: { isDarkMode: boolean; data: RegionalA
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {data.map((region, index) => (
+        {data.map((region, index) => {
+          const theme = getRegionTheme(region.region);
+          return (
           <div
             key={index}
-            className={`p-5 rounded-lg ${
-              isDarkMode
-                ? `bg-gradient-to-br from-${getRegionColor(
-                    region.region
-                  )}-900/20 to-${getRegionColor(
-                    region.region
-                  )}-900/20 border border-${getRegionColor(region.region)}-900/20`
-                : `bg-gradient-to-br from-${getRegionColor(region.region)}-50 to-${getRegionColor(
-                    region.region
-                  )}-50 border border-${getRegionColor(region.region)}-100`
-            }`}
+            className={`p-5 rounded-lg ${isDarkMode ? theme.cardDark : theme.cardLight}`}
           >
             <div className="flex items-center mb-4">
-              <div
-                className={`p-2 rounded-full ${
-                  isDarkMode
-                    ? `bg-${getRegionColor(region.region)}-900/50`
-                    : `bg-${getRegionColor(region.region)}-100`
-                }`}
-              >
+              <div className={`p-2 rounded-full ${isDarkMode ? theme.chipDark : theme.chipLight}`}>
                 <Globe2Icon
-                  className={`h-5 w-5 ${
-                    isDarkMode
-                      ? `text-${getRegionColor(region.region)}-300`
-                      : `text-${getRegionColor(region.region)}-600`
-                  }`}
+                  className={`h-5 w-5 ${isDarkMode ? theme.iconDark : theme.iconLight}`}
+                  aria-hidden="true"
                 />
               </div>
               <h3
                 className={`ml-3 text-lg font-medium ${
-                  isDarkMode
-                    ? `text-${getRegionColor(region.region)}-300`
-                    : `text-${getRegionColor(region.region)}-700`
+                  isDarkMode ? theme.titleDark : theme.titleLight
                 }`}
               >
                 {region.region}
@@ -468,20 +485,15 @@ const RegionsTab = ({ isDarkMode, data }: { isDarkMode: boolean; data: RegionalA
               <span>Average Tariff Rate:</span>
               <span className="font-semibold">{region.averageTariffRate.toFixed(1)}%</span>
             </div>
+            {/* A "12-Month Change" row used to sit here showing a number the
+                model made up. Tariffs in force is measured, so it can stay. */}
             <div
               className={`flex items-center justify-between mb-3 ${
                 isDarkMode ? "text-gray-300" : "text-gray-700"
               }`}
             >
-              <span>12-Month Change:</span>
-              <span
-                className={`font-semibold ${
-                  region.yearOverYearChange > 0 ? "text-red-500" : "text-green-500"
-                }`}
-              >
-                {region.yearOverYearChange > 0 ? "+" : ""}
-                {region.yearOverYearChange.toFixed(1)}%
-              </span>
+              <span>Tariffs in force:</span>
+              <span className="font-semibold">{region.tariffCount}</span>
             </div>
             <p className={`text-sm ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
               {region.description}
@@ -499,13 +511,7 @@ const RegionsTab = ({ isDarkMode, data }: { isDarkMode: boolean; data: RegionalA
                   <span
                     key={sectorIndex}
                     className={`px-2 py-1 text-xs rounded-full ${
-                      isDarkMode
-                        ? `bg-${getRegionColor(region.region)}-900/30 text-${getRegionColor(
-                            region.region
-                          )}-300`
-                        : `bg-${getRegionColor(region.region)}-100 text-${getRegionColor(
-                            region.region
-                          )}-700`
+                      isDarkMode ? theme.tagDark : theme.tagLight
                     }`}
                   >
                     {sector}
@@ -514,7 +520,8 @@ const RegionsTab = ({ isDarkMode, data }: { isDarkMode: boolean; data: RegionalA
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -615,12 +622,101 @@ const PredictionsTab = ({
   );
 };
 
-const getRegionColor = (region: string): string => {
-  const colorMap: Record<string, string> = {
-    "North America": "blue",
-    "Asia-Pacific": "red",
-    Europe: "indigo",
-    "Latin America": "amber",
-  };
-  return colorMap[region] || "gray";
+/**
+ * Complete class strings per region.
+ *
+ * These used to be assembled as `bg-${getRegionColor(r)}-100`. Tailwind scans
+ * source text for whole class names and never sees an interpolated one, so
+ * none of those utilities were emitted and every region card rendered
+ * unstyled. Full literals are the only form the scanner can find.
+ */
+interface RegionTheme {
+  cardDark: string;
+  cardLight: string;
+  chipDark: string;
+  chipLight: string;
+  iconDark: string;
+  iconLight: string;
+  titleDark: string;
+  titleLight: string;
+  tagDark: string;
+  tagLight: string;
+}
+
+const REGION_THEMES: Record<string, RegionTheme> = {
+  "North America": {
+    cardDark: "bg-gradient-to-br from-blue-900/20 to-blue-900/20 border border-blue-900/20",
+    cardLight: "bg-gradient-to-br from-blue-50 to-blue-50 border border-blue-100",
+    chipDark: "bg-blue-900/50",
+    chipLight: "bg-blue-100",
+    iconDark: "text-blue-300",
+    iconLight: "text-blue-600",
+    titleDark: "text-blue-300",
+    titleLight: "text-blue-700",
+    tagDark: "bg-blue-900/30 text-blue-300",
+    tagLight: "bg-blue-100 text-blue-700",
+  },
+  "Asia-Pacific": {
+    cardDark: "bg-gradient-to-br from-red-900/20 to-red-900/20 border border-red-900/20",
+    cardLight: "bg-gradient-to-br from-red-50 to-red-50 border border-red-100",
+    chipDark: "bg-red-900/50",
+    chipLight: "bg-red-100",
+    iconDark: "text-red-300",
+    iconLight: "text-red-600",
+    titleDark: "text-red-300",
+    titleLight: "text-red-700",
+    tagDark: "bg-red-900/30 text-red-300",
+    tagLight: "bg-red-100 text-red-700",
+  },
+  Europe: {
+    cardDark: "bg-gradient-to-br from-indigo-900/20 to-indigo-900/20 border border-indigo-900/20",
+    cardLight: "bg-gradient-to-br from-indigo-50 to-indigo-50 border border-indigo-100",
+    chipDark: "bg-indigo-900/50",
+    chipLight: "bg-indigo-100",
+    iconDark: "text-indigo-300",
+    iconLight: "text-indigo-600",
+    titleDark: "text-indigo-300",
+    titleLight: "text-indigo-700",
+    tagDark: "bg-indigo-900/30 text-indigo-300",
+    tagLight: "bg-indigo-100 text-indigo-700",
+  },
+  "Latin America": {
+    cardDark: "bg-gradient-to-br from-amber-900/20 to-amber-900/20 border border-amber-900/20",
+    cardLight: "bg-gradient-to-br from-amber-50 to-amber-50 border border-amber-100",
+    chipDark: "bg-amber-900/50",
+    chipLight: "bg-amber-100",
+    iconDark: "text-amber-300",
+    iconLight: "text-amber-600",
+    titleDark: "text-amber-300",
+    titleLight: "text-amber-700",
+    tagDark: "bg-amber-900/30 text-amber-300",
+    tagLight: "bg-amber-100 text-amber-700",
+  },
+  Other: {
+    cardDark: "bg-gradient-to-br from-teal-900/20 to-teal-900/20 border border-teal-900/20",
+    cardLight: "bg-gradient-to-br from-teal-50 to-teal-50 border border-teal-100",
+    chipDark: "bg-teal-900/50",
+    chipLight: "bg-teal-100",
+    iconDark: "text-teal-300",
+    iconLight: "text-teal-600",
+    titleDark: "text-teal-300",
+    titleLight: "text-teal-700",
+    tagDark: "bg-teal-900/30 text-teal-300",
+    tagLight: "bg-teal-100 text-teal-700",
+  },
+  Global: {
+    cardDark: "bg-gradient-to-br from-slate-900/20 to-slate-900/20 border border-slate-900/20",
+    cardLight: "bg-gradient-to-br from-slate-50 to-slate-50 border border-slate-100",
+    chipDark: "bg-slate-900/50",
+    chipLight: "bg-slate-100",
+    iconDark: "text-slate-300",
+    iconLight: "text-slate-600",
+    titleDark: "text-slate-300",
+    titleLight: "text-slate-700",
+    tagDark: "bg-slate-900/30 text-slate-300",
+    tagLight: "bg-slate-100 text-slate-700",
+  },
 };
+
+const getRegionTheme = (region: string): RegionTheme =>
+  REGION_THEMES[region] ?? REGION_THEMES.Global;

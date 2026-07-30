@@ -7,10 +7,10 @@ import { clientKey } from "./utils/clientKey";
 import { cacheableIfOk } from "./utils/cacheControl";
 import { TariffService } from "./services/tariffService";
 import { NewsService } from "./services/newsService";
-import { TariffEntry } from "./types/tariff";
-import { NewsArticle } from "./types/news";
+import { StockService } from "./services/stockService";
 import { tariffRoutes } from "./routes/tariffRoutes";
 import { marketAnalysisRoutes } from "./routes/marketAnalysisRoutes";
+import { stockRoutes } from "./routes/stockRoutes";
 import newsRoutes from "./routes/newsRoutes";
 
 // Load environment variables
@@ -140,9 +140,11 @@ const apiLimiter = rateLimit({
   keyGenerator: clientKey,
 });
 
-// Initialize services
+// Initialize services. One instance each: a per-router NewsService would let
+// concurrent analysis requests each fan out their own upstream news fetch.
 const tariffService = new TariffService();
 const newsService = new NewsService();
+const stockService = new StockService();
 
 // fredamartey.com serves the app under /projects/tariff-wars via reverse
 // proxy, and the frontend's API base URL carries that prefix; accept those
@@ -164,7 +166,8 @@ app.get("/health", (req, res) => {
 
 // Set up routes with their respective services - apply API rate limiter
 app.use("/api/tariffs", apiLimiter, tariffRoutes(tariffService));
-app.use("/api/news", apiLimiter, newsRoutes);
+app.use("/api/news", apiLimiter, newsRoutes(newsService));
+app.use("/api/stocks", apiLimiter, stockRoutes(stockService));
 app.use("/api/market-analysis", apiLimiter, marketAnalysisRoutes(tariffService, newsService));
 
 // 404 handler
@@ -173,7 +176,7 @@ app.use((req, res) => {
 });
 
 // Error handling middleware
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err.stack);
 
   // Don't expose error details in production

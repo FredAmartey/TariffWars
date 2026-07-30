@@ -1,32 +1,12 @@
 import React, { useState, useEffect, useCallback, useContext } from "react";
-import { ChevronLeftIcon, ChevronRightIcon, TrendingUpIcon, TrendingDownIcon } from "lucide-react";
+import { TrendingUpIcon, TrendingDownIcon, MinusIcon } from "lucide-react";
 import styles from "./AffectedStocks.module.css";
-import { StockData } from "../../types/stock";
+import { StockData, StockDirection } from "../../types/stock";
+import { stockApi } from "../../services/api";
 import { ThemeContext } from "../../App"; // Import ThemeContext
 
-// List of stock symbols we want to track
-const TRACKED_SYMBOLS = [
-  "X",
-  "NUE",
-  "STLD",
-  "CLF",
-  "TSLA",
-  "AAPL",
-  "GM",
-  "INTC",
-  "CAT",
-  "BA",
-  "SMH",
-  "XME",
-  "F", // Ford
-  "MU", // Micron
-  "JD", // JD.com
-  "NIO", // NIO Inc
-  "BABA", // Alibaba
-  "TM", // Toyota
-  "CRSR", // Corsair Gaming
-  "HPQ", // HP Inc
-];
+// The tracked symbol list lives on the backend now (services/stockService.ts),
+// which is also what bounds the symbols it will ask the provider about.
 
 // Add company full names for display
 const COMPANY_NAMES: Record<string, string> = {
@@ -173,8 +153,10 @@ const CardContent: React.FC<{ stock: StockData; isDarkMode: boolean }> = ({
   isDarkMode,
 }) => {
   // Format market cap as simply as possible: $22.5M or $22.5B for larger values
-  const formatMarketCap = (marketCap: number) => {
-    if (marketCap === 0) return "N/A";
+  const formatMarketCap = (marketCap: number | null) => {
+    // Null means the provider had no profile for this symbol. It used to be
+    // filled with a locally estimated figure that was a million times too small.
+    if (marketCap === null || marketCap === 0) return "N/A";
 
     // For values over 1000M, convert to billions
     if (marketCap >= 1000) {
@@ -197,9 +179,11 @@ const CardContent: React.FC<{ stock: StockData; isDarkMode: boolean }> = ({
           <p className="text-gray-400 text-sm">{COMPANY_NAMES[stock.symbol] || stock.name}</p>
         </div>
         {stock.impact === "positive" ? (
-          <TrendingUpIcon className="h-6 w-6 text-green-400" />
+          <TrendingUpIcon className="h-6 w-6 text-green-400" aria-hidden="true" />
+        ) : stock.impact === "negative" ? (
+          <TrendingDownIcon className="h-6 w-6 text-red-400" aria-hidden="true" />
         ) : (
-          <TrendingDownIcon className="h-6 w-6 text-red-400" />
+          <MinusIcon className="h-6 w-6 text-gray-400" aria-hidden="true" />
         )}
       </div>
 
@@ -207,10 +191,14 @@ const CardContent: React.FC<{ stock: StockData; isDarkMode: boolean }> = ({
         <div className="flex items-center">
           <span
             className={`text-4xl font-bold ${
-              stock.impact === "positive" ? "text-green-400" : "text-red-400"
+              stock.impact === "positive"
+                ? "text-green-400"
+                : stock.impact === "negative"
+                ? "text-red-400"
+                : "text-gray-400"
             }`}
           >
-            {stock.impact === "positive" ? "+" : "-"}
+            {stock.impact === "positive" ? "+" : stock.impact === "negative" ? "-" : ""}
             {stock.percentage.toFixed(2)}%
           </span>
         </div>
@@ -221,7 +209,9 @@ const CardContent: React.FC<{ stock: StockData; isDarkMode: boolean }> = ({
 
       <div className="mt-auto">
         <div className="bg-gray-800/50 rounded-lg p-4">
-          <h4 className="text-gray-300 font-semibold mb-2">Impact Reason</h4>
+          {/* The copy below is a fixed narrative keyed off the day's price
+              direction, not measured tariff exposure. Label it honestly. */}
+          <h4 className="text-gray-300 font-semibold mb-2">Possible tariff angle</h4>
           <p className="text-gray-400 text-sm">{stock.reason}</p>
         </div>
 
@@ -294,6 +284,10 @@ export const AffectedStocks: React.FC = () => {
   const [stockData, setStockData] = useState<StockData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // When the oldest quote on screen was captured. Held-over prices during a
+  // provider hiccup are labelled rather than shown as live. This is an absolute
+  // instant so it stays accurate however long the response sat in a CDN.
+  const [capturedAt, setCapturedAt] = useState<string | null>(null);
 
   // --- Add Mobile Detection State & Effect ---
   const [isMobile, setIsMobile] = useState(false);
@@ -304,204 +298,82 @@ export const AffectedStocks: React.FC = () => {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // --- Keep original fetchStockData and related useEffect ---
+  // Quotes come from our own backend, which holds the Finnhub credential and
+  // caches upstream calls. Fetching them here in the browser meant shipping the
+  // key in the bundle and firing 40 requests per page load.
   const fetchStockData = useCallback(async () => {
-    console.log("[AffectedStocks] Starting fetchStockData...");
-    setIsLoading(true); // Set loading true at the start
+    setIsLoading(true);
     try {
       setError(null);
+      const { quotes, capturedAt } = await stockApi.getQuotes();
+      setCapturedAt(capturedAt);
 
-      const fetchPromises = TRACKED_SYMBOLS.map(async (symbol) => {
-        try {
-          // Get basic quote data
-          console.log(`[AffectedStocks] Fetching quote for ${symbol}`);
-          const response = await fetch(
-            `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${
-              import.meta.env.VITE_FINNHUB_API_KEY
-            }`
-          );
-
-          if (!response.ok) {
-            console.error(
-              `[AffectedStocks] Failed quote fetch for ${symbol}: Status ${response.status}`
-            );
-            throw new Error(`Failed to fetch ${symbol} quote`);
-          }
-
-          const data = await response.json();
-          console.log(`[AffectedStocks] Quote data for ${symbol}:`, data);
-
-          // Check if we have valid data
-          if (!data || typeof data.c !== "number") {
-            console.warn(`[AffectedStocks] No valid quote data for ${symbol}`);
-            return null; // Skip this symbol if quote data is invalid
-          }
-
-          // Get company profile for market cap
-          console.log(`[AffectedStocks] Fetching profile for ${symbol}`);
-          const profileResponse = await fetch(
-            `https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${
-              import.meta.env.VITE_FINNHUB_API_KEY
-            }`
-          );
-
-          let marketCap = 0;
-          if (profileResponse.ok) {
-            const profileData = await profileResponse.json();
-            marketCap = profileData.marketCapitalization || 0;
-            console.log(`[AffectedStocks] Profile data for ${symbol}: Market Cap ${marketCap}`);
-          } else {
-            console.warn(
-              `[AffectedStocks] Failed profile fetch for ${symbol}: Status ${profileResponse.status}. Estimating market cap.`
-            );
-            // Estimate market cap if not available (in millions to match API format)
-            const estimatedShares = {
-              AAPL: 16000, // 16B shares, but in millions
-              TSLA: 3200, // 3.2B shares, but in millions
-              GM: 1400, // 1.4B shares, but in millions
-              BA: 600, // 600M shares, but in millions
-              X: 230, // 230M shares, but in millions
-              NUE: 250, // 250M shares, but in millions
-              CLF: 500, // 500M shares, but in millions
-              STLD: 200, // 200M shares, but in millions
-              XME: 50, // 50M shares (ETF), but in millions
-              INTC: 4200, // 4.2B shares, but in millions
-              CAT: 520, // 520M shares, but in millions
-              SMH: 150, // 150M shares (ETF), but in millions
-              F: 4000, // 4B shares, but in millions
-              MU: 1100, // 1.1B shares, but in millions
-              JD: 1600, // 1.6B shares, but in millions
-              NIO: 1700, // 1.7B shares, but in millions
-              BABA: 2600, // 2.6B shares, but in millions
-              TM: 1400, // 1.4B shares, but in millions
-              CRSR: 100, // 100M shares, but in millions
-              HPQ: 990, // 990M shares, but in millions
-            };
-
-            // If we have an estimated number of shares, calculate market cap
-            if (estimatedShares[symbol as keyof typeof estimatedShares]) {
-              // Calculate in millions directly
-              marketCap =
-                (data.c * estimatedShares[symbol as keyof typeof estimatedShares]) / 1000000;
-            }
-          }
-
-          const currentPrice = data.c;
-          const previousClose = data.pc;
-          const change = currentPrice - previousClose;
-          const changePercent = (change / previousClose) * 100;
+      const seen = new Set<string>();
+      const processed: StockData[] = quotes
+        .filter((q) => {
+          if (!q.symbol || seen.has(q.symbol)) return false;
+          seen.add(q.symbol);
+          return true;
+        })
+        .map((q) => {
+          const changePercent = isFinite(q.changePercent) ? q.changePercent : 0;
+          // A flat day is neither a tariff win nor a loss; keeping it out of the
+          // positive/negative split stops "+0.00%" being narrated as good news.
+          const direction: StockDirection =
+            changePercent > 0 ? "positive" : changePercent < 0 ? "negative" : "neutral";
 
           return {
-            symbol,
-            name: COMPANY_NAMES[symbol] || symbol,
-            impact: change >= 0 ? "positive" : "negative",
+            symbol: q.symbol,
+            name: COMPANY_NAMES[q.symbol] || q.symbol,
+            impact: direction,
             percentage: Math.abs(changePercent),
             reason:
-              IMPACT_REASONS[symbol]?.[change >= 0 ? "positive" : "negative"] ||
-              "Market reaction to tariffs",
-            sector: SECTORS[symbol] || "N/A",
-            price: currentPrice,
-            change: change,
-            changePercent: changePercent,
-            volume: data.v || 0,
-            marketCap: marketCap,
-            previousClose: previousClose,
-            dayHigh: data.h,
-            dayLow: data.l,
-            tradeCount: data.t,
+              direction === "neutral"
+                ? "No movement today"
+                : IMPACT_REASONS[q.symbol]?.[direction] || "Market reaction to tariffs",
+            sector: SECTORS[q.symbol] || "N/A",
+            price: q.price,
+            change: q.change,
+            changePercent,
+            volume: 0,
+            marketCap: q.marketCap,
+            previousClose: q.previousClose,
+            dayHigh: q.dayHigh,
+            dayLow: q.dayLow,
+            tradeCount: 0,
           };
-        } catch (symbolError) {
-          console.error(`[AffectedStocks] Error fetching data for symbol ${symbol}:`, symbolError);
-          return null; // Return null if fetching for a specific symbol fails
-        }
-      });
+        });
 
-      const results = (await Promise.all(fetchPromises)).filter(
-        (result): result is NonNullable<typeof result> => result !== null
-      );
-
-      console.log("[AffectedStocks] Filtered API results:", results);
-
-      if (results.length === 0) {
-        console.warn("[AffectedStocks] No valid stock data retrieved after filtering.");
-        // Don't throw an error here, let the component render the "No data" message
-      }
-
-      // --- Data Processing ---
-      const processedData: StockData[] = results.map((apiData) => {
-        const {
-          symbol,
-          name,
-          impact,
-          reason,
-          sector,
-          price,
-          change,
-          changePercent,
-          volume,
-          marketCap,
-          previousClose,
-          dayHigh,
-          dayLow,
-          tradeCount,
-        } = apiData;
-
-        // Ensure percentage is a valid number, default to 0 if calculation fails
-        const safePercentage =
-          typeof changePercent === "number" && isFinite(changePercent)
-            ? Math.abs(changePercent)
-            : 0;
-
-        // Ensure impact is strictly positive or negative based on changePercent
-        const safeImpact: "positive" | "negative" =
-          typeof changePercent === "number" && changePercent >= 0 ? "positive" : "negative";
-
-        return {
-          symbol: symbol || "N/A",
-          name: name || symbol || "Unknown",
-          impact: safeImpact, // Use the strictly typed impact
-          percentage: safePercentage,
-          reason: reason || "N/A",
-          sector: sector || "N/A",
-          price: typeof price === "number" ? price : 0,
-          change: typeof change === "number" ? change : 0,
-          changePercent: typeof changePercent === "number" ? changePercent : 0,
-          volume: typeof volume === "number" ? volume : 0,
-          marketCap: typeof marketCap === "number" ? marketCap : 0,
-          previousClose: typeof previousClose === "number" ? previousClose : 0,
-          dayHigh: typeof dayHigh === "number" ? dayHigh : 0,
-          dayLow: typeof dayLow === "number" ? dayLow : 0,
-          tradeCount: typeof tradeCount === "number" ? tradeCount : 0,
-        };
-      });
-      // --- End Data Processing ---
-
-      // --- Deduplication Step ---
-      const uniqueSymbols = new Set<string>();
-      const uniqueProcessedData = processedData.filter((stock) => {
-        // Ensure stock and stock.symbol exist before checking the Set
-        if (stock && stock.symbol && !uniqueSymbols.has(stock.symbol)) {
-          uniqueSymbols.add(stock.symbol);
-          return true;
-        }
-        return false;
-      });
-      // --- End Deduplication Step ---
-
-      console.log("[AffectedStocks] Setting stock data state with:", uniqueProcessedData);
-      setStockData(uniqueProcessedData);
+      setStockData(processed);
     } catch (err) {
-      console.error("[AffectedStocks] Global fetch error:", err);
-      setError(err instanceof Error ? err.message : "An unknown error occurred during data fetch");
+      // Every symbol failing used to collapse to an empty list, which rendered
+      // as "no stock data available" and hid the outage.
+      console.error("[AffectedStocks] Fetch failed:", err);
+      setError(err instanceof Error ? err.message : "Could not load market data");
     } finally {
-      console.log("[AffectedStocks] Setting isLoading to false.");
-      setIsLoading(false); // Ensure loading is set to false in finally block
+      setIsLoading(false);
     }
-  }, []); // Removed isLoading from dependency array as it causes loops
+  }, []);
 
   useEffect(() => {
     fetchStockData();
   }, [fetchStockData]);
+
+  // Re-fetch on the same cadence as the server's snapshot TTL: an open page
+  // then picks up new prices by itself, and the staleness notice appears
+  // without waiting for an unrelated render.
+  useEffect(() => {
+    const id = setInterval(fetchStockData, 5 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [fetchStockData]);
+
+  // A lighter tick so the "as of N minutes ago" line keeps counting up between
+  // fetches, including while the provider is down and no fetch succeeds.
+  const [, setNowTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setNowTick((n) => n + 1), 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
 
   // --- Keep original filteredData logic ---
   const filteredData = stockData.filter((stock) => stock.price > 0 && stock.reason);
@@ -509,10 +381,7 @@ export const AffectedStocks: React.FC = () => {
   // --- Keep original duplicatedStockData logic IF NEEDED for desktop marquee ---
   const duplicatedStockData = [...filteredData, ...filteredData];
 
-  // --- Keep original handleCardClick ---
-  const handleCardClick = (symbol: string) => {
-    window.open(`https://finance.yahoo.com/quote/${symbol}`, "_blank");
-  };
+  const quoteUrl = (symbol: string) => `https://finance.yahoo.com/quote/${symbol}`;
 
   // --- Keep original Error handling return ---
   if (isLoading) {
@@ -537,16 +406,36 @@ export const AffectedStocks: React.FC = () => {
     );
   }
 
+  // The service holds a snapshot over a brief provider hiccup rather than
+  // blanking the panel. Say so once it is no longer fresh, so held-over prices
+  // are never read as live. Anything older than the service's ceiling is not
+  // served at all.
+  // Date.now() is only read during a render, and nothing here re-renders on a
+  // schedule, so a page left open would keep showing prices as current however
+  // old they got. This tick makes the age advance on its own.
+  const capturedMs = capturedAt ? Date.parse(capturedAt) : NaN;
+  const ageMs = Number.isNaN(capturedMs) ? null : Date.now() - capturedMs;
+  const staleMinutes = ageMs !== null && ageMs > 5 * 60 * 1000 ? Math.round(ageMs / 60000) : null;
+
   return (
     <div className="relative">
+      {staleMinutes !== null && (
+        <p className="mb-2 text-xs text-amber-500" role="status">
+          Prices as of {staleMinutes} minute{staleMinutes === 1 ? "" : "s"} ago; the market data
+          provider is not responding.
+        </p>
+      )}
       {isMobile ? (
         // --- Mobile Horizontal Scroll View ---
         <div className="flex overflow-x-auto space-x-4 pb-4 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800/50">
           {filteredData.map((stock) => (
-            <div
+            <a
               key={`mobile-${stock.symbol}`}
-              onClick={() => handleCardClick(stock.symbol)}
-              className={`rounded-xl overflow-hidden cursor-pointer w-72 flex-shrink-0 border ${
+              href={quoteUrl(stock.symbol)}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`${stock.name} (${stock.symbol}) on Yahoo Finance`}
+              className={`block rounded-xl overflow-hidden cursor-pointer w-72 flex-shrink-0 border ${
                 isDarkMode ? "border-gray-600/50" : "shadow-md border-gray-200"
               }`}
               style={{
@@ -556,8 +445,8 @@ export const AffectedStocks: React.FC = () => {
                 backdropFilter: "blur(16px)",
               }}
             >
-              <CardContent stock={stock} isDarkMode={isDarkMode} /> {/* Pass isDarkMode */}
-            </div>
+              <CardContent stock={stock} isDarkMode={isDarkMode} />
+            </a>
           ))}
           {!filteredData.length && (
             <div className="text-center p-4 text-gray-500 w-full flex-shrink-0">
@@ -576,10 +465,18 @@ export const AffectedStocks: React.FC = () => {
             // Add hover pause/resume if needed
           >
             {duplicatedStockData.map((stock, index) => (
-              <div
+              <a
                 key={`${stock.symbol}-${index}`}
-                className={`${styles.card} h-96 rounded-xl overflow-hidden`} // Use desktop styles.card
-                onClick={() => handleCardClick(stock.symbol)}
+                href={quoteUrl(stock.symbol)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`${stock.name} (${stock.symbol}) on Yahoo Finance`}
+                // The marquee renders the list twice for a seamless loop, so the
+                // second copy is hidden from assistive tech to avoid announcing
+                // every stock a second time.
+                aria-hidden={index >= filteredData.length}
+                tabIndex={index >= filteredData.length ? -1 : undefined}
+                className={`${styles.card} h-96 rounded-xl overflow-hidden block`}
                 style={{
                   background: isDarkMode
                     ? "linear-gradient(145deg, rgba(17, 24, 39, 0.95), rgba(88, 28, 135, 0.8))"
@@ -587,8 +484,8 @@ export const AffectedStocks: React.FC = () => {
                   backdropFilter: "blur(16px)",
                 }}
               >
-                <CardContent stock={stock} isDarkMode={isDarkMode} /> {/* Pass isDarkMode */}
-              </div>
+                <CardContent stock={stock} isDarkMode={isDarkMode} />
+              </a>
             ))}
           </div>
         </div>

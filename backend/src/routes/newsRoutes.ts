@@ -4,10 +4,6 @@ import rateLimit from "express-rate-limit";
 import { clientKey } from "../utils/clientKey";
 import { cacheableIfOk } from "../utils/cacheControl";
 
-const router = express.Router();
-const newsService = new NewsService();
-
-
 const newsRateLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
   max: 100,
@@ -17,60 +13,48 @@ const newsRateLimiter = rateLimit({
   keyGenerator: clientKey,
 });
 
-// News turns over during the day, so it gets a shorter edge TTL than the
-// hourly default the rest of the API uses.
-router.use((req, res, next) => {
-  if (req.method === "GET" && req.query.refresh !== "true") {
-    cacheableIfOk(res, 900, 3600);
-  }
-  next();
-});
+// Takes the service rather than constructing its own: the market-analysis
+// routes need the same instance, and two instances meant two independent
+// caches and two upstream fetches on every cold start.
+export const newsRoutes = (newsService: NewsService) => {
+  const router = express.Router();
 
-router.get("/tariff-news", newsRateLimiter, async (req, res) => {
-  console.log(`[${new Date().toISOString()}] Received request for /api/news/tariff-news`); 
-  try {
-    
-    
-    console.log(`[${new Date().toISOString()}] Calling newsService.getTariffNews()...`);
-    const articles = await newsService.getTariffNews();
-    console.log(
-      `[${new Date().toISOString()}] newsService.getTariffNews() returned ${
-        articles ? articles.length : "null/undefined"
-      } articles.`
-    );
+  // News turns over during the day, so it gets a shorter edge TTL than the
+  // hourly app-wide default.
+  router.use((req, res, next) => {
+    if (req.method === "GET" && req.query.refresh !== "true") {
+      cacheableIfOk(res, 900, 3600, { fromRoute: true });
+    }
+    next();
+  });
 
-    
-    res.removeHeader("X-Powered-By");
+  router.get("/tariff-news", newsRateLimiter, async (_req, res) => {
+    try {
+      const articles = await newsService.getTariffNews();
+      res.removeHeader("X-Powered-By");
 
-    
-    if (Array.isArray(articles)) {
-      console.log(
-        `[${new Date().toISOString()}] Sending JSON response with ${articles.length} articles.`
-      );
+      if (!Array.isArray(articles)) {
+        console.error("Invalid data from newsService: expected array, got", typeof articles);
+        return res.status(500).json({
+          error: "Internal Server Error",
+          message: "Received invalid data while fetching news.",
+        });
+      }
+
       res.json(articles);
-    } else {
-      console.error(
-        `[${new Date().toISOString()}] Invalid data returned from newsService. Expected array, got:`,
-        typeof articles
-      );
-      res.status(500).json({
-        error: "Internal Server Error",
-        message: "Received invalid data while fetching news.",
+    } catch (error: any) {
+      console.error("Error in /api/news/tariff-news handler:", error?.message ?? error);
+      res.status(502).json({
+        error: "Failed to fetch news",
+        message:
+          process.env.NODE_ENV === "production"
+            ? "An error occurred while fetching news data"
+            : error.message,
       });
     }
-  } catch (error: any) {
-    
-    console.error(`[${new Date().toISOString()}] Error in /api/news/tariff-news handler:`, error);
+  });
 
-    
-    res.status(500).json({
-      error: "Failed to fetch news",
-      message:
-        process.env.NODE_ENV === "production"
-          ? "An error occurred while fetching news data"
-          : error.message,
-    });
-  }
-});
+  return router;
+};
 
-export default router;
+export default newsRoutes;

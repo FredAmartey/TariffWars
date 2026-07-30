@@ -5,11 +5,17 @@ import { NewsService } from "./newsService";
 import OpenAI from "openai";
 import { config } from "../config";
 import { TariffEntry } from "../types/tariff";
-import { NewsArticle } from "../types/news";
 
 export interface MarketOverview {
   averageTariffRate: number;
-  yearOverYearChange: number;
+  /**
+   * Percentage points against a recorded snapshot, or null when history does
+   * not reach back far enough. This used to be whatever number the model felt
+   * like returning: it reported -5.2 while the measured change was -22.7.
+   */
+  yearOverYearChange: number | null;
+  yearOverYearComparedTo: string | null;
+  /** Read off the CSV, not estimated by the model. */
   highRiskSectors: Array<{
     name: string;
     tariffIncrease: number;
@@ -35,8 +41,10 @@ export interface CommodityAnalysis {
 
 export interface RegionalAnalysis {
   region: string;
+  /** Averaged over active, rated rows in the region. */
   averageTariffRate: number;
-  yearOverYearChange: number;
+  /** How many active tariffs the average is built from. */
+  tariffCount: number;
   description: string;
   keySectors: string[];
 }
@@ -81,17 +89,35 @@ export interface KeyMetrics {
 export class MarketAnalysisService {
   private tariffService: TariffService;
   private newsService: NewsService;
-  private openai: OpenAI;
+  private openaiClient: OpenAI | null = null;
   private cache: Map<string, { data: any; timestamp: number }> = new Map();
-  private readonly cacheTimeout = 5 * 60 * 1000;
+  private inFlight: Map<string, Promise<any>> = new Map();
   private CACHE_TTL = 1000 * 60 * 60;
+  /**
+   * Floor on how often `refresh=true` may actually pay for a regeneration.
+   * The refresh button is public and uncredentialed, so without this a script
+   * could bill an unbounded number of completions by looping the endpoint.
+   */
+  private readonly MIN_REGENERATE_INTERVAL = 5 * 60 * 1000;
 
   constructor(tariffService: TariffService, newsService: NewsService) {
     this.tariffService = tariffService;
     this.newsService = newsService;
-    this.openai = new OpenAI({
-      apiKey: config.openai.apiKey,
-    });
+  }
+
+  /**
+   * Built on first use, not in the constructor. The routers are constructed at
+   * startup, so an absent OPENAI_API_KEY used to throw there and take the
+   * tariff and news endpoints down with it, even though neither uses OpenAI.
+   */
+  private get openai(): OpenAI {
+    if (!this.openaiClient) {
+      if (!config.openai.apiKey) {
+        throw new Error("OPENAI_API_KEY is not configured");
+      }
+      this.openaiClient = new OpenAI({ apiKey: config.openai.apiKey });
+    }
+    return this.openaiClient;
   }
 
   private async getCachedData<T>(
@@ -105,19 +131,44 @@ export class MarketAnalysisService {
       return cached.data;
     }
 
-    console.log(bypassCache ? `Bypassing cache for ${key}.` : `Fetching fresh data for ${key}.`);
-    try {
-      const data = await fetchFn();
-      this.cache.set(key, { data, timestamp: Date.now() });
-      return data;
-    } catch (error) {
-      console.error(`Error fetching data for ${key}:`, error);
-      if (cached) {
-        console.log(`Returning cached data for ${key} due to error.`);
-        return cached.data;
-      }
-      throw error;
+    // A refresh that lands within the floor gets the cached answer instead of
+    // a fresh bill.
+    if (bypassCache && cached && Date.now() - cached.timestamp < this.MIN_REGENERATE_INTERVAL) {
+      console.log(`Refresh for ${key} throttled; serving recent generation.`);
+      return cached.data;
     }
+
+    // The floor above only helps once something is cached. On a cold instance,
+    // or the moment the floor lapses, concurrent refreshes would each start
+    // their own paid completion before any of them stored a result. Everyone
+    // waits on the first one instead.
+    const pending = this.inFlight.get(key);
+    if (pending) {
+      console.log(`Joining in-flight generation for ${key}.`);
+      return pending as Promise<T>;
+    }
+
+    console.log(bypassCache ? `Bypassing cache for ${key}.` : `Fetching fresh data for ${key}.`);
+
+    const run = (async () => {
+      try {
+        const data = await fetchFn();
+        this.cache.set(key, { data, timestamp: Date.now() });
+        return data;
+      } catch (error) {
+        console.error(`Error fetching data for ${key}:`, error);
+        if (cached) {
+          console.log(`Returning cached data for ${key} due to error.`);
+          return cached.data;
+        }
+        throw error;
+      } finally {
+        this.inFlight.delete(key);
+      }
+    })();
+
+    this.inFlight.set(key, run);
+    return run;
   }
 
   // The prompts used to hardcode "around April 2025", so the model narrated a
@@ -165,6 +216,35 @@ export class MarketAnalysisService {
       console.error("Error generating content with OpenAI:", error);
       return "{}";
     }
+  }
+
+  /**
+   * Parse a model response, falling back to a value of the right shape.
+   *
+   * `generateWithOpenAI` returns "{}" when the call fails, so endpoints typed
+   * as arrays were handing the frontend an object and its `.map()` threw. The
+   * fallback decides the expected shape, and anything that does not match it
+   * is treated as a failed generation.
+   */
+  private parseJson<T>(raw: string, label: string, fallback: T): T {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      console.error(`Failed to parse OpenAI response for ${label}:`, e);
+      return fallback;
+    }
+
+    if (Array.isArray(fallback) !== Array.isArray(parsed) || parsed === null) {
+      console.error(
+        `OpenAI response for ${label} had the wrong shape (expected ${
+          Array.isArray(fallback) ? "array" : "object"
+        })`
+      );
+      return fallback;
+    }
+
+    return parsed as T;
   }
 
   // "N/A", "Restricted" and "Exempt" parse to 0, so averaging them in would
@@ -235,6 +315,46 @@ export class MarketAnalysisService {
     return rates.reduce((sum, rate) => sum + rate, 0) / rates.length;
   }
 
+  /**
+   * The rows an average may be built from: in force, and carrying a number.
+   *
+   * Each caller used to spell this out for itself, and most of them got it
+   * wrong. Averaging every row put a withdrawn 250% dairy threat and a
+   * superseded 200% spirits rate into the headline, so the prompts were told
+   * the average tariff was 44.6% while the dashboard beside them said 22.4%,
+   * and the North America region reported 108.3%.
+   */
+  private collected(tariffs: TariffEntry[]): TariffEntry[] {
+    return tariffs.filter((t) => t.status === "Active" && this.carriesRate(t));
+  }
+
+  /**
+   * Sectors ranked by the size of their most recent rate move, taken straight
+   * from the Change column of active rows.
+   *
+   * The model used to be asked to "estimate" these. It answered with ended
+   * tariffs (fentanyl, struck down months ago) and invented figures for rows
+   * whose rate is literally "N/A" (robotics, still under investigation).
+   */
+  private movesFromData(
+    tariffs: TariffEntry[],
+    direction: "increase" | "decrease"
+  ): Array<{ name: string; points: number }> {
+    return this.collected(tariffs)
+      .map((t) => {
+        const raw = (t.changeDisplay ?? "").trim();
+        const match = raw.match(/^([+-])(\d+(?:\.\d+)?)%$/);
+        if (!match) return null;
+        const signed = match[1] === "-" ? -parseFloat(match[2]) : parseFloat(match[2]);
+        return { name: t.commodity, points: signed };
+      })
+      .filter((m): m is { name: string; points: number } => m !== null)
+      .filter((m) => (direction === "increase" ? m.points > 0 : m.points < 0))
+      .sort((a, b) => (direction === "increase" ? b.points - a.points : a.points - b.points))
+      .slice(0, 5)
+      .map((m) => ({ name: m.name, points: Math.abs(m.points) }));
+  }
+
   public clearCache(): void {
     console.log("Clearing market analysis cache...");
     this.cache.clear();
@@ -246,14 +366,40 @@ export class MarketAnalysisService {
       const news = await this.newsService.getTariffNews();
 
       // Active-only, matching the Key Metrics card and the copy that renders it.
-      const averageTariffRate = this.calculateAverageTariffRate(
-        tariffRates.data.filter((t) => t.status === "Active" && this.carriesRate(t))
-      );
+      const collected = this.collected(tariffRates.data);
+      const averageTariffRate = this.calculateAverageTariffRate(collected);
+      const { yoyChangePoints, yoyComparedTo } = this.calculateYearOverYear(averageTariffRate);
+
+      // Every number below is measured here. The model is asked for prose only,
+      // so it can no longer put a figure on screen that nothing supports.
+      const highRiskSectors = this.movesFromData(tariffRates.data, "increase").map((m) => ({
+        name: m.name,
+        tariffIncrease: m.points,
+        impact: "high",
+      }));
+      const growthOpportunities = this.movesFromData(tariffRates.data, "decrease").map((m) => ({
+        name: m.name,
+        tariffReduction: m.points,
+        impact: "positive",
+      }));
 
       const prompt = `Based on the following tariff data and news articles, generate a market overview for the current period (${this.dataGrounding()}):
 
-      Tariff Data Sample (Average Rate: ${averageTariffRate.toFixed(1)}%):
-      ${JSON.stringify(tariffRates.data.slice(0, 5), null, 2)}
+      Active tariffs in force: ${collected.length}, averaging ${averageTariffRate.toFixed(1)}%.
+      ${
+        yoyChangePoints === null
+          ? "No year-over-year comparison is available."
+          : `That average has moved ${yoyChangePoints} percentage points since ${yoyComparedTo}.`
+      }
+
+      Largest recent increases among tariffs in force:
+      ${highRiskSectors.map((s) => `- ${s.name}: +${s.tariffIncrease}%`).join("\n") || "- none"}
+
+      Largest recent reductions among tariffs in force:
+      ${growthOpportunities.map((s) => `- ${s.name}: -${s.tariffReduction}%`).join("\n") || "- none"}
+
+      Tariff Data Sample:
+      ${JSON.stringify(collected.slice(0, 5), null, 2)}
 
       Recent News Sample:
       ${news
@@ -261,55 +407,33 @@ export class MarketAnalysisService {
         .map((article) => `- ${article.title}`)
         .join("\n")}
 
-      Please provide:
-      1. A calculated year-over-year change percentage (number) based on the general sentiment and trends in the data/news.
-      2. A list of 3-5 high-risk sectors (name: string, tariffIncrease: number). Estimate tariffIncrease based on data/news if specific numbers aren't present.
-      3. A list of 3-5 growth opportunities (name: string, tariffReduction: number). Estimate tariffReduction similarly.
-      4. A concise paragraph (string) summarizing the impact on manufacturing.
-      5. A concise paragraph (string) summarizing supply chain shifts.
-      6. A concise paragraph (string) summarizing the general economic outlook related to tariffs.
+      Write three concise paragraphs. Use only the figures given above; do not
+      introduce any rate, percentage or year-over-year number of your own.
+      1. The impact on manufacturing.
+      2. Supply chain shifts.
+      3. The general economic outlook related to tariffs.
 
       Format the response STRICTLY as a JSON object matching this TypeScript interface, with NO additional text or markdown:
       interface ResponseFormat {
-        yearOverYearChange: number;
-        highRiskSectors: Array<{name: string, tariffIncrease: number}>;
-        growthOpportunities: Array<{name: string, tariffReduction: number}>;
         manufacturingImpact: string;
         supplyChainShifts: string;
         economicOutlook: string;
       }`;
 
       const response = await this.generateWithOpenAI(prompt);
-      try {
-        const parsed = JSON.parse(response);
-        return {
-          averageTariffRate: averageTariffRate,
-          yearOverYearChange: parsed.yearOverYearChange || 0,
-          highRiskSectors: parsed.highRiskSectors || [],
-          growthOpportunities: parsed.growthOpportunities || [],
-          manufacturingImpact:
-            parsed.manufacturingImpact || "No manufacturing impact analysis available.",
-          supplyChainShifts:
-            parsed.supplyChainShifts || "No supply chain shift analysis available.",
-          economicOutlook: parsed.economicOutlook || "No economic outlook analysis available.",
-        };
-      } catch (e) {
-        console.error(
-          "Failed to parse OpenAI response for MarketOverview:",
-          e,
-          "\nResponse:",
-          response
-        );
-        return {
-          averageTariffRate: averageTariffRate,
-          yearOverYearChange: 0,
-          highRiskSectors: [],
-          growthOpportunities: [],
-          manufacturingImpact: "Error generating manufacturing impact analysis.",
-          supplyChainShifts: "Error generating supply chain shift analysis.",
-          economicOutlook: "Error generating economic outlook analysis.",
-        };
-      }
+      const parsed = this.parseJson<Partial<MarketOverview>>(response, "MarketOverview", {});
+
+      return {
+        averageTariffRate,
+        yearOverYearChange: yoyChangePoints,
+        yearOverYearComparedTo: yoyComparedTo,
+        highRiskSectors,
+        growthOpportunities,
+        manufacturingImpact:
+          parsed.manufacturingImpact || "No manufacturing impact analysis available.",
+        supplyChainShifts: parsed.supplyChainShifts || "No supply chain shift analysis available.",
+        economicOutlook: parsed.economicOutlook || "No economic outlook analysis available.",
+      };
     });
   }
 
@@ -346,17 +470,7 @@ export class MarketAnalysisService {
       }>`;
 
       const response = await this.generateWithOpenAI(prompt);
-      try {
-        return JSON.parse(response);
-      } catch (e) {
-        console.error(
-          "Failed to parse OpenAI response for CommodityAnalysis:",
-          e,
-          "\\nResponse:",
-          response
-        );
-        return [];
-      }
+      return this.parseJson<CommodityAnalysis[]>(response, "CommodityAnalysis", []);
     });
   }
 
@@ -365,62 +479,73 @@ export class MarketAnalysisService {
       const tariffRates = await this.tariffService.getTariffRates({ itemsPerPage: 1000 });
       const news = await this.newsService.getTariffNews();
 
-      const regions = ["North America", "Europe", "Asia-Pacific", "Latin America", "Other"];
+      // Only tariffs actually being collected. Averaging every row reported
+      // North America at 108.3%, which was a withdrawn 250% dairy threat and a
+      // proposed 50% duty averaged in with one real 25% surtax.
+      const collected = this.collected(tariffRates.data);
+
+      // "Global" is worldwide measures only; "Other" catches rows naming a
+      // country outside the mapped regions. Empty buckets are dropped below.
+      const regions = [
+        "North America",
+        "Europe",
+        "Asia-Pacific",
+        "Latin America",
+        "Global",
+        "Other",
+      ];
       const regionalData = regions
         .map((region) => {
-          const regionTariffs = tariffRates.data.filter(
-            (t) =>
-              this.getRegionFromCountry(t.tariffOrigin) === region ||
-              this.getRegionFromCountry(t.to) === region
-          );
+          const regionTariffs = collected.filter((t) => this.regionsFor(t).includes(region));
           return {
-            region: region,
-            avgRate: this.calculateAverageTariffRate(
-              regionTariffs.filter((t) => this.carriesRate(t))
-            ),
+            region,
+            avgRate: +this.calculateAverageTariffRate(regionTariffs).toFixed(2),
             count: regionTariffs.length,
+            sectors: this.getKeySectors(regionTariffs),
           };
         })
         .filter((r) => r.count > 0);
 
-      const prompt = `Based on the following regional tariff data summaries and news articles for the current period (${this.dataGrounding()}), generate a regional analysis for the key regions identified:
+      const prompt = `Based on the following regional tariff data summaries and news articles for the current period (${this.dataGrounding()}), generate a regional analysis:
 
-      Regional Tariff Summary:
+      Regional Tariff Summary (already calculated over tariffs in force; treat these numbers as given):
       ${JSON.stringify(regionalData, null, 2)}
 
       Recent News Sample:
       ${news
         .slice(0, 5)
         .map((article) => `- ${article.title}`)
-        .join("\\n")}
+        .join("\n")}
 
-      Please provide an analysis of major regions including:
-      - Calculated average tariff rate (number)
-      - Calculated year-over-year change (number, estimate based on trends/news)
-      - A brief description (string) of current trends (1-2 sentences)
-      - 3-5 key sectors affected (array of strings)
+      For each region listed above, and only those regions, provide:
+      - region (string, copied exactly from the summary)
+      - description (string, 1-2 sentences on current trends)
+
+      Do not output any rate, percentage or year-over-year figure; the numbers
+      are supplied above and will be used as given.
 
       Format the response STRICTLY as a JSON array of objects matching this TypeScript interface, with NO additional text or markdown:
-      Array<{
-        region: string,
-        averageTariffRate: number,
-        yearOverYearChange: number,
-        description: string,
-        keySectors: string[]
-      }>`;
+      Array<{ region: string, description: string }>`;
 
       const response = await this.generateWithOpenAI(prompt);
-      try {
-        return JSON.parse(response);
-      } catch (e) {
-        console.error(
-          "Failed to parse OpenAI response for RegionalAnalysis:",
-          e,
-          "\\nResponse:",
-          response
-        );
-        return [];
-      }
+      const narrative = this.parseJson<Array<{ region: string; description: string }>>(
+        response,
+        "RegionalAnalysis",
+        []
+      );
+
+      // The measured figures are authoritative; the model only supplies prose.
+      return regionalData.map((r) => ({
+        region: r.region,
+        averageTariffRate: r.avgRate,
+        tariffCount: r.count,
+        description:
+          narrative.find((n) => n?.region === r.region)?.description ??
+          `${r.count} tariff${r.count === 1 ? "" : "s"} in force, averaging ${r.avgRate.toFixed(
+            1
+          )}%.`,
+        keySectors: r.sectors,
+      }));
     });
   }
 
@@ -429,14 +554,14 @@ export class MarketAnalysisService {
       const tariffRates = await this.tariffService.getTariffRates({ itemsPerPage: 1000 });
       const news = await this.newsService.getTariffNews();
 
+      const collected = this.collected(tariffRates.data);
+
       const prompt = `Based on the following tariff data and news articles for the current period (${this.dataGrounding()}), generate market predictions:
 
-      Tariff Data Sample (Average Rate: ${this.calculateAverageTariffRate(
-        tariffRates.data.filter((t) => this.carriesRate(t))
-      ).toFixed(
-        1
-      )}%):
-      ${JSON.stringify(tariffRates.data.slice(0, 5), null, 2)}
+      Tariff Data Sample (Average Rate across tariffs in force: ${this.calculateAverageTariffRate(
+        collected
+      ).toFixed(1)}%):
+      ${JSON.stringify(collected.slice(0, 5), null, 2)}
 
       Recent News Sample:
       ${news
@@ -461,35 +586,73 @@ export class MarketAnalysisService {
       }>`;
 
       const response = await this.generateWithOpenAI(prompt);
-      try {
-        return JSON.parse(response);
-      } catch (e) {
-        console.error(
-          "Failed to parse OpenAI response for MarketPredictions:",
-          e,
-          "\nResponse:",
-          response
-        );
-        return [];
-      }
+      return this.parseJson<MarketPrediction[]>(response, "MarketPredictions", []);
     });
   }
 
-  private getRegionFromCountry(country: string): string {
-    const regionMap: Record<string, string> = {
-      China: "Asia-Pacific",
-      Japan: "Asia-Pacific",
-      "South Korea": "Asia-Pacific",
-      India: "Asia-Pacific",
-      Germany: "Europe",
-      France: "Europe",
-      UK: "Europe",
-      Canada: "North America",
-      Mexico: "North America",
-      Brazil: "Latin America",
-      Argentina: "Latin America",
-    };
-    return regionMap[country] || "Other";
+  /**
+   * Regions a row touches.
+   *
+   * The old version looked up the whole `to` string in an eleven-entry map and
+   * called anything else "Other". Real values are things like "Global",
+   * "European Union", "France, Italy, Spain" and "60 Economies (99.4% of US
+   * imports...)", so almost every row fell through: Europe ended up with a
+   * single unrated row and reported 0%. Matching on substrings lets a row
+   * count toward every region it actually names, and a global measure counts
+   * everywhere.
+   */
+  private static readonly REGION_TERMS: Record<string, string[]> = {
+    // US aliases matter for the five retaliation rows whose target is the US
+    // (China's and Canada's counter-tariffs, the EU duty removal). Matched
+    // against the target only, never the imposer: 32 of 37 rows are imposed by
+    // the USA, so keying on the origin would file almost the whole dataset
+    // under North America and turn that card into the global average.
+    "North America": [
+      "canada", "mexico", "usmca", "north america",
+      "usa", "u.s.", "united states",
+    ],
+    Europe: [
+      "european union", "eu ", " eu", "europe", "germany", "france", "italy",
+      "spain", "united kingdom", "uk", "switzerland", "ukraine",
+    ],
+    "Asia-Pacific": [
+      "china", "japan", "south korea", "korea", "taiwan", "india", "vietnam",
+      "cambodia", "indonesia", "malaysia", "thailand", "philippines",
+      "singapore", "bangladesh", "pakistan", "australia", "new zealand",
+      "asia",
+    ],
+    // Mexico is deliberately absent: it is listed under North America, and
+    // naming it here too would count the same tariff in two regions.
+    "Latin America": [
+      "brazil", "argentina", "chile", "colombia", "nicaragua", "venezuela",
+      "latin america",
+    ],
+  };
+
+  private regionsFor(t: TariffEntry): string[] {
+    // The target, not the imposer. A US tariff on Chinese goods is exposure for
+    // Asia-Pacific, not for North America; China's counter-tariff on US goods
+    // is the reverse. Including `tariffOrigin` here put every US-imposed row
+    // into North America regardless of who actually pays it.
+    const haystack = `${t.to ?? ""}`.toLowerCase();
+    const named = Object.keys(MarketAnalysisService.REGION_TERMS);
+
+    // A worldwide measure is collected on goods from everywhere, so it belongs
+    // in every regional total as well as in the Global summary. Returning only
+    // "Global" left a 50% worldwide steel tariff out of Europe's average even
+    // though European steel pays it.
+    if (/\bglobal\b|all countries|all u\.s\. trading partners|60 economies/.test(haystack)) {
+      return [...named, "Global"];
+    }
+
+    const hits = Object.entries(MarketAnalysisService.REGION_TERMS)
+      .filter(([, terms]) => terms.some((term) => haystack.includes(term)))
+      .map(([region]) => region);
+
+    // A row naming no region we track goes to "Other", not "Global". Putting it
+    // in Global made that card claim to summarise worldwide measures while
+    // actually mixing in one-off tariffs on unmapped countries.
+    return hits.length > 0 ? hits : ["Other"];
   }
 
   private getKeySectors(tariffs: TariffEntry[]): string[] {
@@ -505,36 +668,6 @@ export class MarketAnalysisService {
       .map(([sector]) => sector);
   }
 
-  private generateShortTermPredictions(tariffs: TariffEntry[], news: NewsArticle[]): string[] {
-    const highImpactTariffs = tariffs.filter((t) => t.impact === "high");
-    const recentNews = news.slice(0, 5);
-
-    return [
-      `Steel tariffs expected to remain elevated with potential additional increases`,
-      `Agricultural tariffs likely to decrease in regional trade blocs`,
-      `Consumer electronics tariffs projected to increase amid tech competition`,
-      `Temporary tariff exemptions for critical medical supplies`,
-    ];
-  }
-
-  private generateMediumTermPredictions(tariffs: TariffEntry[], news: NewsArticle[]): string[] {
-    return [
-      `Potential moderation in US-China tariffs depending on diplomatic developments`,
-      `RCEP implementation to accelerate, reducing intra-Asian tariffs`,
-      `European tariffs on energy products likely to increase amid security concerns`,
-      `North American automotive sector to benefit from continued USMCA implementation`,
-    ];
-  }
-
-  private generateLongTermPredictions(tariffs: TariffEntry[], news: NewsArticle[]): string[] {
-    return [
-      `Regional trade blocs to strengthen with lower internal tariffs`,
-      `Strategic sectors (semiconductors, rare earths, energy) to face persistent high tariffs`,
-      `Developing markets to benefit from supply chain diversification`,
-      `Climate-related tariffs and carbon border adjustments to emerge as significant factors`,
-    ];
-  }
-
   // New method to get AI-powered insights
   async getAIInsights(bypassCache = false): Promise<AIInsight[]> {
     return this.getCachedData(
@@ -543,14 +676,14 @@ export class MarketAnalysisService {
         const tariffRates = await this.tariffService.getTariffRates({ itemsPerPage: 50 });
         const news = await this.newsService.getTariffNews();
 
+        const collected = this.collected(tariffRates.data);
+
         const prompt = `Based on the following tariff data and news articles for the current period (${this.dataGrounding()}), generate 3-4 concise AI-powered insights for a dashboard widget. Prioritize identifying one significant 'alert' if applicable, and include a mix of 'positive' and 'negative' trends.
 
-      Tariff Data Sample (Average Rate: ${this.calculateAverageTariffRate(
-        tariffRates.data.filter((t) => this.carriesRate(t))
-      ).toFixed(
-        1
-      )}%):
-      ${JSON.stringify(tariffRates.data.slice(0, 5), null, 2)}
+      Tariff Data Sample (Average Rate across tariffs in force: ${this.calculateAverageTariffRate(
+        collected
+      ).toFixed(1)}%):
+      ${JSON.stringify(collected.slice(0, 5), null, 2)}
 
       Recent News Sample:
       ${news
@@ -567,28 +700,11 @@ export class MarketAnalysisService {
       }>`;
 
         const response = await this.generateWithOpenAI(prompt);
-        try {
-          const insights = JSON.parse(response);
-          if (Array.isArray(insights) && insights.every((i) => i.type && i.text)) {
-            return insights;
-          }
-          throw new Error("Parsed response is not a valid AIInsight array");
-        } catch (e) {
-          console.error(
-            "Failed to parse OpenAI response for AIInsights:",
-            e,
-            "\nResponse:",
-            response
-          );
-          return [
-            {
-              type: "alert",
-              text: "Error generating insights. Unable to connect to analysis service.",
-            },
-            { type: "positive", text: "Data refresh pending..." },
-            { type: "negative", text: "Please check backend logs for details." },
-          ];
-        }
+        const insights = this.parseJson<AIInsight[]>(response, "AIInsights", []);
+        // "Data refresh pending..." and "check backend logs" used to be served
+        // as if they were insights. An empty list lets the panel say nothing
+        // rather than say something meaningless.
+        return insights.filter((i) => i && i.type && i.text);
       },
       bypassCache
     );

@@ -10,9 +10,6 @@ import {
   SearchIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  FilterIcon,
-  XIcon,
-  NewspaperIcon,
 } from "lucide-react";
 import { useNotifications } from "../context/NotificationsContext";
 import { NewsArticle } from "../types/index";
@@ -22,15 +19,80 @@ interface NewsFeedProps {
   preview?: boolean;
 }
 
+const BOOKMARK_KEY = "tariffNewsBookmarks";
+
+/**
+ * Bookmarks are rendered as click targets, and storage predates the scheme
+ * check the backend now applies at ingestion. A `javascript:` or `data:` URL
+ * saved by an older build would otherwise be handed straight back to the user
+ * as something to activate.
+ */
+function isSafeUrl(raw: unknown): raw is string {
+  if (typeof raw !== "string" || !raw.trim()) return false;
+  try {
+    const { protocol } = new URL(raw);
+    return protocol === "https:" || protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Never throws: bad JSON, a non-array value or blocked storage yields [].
+ *
+ * Earlier releases stored bare URL strings. Those are migrated rather than
+ * dropped: discarding them here would combine with the persistence effect below
+ * to erase every existing bookmark the first time a user loaded the new build.
+ * A migrated entry keeps the link working immediately, and is upgraded to the
+ * full article as soon as it appears in a live feed.
+ */
+function readBookmarks(): NewsArticle[] {
+  try {
+    const raw = localStorage.getItem(BOOKMARK_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .map((entry): NewsArticle | null => {
+        // Both shapes are checked: a legacy string and a stored object can each
+        // carry a URL written before the scheme was validated anywhere.
+        if (typeof entry === "string") {
+          return isSafeUrl(entry)
+            ? ({
+                id: entry,
+                title: entry,
+                summary: "",
+                url: entry,
+                date: "",
+                source: { name: "Saved link" },
+              } as NewsArticle)
+            : null;
+        }
+        if (entry && typeof entry === "object" && isSafeUrl(entry.url)) {
+          return entry as NewsArticle;
+        }
+        return null;
+      })
+      .filter((a): a is NewsArticle => a !== null);
+  } catch {
+    return [];
+  }
+}
+
 export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
   const { isDarkMode } = useContext(ThemeContext);
   const { addNotification } = useNotifications();
-  const [bookmarkedArticles, setBookmarkedArticles] = useState<string[]>(() => {
-    const savedBookmarks = localStorage.getItem("tariffNewsBookmarks");
-    return savedBookmarks ? JSON.parse(savedBookmarks) : [];
-  });
+  // Whole articles, not just URLs. Storing URLs alone meant a bookmark became
+  // unreachable as soon as the article rotated out of the live feed. Reading is
+  // guarded: malformed or non-array JSON, or storage blocked by the browser,
+  // used to throw during initialisation and take the whole news view down with
+  // an error boundary whose "Try again" hit the same failure every time.
+  const [bookmarkedArticles, setBookmarkedArticles] = useState<NewsArticle[]>(() =>
+    readBookmarks()
+  );
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeFilter, setActiveFilter] = useState("all");
+  const [activeFilter, setActiveFilter] = useState<"all" | "bookmarked">("all");
   const [isLoadingNews, setIsLoadingNews] = useState(true);
   const [newsError, setNewsError] = useState<string | null>(null);
   const [articles, setArticles] = useState<NewsArticle[]>([]);
@@ -45,17 +107,18 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const toggleBookmark = (url: string | undefined) => {
-    if (!url) {
-      console.warn("Attempted to bookmark article with undefined URL");
+  const bookmarkedUrls = new Set(bookmarkedArticles.map((a) => a.url));
+
+  const toggleBookmark = (article: NewsArticle) => {
+    if (!article.url) {
       addNotification("Cannot bookmark article without a valid URL", "error");
       return;
     }
-    if (bookmarkedArticles.includes(url)) {
-      setBookmarkedArticles(bookmarkedArticles.filter((articleUrl) => articleUrl !== url));
+    if (bookmarkedUrls.has(article.url)) {
+      setBookmarkedArticles(bookmarkedArticles.filter((a) => a.url !== article.url));
       addNotification("Article removed from bookmarks", "info");
     } else {
-      setBookmarkedArticles([...bookmarkedArticles, url]);
+      setBookmarkedArticles([...bookmarkedArticles, article]);
       addNotification("Article bookmarked", "success");
     }
   };
@@ -107,7 +170,12 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
   };
 
   useEffect(() => {
-    localStorage.setItem("tariffNewsBookmarks", JSON.stringify(bookmarkedArticles));
+    try {
+      localStorage.setItem(BOOKMARK_KEY, JSON.stringify(bookmarkedArticles));
+    } catch (e) {
+      // Private mode or a full quota: bookmarks stay for the session only.
+      console.warn("Could not persist bookmarks:", e);
+    }
   }, [bookmarkedArticles]);
 
   useEffect(() => {
@@ -131,6 +199,15 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
         }
 
         setArticles(data);
+
+        // Fill in migrated placeholders once the real article shows up in the
+        // feed, so an upgraded bookmark stops reading as a bare URL.
+        setBookmarkedArticles((prev) =>
+          prev.map((b) => {
+            if (b.title !== b.url) return b;
+            return data.find((a) => a.url === b.url) ?? b;
+          })
+        );
       } catch (err: any) {
         console.error("Error fetching news via apiService:", err);
         setNewsError(`Failed to load news: ${err.message || "Please check the API connection"}`);
@@ -145,17 +222,28 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
 
   const articlesPerPage = 3;
 
-  const filteredNews = articles.filter((news: NewsArticle) => {
+  // Bookmarks are shown from storage, so one saved before the article left the
+  // live feed is still reachable.
+  const sourceNews = activeFilter === "bookmarked" ? bookmarkedArticles : articles;
+
+  const filteredNews = sourceNews.filter((news: NewsArticle) => {
     if (!searchTerm) return true;
+    const needle = searchTerm.toLowerCase();
     return (
-      news.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (news.summary?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-      news.source.name.toLowerCase().includes(searchTerm.toLowerCase())
+      news.title.toLowerCase().includes(needle) ||
+      (news.summary?.toLowerCase() || "").includes(needle) ||
+      (news.source?.name?.toLowerCase() || "").includes(needle)
     );
   });
 
   const totalPages = Math.ceil(filteredNews.length / articlesPerPage);
-  const startIndex = currentPage * articlesPerPage;
+  // Clamp rather than trust `currentPage`: if the list shrinks under the reader
+  // (removing the last bookmark on a page, or a narrower search), an unclamped
+  // index slices past the end and shows an empty list with no pager to escape
+  // from. The pager and the bookmark filter do not currently render together,
+  // so this is defensive.
+  const safePage = Math.min(currentPage, Math.max(totalPages - 1, 0));
+  const startIndex = safePage * articlesPerPage;
   const endIndex = startIndex + articlesPerPage;
 
   const displayedNews = preview
@@ -215,13 +303,69 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
             : "bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100"
         }`}
       >
-        <h1 className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-gray-800"}`}>
-          Global Tariff News
-        </h1>
+        {/* Standalone this is the page heading; embedded in the dashboard the
+            page already has an h1, and a second one there inverted the outline. */}
+        {preview ? (
+          <h2 className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-gray-800"}`}>
+            Global Tariff News
+          </h2>
+        ) : (
+          <h1 className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-gray-800"}`}>
+            Global Tariff News
+          </h1>
+        )}
         <p className={`mt-1 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
           Stay updated with the latest international trade tariff news and developments.
         </p>
       </header>
+      {/* The search box and bookmark filter below were held in state with no
+          controls to drive them, so neither could ever be used. */}
+      {!preview && (
+        <div className="mt-4 flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <SearchIcon
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
+              aria-hidden="true"
+            />
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(0);
+              }}
+              placeholder="Search headlines, summaries and sources"
+              aria-label="Search news"
+              className={`w-full pl-9 pr-3 py-2 rounded-lg border text-sm ${
+                isDarkMode
+                  ? "bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-500"
+                  : "bg-white border-gray-300 text-gray-800 placeholder-gray-400"
+              }`}
+            />
+          </div>
+          <div className="flex gap-2" role="group" aria-label="Filter news">
+            {(["all", "bookmarked"] as const).map((filter) => (
+              <button
+                key={filter}
+                onClick={() => {
+                  setActiveFilter(filter);
+                  setCurrentPage(0);
+                }}
+                aria-pressed={activeFilter === filter}
+                className={`px-3 py-2 rounded-lg text-sm ${
+                  activeFilter === filter
+                    ? "bg-indigo-600 text-white"
+                    : isDarkMode
+                    ? "bg-gray-800 text-gray-300 border border-gray-700"
+                    : "bg-white text-gray-700 border border-gray-300"
+                }`}
+              >
+                {filter === "all" ? "All news" : `Bookmarked (${bookmarkedArticles.length})`}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <div className={`p-4 ${isDarkMode ? "bg-gray-900" : "bg-white"}`}>
         {isLoadingNews ? (
           <div className="flex justify-center items-center h-64">
@@ -287,10 +431,10 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 console.log("[Mobile Bookmark Click] URL:", article.url);
-                                toggleBookmark(article.url);
+                                toggleBookmark(article);
                               }}
                               className={`p-1.5 rounded-full transition-colors flex-shrink-0 ${
-                                bookmarkedArticles.includes(article.url || "")
+                                bookmarkedUrls.has(article.url)
                                   ? isDarkMode
                                     ? "text-yellow-400 bg-yellow-900/30 hover:bg-yellow-800/50"
                                     : "text-yellow-600 bg-yellow-100 hover:bg-yellow-200"
@@ -299,14 +443,14 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
                                   : "text-gray-500 hover:bg-gray-100"
                               }`}
                               aria-label={
-                                bookmarkedArticles.includes(article.url || "")
+                                bookmarkedUrls.has(article.url)
                                   ? "Remove bookmark"
                                   : "Bookmark article"
                               }
                             >
                               <BookmarkIcon
                                 className={`h-5 w-5 ${
-                                  bookmarkedArticles.includes(article.url || "")
+                                  bookmarkedUrls.has(article.url)
                                     ? "fill-current"
                                     : ""
                                 }`}
@@ -383,10 +527,10 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              toggleBookmark(article.url);
+                              toggleBookmark(article);
                             }}
                             className={`absolute top-2 right-2 p-1.5 rounded-full bg-black bg-opacity-50 text-white hover:bg-opacity-75 ${
-                              bookmarkedArticles.includes(article.url!)
+                              bookmarkedUrls.has(article.url)
                                 ? "fill-current text-yellow-400"
                                 : ""
                             }`}
@@ -429,26 +573,28 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
                                 e.stopPropagation();
                                 shareArticle(article);
                               }}
+                              aria-label={`Share: ${article.title}`}
                               className={`p-2 rounded-full ${
                                 isDarkMode
                                   ? "hover:bg-gray-600 text-gray-300"
                                   : "hover:bg-gray-200 text-gray-500"
                               }`}
                             >
-                              <Share2Icon className="h-4 w-4" />
+                              <Share2Icon className="h-4 w-4" aria-hidden="true" />
                             </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 openArticle(article.url);
                               }}
+                              aria-label={`Open in a new tab: ${article.title}`}
                               className={`p-2 rounded-full ${
                                 isDarkMode
                                   ? "hover:bg-gray-600 text-blue-500"
                                   : "hover:bg-gray-200 text-blue-500"
                               }`}
                             >
-                              <ExternalLink className="h-4 w-4" />
+                              <ExternalLink className="h-4 w-4" aria-hidden="true" />
                             </button>
                           </div>
                         </div>
@@ -467,9 +613,17 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
                       isDarkMode ? "text-gray-300" : "text-gray-600"
                     }`}
                   >
-                    No news articles available at this time.
+                    {activeFilter === "bookmarked"
+                      ? "No bookmarked articles yet."
+                      : searchTerm
+                      ? "No news articles match your search."
+                      : "No news articles available at this time."}
                   </p>
-                  <p className="mt-2 text-sm text-gray-500">Please check back later for updates.</p>
+                  <p className="mt-2 text-sm text-gray-500">
+                    {activeFilter === "bookmarked"
+                      ? "Bookmark an article to keep it here."
+                      : "Please check back later for updates."}
+                  </p>
                 </div>
               )}
             </div>
@@ -478,47 +632,37 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
               <div className="flex justify-center items-center mt-6 space-x-4">
                 <button
                   onClick={handlePrevious}
-                  disabled={currentPage === 0}
+                  disabled={safePage === 0}
+                  aria-label="Previous page of news"
                   className={`p-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed ${
                     isDarkMode
                       ? "bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800"
                       : "bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100"
                   }`}
                 >
-                  <ChevronLeftIcon className="h-5 w-5" />
+                  <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
                 </button>
                 <span className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
-                  Page {currentPage + 1} of {totalPages}
+                  Page {safePage + 1} of {totalPages}
                 </span>
                 <button
                   onClick={handleNext}
-                  disabled={currentPage === totalPages - 1}
+                  disabled={safePage >= totalPages - 1}
+                  aria-label="Next page of news"
                   className={`p-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed ${
                     isDarkMode
                       ? "bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800"
                       : "bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100"
                   }`}
                 >
-                  <ChevronRightIcon className="h-5 w-5" />
+                  <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
                 </button>
               </div>
             )}
 
-            {!displayedNews.length && !isLoadingNews && (
-              <div
-                className={`p-8 text-center rounded-lg ${
-                  isDarkMode ? "bg-gray-800" : "bg-gray-50"
-                }`}
-              >
-                <p
-                  className={`text-lg font-medium ${
-                    isDarkMode ? "text-gray-300" : "text-gray-600"
-                  }`}
-                >
-                  No news articles found matching your criteria.
-                </p>
-              </div>
-            )}
+            {/* A second empty state used to render directly beneath the first,
+                so an empty feed showed two different messages at once. The
+                one inside the grid above covers it. */}
           </>
         )}
       </div>

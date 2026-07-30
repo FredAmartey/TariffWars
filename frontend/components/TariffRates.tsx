@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useContext } from "react";
+import React, { useState, useContext } from "react";
 import { ThemeContext } from "../App";
 import { TariffTable } from "./dashboard/TariffTable";
 import {
@@ -6,8 +6,6 @@ import {
   FilterIcon,
   XIcon,
   SlidersIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
 } from "lucide-react";
 
 // Updated FilterOption type
@@ -32,7 +30,9 @@ export const TariffRates = () => {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [totalPages, setTotalPages] = useState(0);
+  // Kept only to satisfy TariffTable's callback; the table renders its own
+  // pager, so nothing here reads the count.
+  const [, setTotalPages] = useState(0);
 
   const [tempFilterField, setTempFilterField] = useState<string>("status");
   const [tempFilterValueInput, setTempFilterValueInput] = useState<string>("");
@@ -72,9 +72,11 @@ export const TariffRates = () => {
   const handleAddFilter = (field: string, value: string) => {
     const trimmedValue = value.trim();
     if (field && trimmedValue) {
-      if (!filters.some((f) => f.field === field && f.value === trimmedValue)) {
-        setFilters([...filters, { field, value: trimmedValue }]);
-      }
+      // One filter per field. The API takes a single value per field, so adding
+      // "Status: Active" and then "Status: Threatened" showed two chips while
+      // only the last one was ever sent: the UI claimed a filter that was not
+      // being applied. Replacing makes what is shown match what is queried.
+      setFilters([...filters.filter((f) => f.field !== field), { field, value: trimmedValue }]);
       setShowFilterModal(false);
       setTempFilterValueInput("");
       setCurrentPage(1);
@@ -93,11 +95,6 @@ export const TariffRates = () => {
     setCurrentPage(1);
   };
 
-  const handlePageChange = (page: number) => {
-    if (page < 1 || page > totalPages) return;
-    setCurrentPage(page);
-  };
-
   const handleFieldChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setTempFilterField(e.target.value);
     setTempFilterValueInput("");
@@ -114,9 +111,9 @@ export const TariffRates = () => {
             : "bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100"
         }`}
       >
-        <h2 className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-gray-800"}`}>
+        <h1 className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-gray-800"}`}>
           Global Tariff Rates
-        </h2>
+        </h1>
         <p className={`mt-1 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
           Comprehensive database of current international trade tariffs and recent changes
         </p>
@@ -312,8 +309,15 @@ export const TariffRates = () => {
                 >
                   Value
                 </label>
+                {/* The className below was a plain double-quoted string holding a
+                    literal ${...}, so those characters reached the DOM as class
+                    tokens and the border never rendered. */}
                 {selectedFilterFieldData?.predefinedValues ? (
-                  <div className="mt-1 space-y-2 max-h-48 overflow-y-auto p-2 border rounded-md ${isDarkMode ? 'border-gray-600' : 'border-gray-300'}">
+                  <div
+                    className={`mt-1 space-y-2 max-h-48 overflow-y-auto p-2 border rounded-md ${
+                      isDarkMode ? "border-gray-600" : "border-gray-300"
+                    }`}
+                  >
                     {selectedFilterFieldData.predefinedValues.map((value) => (
                       <button
                         key={value}

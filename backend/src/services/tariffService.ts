@@ -34,7 +34,9 @@ export class TariffService {
             cast: (value, context) => {
               if (context.column === "Rate" && typeof value === "string") {
                 const trimmedValue = value.trim();
-                if (["N/A", "Restricted", "-", "–", "Banned"].includes(trimmedValue)) {
+                // "Exempt" was missing here, so Russia's exemption fell through
+                // to parseFloat, became null, and rendered as "N/A".
+                if (["N/A", "Restricted", "Exempt", "-", "–", "Banned"].includes(trimmedValue)) {
                   return trimmedValue;
                 }
                 if (trimmedValue.endsWith("%")) {
@@ -93,11 +95,7 @@ export class TariffService {
           status: effectiveStatus(record.Status || "Unknown", record["Effective Date"] || ""),
           rate: rateNum,
           rateDisplay: rateDisplayStr,
-          scope: record.Scope || "N/A",
-          additionalInfo: record.AdditionalInfo || "",
           effectiveDate: record["Effective Date"] || "N/A",
-          lastUpdated: record["Effective Date"] || new Date().toISOString().split("T")[0],
-          impact: (record.Impact?.toLowerCase() as "low" | "medium" | "high") || "low",
           tariffOrigin: record.From || "N/A",
           to: record.To || "N/A",
           isIncrease: isIncrease,
@@ -109,13 +107,10 @@ export class TariffService {
 
       return formattedRecords;
     } catch (readError: any) {
-      if (readError.code === "ENOENT") {
-        console.error(`Error: CSV file not found at ${this.csvFilePath}`);
-        return [];
-      } else {
-        console.error(`Error reading or parsing CSV file at ${this.csvFilePath}:`, readError);
-        return [];
-      }
+      // Returning [] here turned a missing or corrupt dataset into a page that
+      // cheerfully reported zero tariffs. An outage should read as an outage.
+      console.error(`Error reading tariff CSV at ${this.csvFilePath}:`, readError);
+      throw new Error("Tariff commodity data is unavailable");
     }
   }
 
@@ -133,7 +128,9 @@ export class TariffService {
               // Use the exact header name from the CSV
               if (context.column === "Rate Imposed By USA" && typeof value === "string") {
                 const trimmedValue = value.trim();
-                if (["N/A", "Restricted", "-", "–", "Banned"].includes(trimmedValue)) {
+                // "Exempt" was missing here, so Russia's exemption fell through
+                // to parseFloat, became null, and rendered as "N/A".
+                if (["N/A", "Restricted", "Exempt", "-", "–", "Banned"].includes(trimmedValue)) {
                   return trimmedValue;
                 }
                 // Handle percentages
@@ -170,7 +167,11 @@ export class TariffService {
             rateNum = parseFloat(rateStr);
             rateDisplayStr = `${rateNum}%`;
           } else {
+            // Keep the label, and flag it as non-numeric with the same -1
+            // sentinel the commodity loader uses so sorting does not read an
+            // exemption as a 0% tariff.
             rateDisplayStr = rateStr;
+            rateNum = -1;
           }
         } else if (typeof rawRate === "number" && !isNaN(rawRate)) {
           rateNum = rawRate;
@@ -187,11 +188,7 @@ export class TariffService {
           status: record.Status || "Unknown",
           rate: rateNum,
           rateDisplay: rateDisplayStr,
-          scope: "N/A",
-          additionalInfo: "",
           effectiveDate: "N/A",
-          lastUpdated: new Date().toISOString().split("T")[0],
-          impact: "low",
           tariffOrigin: "USA",
           to: record.Country || "N/A",
           isIncrease: false,
@@ -209,7 +206,7 @@ export class TariffService {
       return formattedRecords;
     } catch (readError: any) {
       console.error("Error reading country CSV:", readError);
-      return [];
+      throw new Error("Tariff country data is unavailable");
     }
   }
 
@@ -228,6 +225,7 @@ export class TariffService {
         sortOrder = "asc",
         page = 1,
         itemsPerPage = 10,
+        skipCache = false,
       } = params;
 
       const validSortFields = [
@@ -236,14 +234,11 @@ export class TariffService {
         "to",
         "rate",
         "effectiveDate",
-        "impact",
-        "firstImplemented",
         "tariffOrigin",
         "change",
         "status",
         "nature",
         "country",
-        "scope",
         "rateDisplay",
         "changeDisplay",
         "countrysTariffOnUS",
@@ -265,7 +260,7 @@ export class TariffService {
       const cachedData = this.cache.get(cacheKey);
       let data: TariffEntry[] = [];
 
-      if (cachedData && now - cachedData.timestamp < this.cacheTimeout) {
+      if (!skipCache && cachedData && now - cachedData.timestamp < this.cacheTimeout) {
         console.log(`Using cached tariff data for key: ${cacheKey}`);
         data = cachedData.data;
       } else {
@@ -287,14 +282,23 @@ export class TariffService {
 
         if (search) {
           const lowerSearch = search.toLowerCase();
-          filteredData = filteredData.filter(
-            (entry) =>
-              entry.commodity?.toLowerCase().includes(lowerSearch) ||
-              entry.country?.toLowerCase().includes(lowerSearch) ||
-              entry.status?.toLowerCase().includes(lowerSearch) ||
-              entry.tariffOrigin?.toLowerCase().includes(lowerSearch) ||
-              entry.to?.toLowerCase().includes(lowerSearch) ||
-              entry.nature?.toLowerCase().includes(lowerSearch)
+          // Search every column the user can see. The country table shows Key
+          // Sectors, Market Impact and Response Type, so searching "Steel"
+          // used to miss Canada even though Steel is listed on its row.
+          filteredData = filteredData.filter((entry) =>
+            [
+              entry.commodity,
+              entry.country,
+              entry.status,
+              entry.tariffOrigin,
+              entry.to,
+              entry.nature,
+              entry.rateDisplay,
+              entry.countrysTariffOnUS,
+              entry.keyAffectedSectors,
+              entry.marketImpact,
+              entry.responseType,
+            ].some((field) => String(field ?? "").toLowerCase().includes(lowerSearch))
           );
         }
 
@@ -522,47 +526,88 @@ export class TariffService {
   }
 
   async exportTariffs(
-    format: "csv" | "json"
+    format: "csv" | "json",
+    dataset: "product" | "country" = "product",
+    search?: string
   ): Promise<{ data: string; contentType: string; filename: string }> {
     try {
-      const allTariffs = await this.loadDataFromCSV();
+      const { data: rows } = await this.getTariffRates({
+        type: dataset,
+        search,
+        // One page holding everything: the export is the whole selection, not
+        // whatever page the table happens to be showing.
+        page: 1,
+        itemsPerPage: 100000,
+      });
+
+      // The old export shipped 19 columns carrying 12 columns of information:
+      // `type`, `scope`, `additionalInfo` and `impact` were identical in every
+      // row, and country/to, product/commodity and effectiveDate/lastUpdated
+      // were exact duplicates of each other.
+      // Declared explicitly rather than inferred from the first row: a search
+      // matching nothing produces an empty array, and csv-stringify cannot
+      // infer a schema from that. It emitted a zero-byte file with no header,
+      // so a legitimate "no results" export downloaded as an empty document.
+      const columns =
+        dataset === "country"
+          ? [
+              "country",
+              "rateImposedByUSA",
+              "status",
+              "rateImposedOnUSA",
+              "keySectors",
+              "marketImpact",
+              "responseType",
+            ]
+          : [
+              "commodity",
+              "tariffFrom",
+              "tariffTo",
+              "rate",
+              "change",
+              "status",
+              "type",
+              "effectiveDate",
+            ];
+
+      const shaped =
+        dataset === "country"
+          ? rows.map((r) => ({
+              country: r.country,
+              rateImposedByUSA: r.rateDisplay,
+              status: r.status,
+              rateImposedOnUSA: r.countrysTariffOnUS ?? "",
+              keySectors: r.keyAffectedSectors ?? "",
+              marketImpact: r.marketImpact ?? "",
+              responseType: r.responseType ?? "",
+            }))
+          : rows.map((r) => ({
+              commodity: r.commodity,
+              tariffFrom: r.tariffOrigin,
+              tariffTo: r.to,
+              rate: r.rateDisplay,
+              change: r.changeDisplay,
+              status: r.status,
+              type: r.nature,
+              effectiveDate: r.effectiveDate,
+            }));
+
+      const stamp = new Date().toISOString().split("T")[0];
+      const name = `tariff_${dataset === "country" ? "countries" : "commodities"}_${stamp}`;
 
       if (format === "csv") {
-        const columns = [
-          "id",
-          "type",
-          "country",
-          "product",
-          "commodity",
-          "status",
-          "rate",
-          "rateDisplay",
-          "scope",
-          "additionalInfo",
-          "effectiveDate",
-          "lastUpdated",
-          "impact",
-          "tariffOrigin",
-          "to",
-          "isIncrease",
-          "change",
-          "changeDisplay",
-          "nature",
-        ];
-        const csvData = stringify(allTariffs, { header: true, columns: columns });
         return {
-          data: csvData,
+          data: stringify(shaped, { header: true, columns }),
           contentType: "text/csv",
-          filename: `tariff_data_${new Date().toISOString().split("T")[0]}.csv`,
-        };
-      } else {
-        const jsonData = JSON.stringify(allTariffs, null, 2);
-        return {
-          data: jsonData,
-          contentType: "application/json",
-          filename: `tariff_data_${new Date().toISOString().split("T")[0]}.json`,
+          filename: `${name}.csv`,
         };
       }
+
+      return {
+        data: JSON.stringify(shaped, null, 2),
+        contentType: "application/json",
+        filename: `${name}.json`,
+      };
     } catch (error) {
       console.error(`Error exporting tariffs as ${format}:`, error);
       throw new Error(`Failed to export data as ${format}.`);

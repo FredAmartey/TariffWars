@@ -11,16 +11,34 @@ interface TariffMeta {
 export const DataFreshness: React.FC = () => {
   const { isDarkMode } = useContext(ThemeContext);
   const [meta, setMeta] = useState<TariffMeta | null>(null);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    apiService.getTariffMeta().then((m) => {
-      if (!cancelled && m) setMeta(m);
-    });
+    apiService
+      .getTariffMeta()
+      .then((m) => {
+        if (!cancelled && m) setMeta(m);
+      })
+      .catch((e) => {
+        console.error("Could not load tariff metadata:", e);
+        if (!cancelled) setFailed(true);
+      });
     return () => {
       cancelled = true;
     };
   }, []);
+
+  // Silently rendering nothing removed the "Data updated ..." line and the
+  // source list altogether, so a metadata outage looked like a page that had
+  // simply never claimed a date. Say that it is unavailable instead.
+  if (failed) {
+    return (
+      <div className={`mt-3 text-xs ${isDarkMode ? "text-gray-500" : "text-gray-400"}`}>
+        Data freshness information is unavailable right now.
+      </div>
+    );
+  }
 
   if (!meta) return null;
 

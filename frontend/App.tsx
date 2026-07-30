@@ -41,14 +41,6 @@ const AppContent: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const isAuthenticated = true;
 
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const toggleMobileSidebar = () => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
@@ -159,13 +151,11 @@ const AppContent: React.FC = () => {
                       path="/news-feed"
                       element={isAuthenticated ? <NewsFeed /> : <Navigate to="/login" />}
                     />
-                    <Route
-                      path="/"
-                      element={
-                        isAuthenticated ? <Navigate to="/dashboard" /> : <Navigate to="/login" />
-                      }
-                    />
-                    <Route path="/login" element={<div>Login Page Placeholder</div>} />
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    {/* A "/login" route shipped "Login Page Placeholder" to
+                        production, and any unknown path rendered the shell with
+                        an empty main area. Send everything unrecognised home. */}
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
                   </Routes>
                 </main>
                 <Footer />

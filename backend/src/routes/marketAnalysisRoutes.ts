@@ -45,7 +45,7 @@ export const marketAnalysisRoutes = (tariffService: TariffService, newsService: 
       // Let Vercel's edge cache serve them: first hit after expiry pays the
       // generation latency, everyone else gets CDN-speed responses. Browsers
       // always revalidate (max-age=0) so a fresh deploy shows up immediately.
-      cacheableIfOk(res, 3600, 86400);
+      cacheableIfOk(res, 3600, 86400, { fromRoute: true });
     }
 
     if (req.query.refresh && req.query.refresh !== "true" && req.query.refresh !== "false") {

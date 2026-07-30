@@ -25,13 +25,65 @@ interface TariffTableProps {
   onPageChange: (page: number) => void;
   onTotalPagesChange: (totalPages: number) => void;
   handleSortChange?: (e: ChangeEvent<HTMLSelectElement>) => void;
+  /** Lets the page know which dataset is on screen, so Export can match it. */
+  onDatasetChange?: (dataset: "product" | "country") => void;
 }
 
 type TabType = "countries" | "products";
 
-// The column was headed "Nature", which reads as how recent a tariff is, so
-// "New" beside a status of "Ended" or a 2025 date looked like a data error. It
-// classifies the kind of action and is independent of both status and date.
+/**
+ * A sortable column header.
+ *
+ * These were plain `<th onClick>` elements: not focusable, not operable by
+ * keyboard, and carrying no `aria-sort`, so sorting existed only for mouse
+ * users and the current order was invisible to a screen reader. The button
+ * inside gives it a role, focus and Enter/Space for free.
+ */
+const SortableHeader = ({
+  field,
+  label,
+  activeField,
+  direction,
+  onSort,
+  isDarkMode,
+  tooltip,
+}: {
+  field: string;
+  label: string;
+  activeField: string;
+  direction: "asc" | "desc";
+  onSort: (field: string) => void;
+  isDarkMode: boolean;
+  tooltip?: string;
+}) => {
+  const active = activeField === field;
+  return (
+    <th
+      scope="col"
+      aria-sort={active ? (direction === "asc" ? "ascending" : "descending") : "none"}
+      className={`px-4 py-3 text-left text-sm font-semibold ${
+        isDarkMode ? "text-gray-400" : "text-gray-600"
+      } hover:bg-gray-700/50`}
+      title={tooltip}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(field)}
+        className="flex items-center w-full text-left font-semibold"
+      >
+        {label}
+        {active ? (
+          direction === "asc" ? (
+            <ChevronUpIcon className="h-4 w-4 ml-1" aria-hidden="true" />
+          ) : (
+            <ChevronDownIcon className="h-4 w-4 ml-1" aria-hidden="true" />
+          )
+        ) : null}
+      </button>
+    </th>
+  );
+};
+
 const TARIFF_TYPE_TOOLTIP =
   "Kind of trade action, independent of status and date. " +
   "New: creates a tariff line. " +
@@ -49,18 +101,18 @@ export const TariffTable: React.FC<TariffTableProps> = ({
   onPageChange,
   onTotalPagesChange,
   handleSortChange,
+  onDatasetChange,
 }) => {
   const { isDarkMode } = useContext(ThemeContext);
   const [data, setData] = useState<TariffEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalItems, setTotalItems] = useState(0);
-  const [lastFetchTime, setLastFetchTime] = useState(0);
   const [activeTab, setActiveTab] = useState<TabType>("products");
   const [localSortField, setLocalSortField] = useState(sortField);
   const [localSortDirection, setLocalSortDirection] = useState(sortDirection);
-  const minFetchInterval = 5000; // 5 seconds between fetches
   const requestCache = useRef<{ [key: string]: { data: any; timestamp: number } }>({});
+  const latestRequestId = useRef(0);
   const cacheTimeout = 60000; // 1 minute cache timeout
   const [isMobile, setIsMobile] = useState(false);
 
@@ -83,15 +135,6 @@ export const TariffTable: React.FC<TariffTableProps> = ({
     // Note: We don't fetch data directly here; useEffect handles it
   };
 
-  const getSortIcon = (field: string) => {
-    if (field !== localSortField) return null;
-    return localSortDirection === "asc" ? (
-      <ChevronUpIcon className="h-4 w-4 ml-1" />
-    ) : (
-      <ChevronDownIcon className="h-4 w-4 ml-1" />
-    );
-  };
-
   const getCacheKey = useCallback(() => {
     return JSON.stringify({
       searchTerm,
@@ -109,14 +152,20 @@ export const TariffTable: React.FC<TariffTableProps> = ({
     const cacheKey = getCacheKey();
     const cachedResult = requestCache.current[cacheKey];
 
-    console.log(
-      `[TariffTable] fetchData triggered. Sort field: ${localSortField}, Sort direction: ${localSortDirection}, Page: ${page}`
-    );
+    // Every change of search, sort, filter, page or tab starts a request.
+    // Without this token, a slow earlier request could land after a faster
+    // later one and repaint the table with a query the user has moved on from.
+    const requestId = ++latestRequestId.current;
+    const isStale = () => requestId !== latestRequestId.current;
 
     if (cachedResult && now - cachedResult.timestamp < cacheTimeout) {
       setData(cachedResult.data.data);
       setTotalItems(cachedResult.data.total);
       onTotalPagesChange(cachedResult.data.totalPages);
+      // Clear the previous failure too. Serving cached rows while last
+      // request's error banner stayed on screen showed good data under a
+      // message saying the data could not be loaded.
+      setError(null);
       setIsLoading(false);
       return;
     }
@@ -124,7 +173,6 @@ export const TariffTable: React.FC<TariffTableProps> = ({
     try {
       setIsLoading(true);
       setError(null);
-      setLastFetchTime(now);
 
       const apiParams = {
         search: searchTerm,
@@ -143,6 +191,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
       };
 
       const response = await apiService.getTariffRates(apiParams);
+      if (isStale()) return;
 
       // Cache the response, dropping entries that have aged out so a long
       // session of unique searches can't grow this map without bound.
@@ -151,27 +200,25 @@ export const TariffTable: React.FC<TariffTableProps> = ({
           delete requestCache.current[key];
         }
       }
-      requestCache.current[cacheKey] = {
-        data: response,
-        timestamp: now,
-      };
 
       if (response && response.data && Array.isArray(response.data)) {
-        console.log("[TariffTable useEffect] Setting data with length:", response.data.length);
+        // Only successful responses are cached. Caching a failure meant an
+        // outage kept being replayed from memory for a minute after it ended.
+        requestCache.current[cacheKey] = { data: response, timestamp: now };
         setData(response.data);
         setTotalItems(response.total || 0);
         onTotalPagesChange(response.totalPages);
       } else {
         console.error("Invalid tariff data structure:", response);
+        setError("Tariff data came back in an unexpected format.");
         setData([]);
         setTotalItems(0);
-        if (onTotalPagesChange) {
-          onTotalPagesChange(1);
-        }
+        onTotalPagesChange(1);
       }
       setIsLoading(false);
     } catch (err) {
-      setError("Failed to fetch tariff data");
+      if (isStale()) return;
+      setError("Failed to load tariff data. Please try again.");
       console.error("Error fetching tariff data:", err);
       setIsLoading(false);
     }
@@ -213,12 +260,15 @@ export const TariffTable: React.FC<TariffTableProps> = ({
     setLocalSortDirection(sortDirection);
   }, [sortField, sortDirection]);
 
-  // Add effect to reset page when tab changes
+  // Switching tabs returns to page 1. `page` is read but deliberately not a
+  // dependency: including it would re-run this on every page change and pin
+  // the user to page 1.
   useEffect(() => {
     if (page !== 1) {
       onPageChange(1);
     }
-  }, [activeTab, onPageChange]); // Only run when activeTab changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, onPageChange]);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -507,6 +557,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
         <button
           onClick={() => {
             setActiveTab("products");
+            onDatasetChange?.("product");
             onPageChange(1);
           }}
           className={`px-4 py-2 rounded-md flex items-center ${
@@ -525,6 +576,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
         <button
           onClick={() => {
             setActiveTab("countries");
+            onDatasetChange?.("country");
             onPageChange(1);
           }}
           className={`px-4 py-2 rounded-md flex items-center ${
@@ -596,175 +648,130 @@ export const TariffTable: React.FC<TariffTableProps> = ({
             <thead>
               {activeTab === "products" ? (
                 <tr className={`border-b ${isDarkMode ? "border-gray-700" : "border-gray-300"}`}>
-                  <th
-                    className={`px-4 py-3 text-left text-sm font-semibold ${
-                      isDarkMode ? "text-gray-400" : "text-gray-600"
-                    } cursor-pointer hover:bg-gray-700/50`}
-                    onClick={() => handleSort("commodity")}
-                  >
-                    <div className="flex items-center">
-                      COMMODITY
-                      {getSortIcon("commodity")}
-                    </div>
-                  </th>
-                  <th
-                    className={`px-4 py-3 text-left text-sm font-semibold ${
-                      isDarkMode ? "text-gray-400" : "text-gray-600"
-                    } cursor-pointer hover:bg-gray-700/50`}
-                    onClick={() => handleSort("tariffOrigin")}
-                  >
-                    <div className="flex items-center">
-                      TARIFF FROM
-                      {getSortIcon("tariffOrigin")}
-                    </div>
-                  </th>
-                  <th
-                    className={`px-4 py-3 text-left text-sm font-semibold ${
-                      isDarkMode ? "text-gray-400" : "text-gray-600"
-                    } cursor-pointer hover:bg-gray-700/50`}
-                    onClick={() => handleSort("to")}
-                  >
-                    <div className="flex items-center">
-                      TO
-                      {getSortIcon("to")}
-                    </div>
-                  </th>
-                  <th
-                    className={`px-4 py-3 text-left text-sm font-semibold ${
-                      isDarkMode ? "text-gray-400" : "text-gray-600"
-                    } cursor-pointer hover:bg-gray-700/50`}
-                    onClick={() => handleSort("rate")}
-                  >
-                    <div className="flex items-center">
-                      RATE
-                      {getSortIcon("rate")}
-                    </div>
-                  </th>
-                  <th
-                    className={`px-4 py-3 text-left text-sm font-semibold ${
-                      isDarkMode ? "text-gray-400" : "text-gray-600"
-                    } cursor-pointer hover:bg-gray-700/50`}
-                    onClick={() => handleSort("changeDisplay")}
-                  >
-                    <div className="flex items-center">
-                      CHANGE
-                      {getSortIcon("changeDisplay")}
-                    </div>
-                  </th>
-                  <th
-                    className={`px-4 py-3 text-left text-sm font-semibold ${
-                      isDarkMode ? "text-gray-400" : "text-gray-600"
-                    } cursor-pointer hover:bg-gray-700/50`}
-                    onClick={() => handleSort("status")}
-                  >
-                    <div className="flex items-center">
-                      STATUS
-                      {getSortIcon("status")}
-                    </div>
-                  </th>
-                  <th
-                    className={`px-4 py-3 text-left text-sm font-semibold ${
-                      isDarkMode ? "text-gray-400" : "text-gray-600"
-                    } cursor-pointer hover:bg-gray-700/50`}
-                    onClick={() => handleSort("nature")}
-                    title={TARIFF_TYPE_TOOLTIP}
-                  >
-                    <div className="flex items-center">
-                      TYPE
-                      {getSortIcon("nature")}
-                    </div>
-                  </th>
-                  <th
-                    className={`px-4 py-3 text-left text-sm font-semibold ${
-                      isDarkMode ? "text-gray-400" : "text-gray-600"
-                    } cursor-pointer hover:bg-gray-700/50`}
-                    onClick={() => handleSort("effectiveDate")}
-                  >
-                    <div className="flex items-center">
-                      EFFECTIVE DATE
-                      {getSortIcon("effectiveDate")}
-                    </div>
-                  </th>
+                  <SortableHeader
+                    field="commodity"
+                    label="COMMODITY"
+                    activeField={localSortField}
+                    direction={localSortDirection}
+                    onSort={handleSort}
+                    isDarkMode={isDarkMode}
+                  />
+                  <SortableHeader
+                    field="tariffOrigin"
+                    label="TARIFF FROM"
+                    activeField={localSortField}
+                    direction={localSortDirection}
+                    onSort={handleSort}
+                    isDarkMode={isDarkMode}
+                  />
+                  <SortableHeader
+                    field="to"
+                    label="TO"
+                    activeField={localSortField}
+                    direction={localSortDirection}
+                    onSort={handleSort}
+                    isDarkMode={isDarkMode}
+                  />
+                  <SortableHeader
+                    field="rate"
+                    label="RATE"
+                    activeField={localSortField}
+                    direction={localSortDirection}
+                    onSort={handleSort}
+                    isDarkMode={isDarkMode}
+                  />
+                  <SortableHeader
+                    field="changeDisplay"
+                    label="CHANGE"
+                    activeField={localSortField}
+                    direction={localSortDirection}
+                    onSort={handleSort}
+                    isDarkMode={isDarkMode}
+                  />
+                  <SortableHeader
+                    field="status"
+                    label="STATUS"
+                    activeField={localSortField}
+                    direction={localSortDirection}
+                    onSort={handleSort}
+                    isDarkMode={isDarkMode}
+                  />
+                  <SortableHeader
+                    field="nature"
+                    label="TYPE"
+                    activeField={localSortField}
+                    direction={localSortDirection}
+                    onSort={handleSort}
+                    isDarkMode={isDarkMode}
+                    tooltip={TARIFF_TYPE_TOOLTIP}
+                  />
+                  <SortableHeader
+                    field="effectiveDate"
+                    label="EFFECTIVE DATE"
+                    activeField={localSortField}
+                    direction={localSortDirection}
+                    onSort={handleSort}
+                    isDarkMode={isDarkMode}
+                  />
                 </tr>
               ) : (
                 <tr className={`border-b ${isDarkMode ? "border-gray-700" : "border-gray-300"}`}>
-                  <th
-                    className={`px-4 py-3 text-left text-sm font-semibold ${
-                      isDarkMode ? "text-gray-400" : "text-gray-600"
-                    } cursor-pointer hover:bg-gray-700/50`}
-                    onClick={() => handleSort("country")}
-                  >
-                    <div className="flex items-center">
-                      COUNTRY
-                      {getSortIcon("country")}
-                    </div>
-                  </th>
-                  <th
-                    className={`px-4 py-3 text-left text-sm font-semibold ${
-                      isDarkMode ? "text-gray-400" : "text-gray-600"
-                    } cursor-pointer hover:bg-gray-700/50`}
-                    onClick={() => handleSort("rateDisplay")}
-                  >
-                    <div className="flex items-center">
-                      RATE IMPOSED BY USA
-                      {getSortIcon("rateDisplay")}
-                    </div>
-                  </th>
-                  <th
-                    className={`px-4 py-3 text-left text-sm font-semibold ${
-                      isDarkMode ? "text-gray-400" : "text-gray-600"
-                    } cursor-pointer hover:bg-gray-700/50`}
-                    onClick={() => handleSort("status")}
-                  >
-                    <div className="flex items-center">
-                      STATUS
-                      {getSortIcon("status")}
-                    </div>
-                  </th>
-                  <th
-                    className={`px-4 py-3 text-left text-sm font-semibold ${
-                      isDarkMode ? "text-gray-400" : "text-gray-600"
-                    } cursor-pointer hover:bg-gray-700/50`}
-                    onClick={() => handleSort("countrysTariffOnUS")}
-                  >
-                    <div className="flex items-center">
-                      RATE IMPOSED ON USA
-                      {getSortIcon("countrysTariffOnUS")}
-                    </div>
-                  </th>
-                  <th
-                    className={`px-4 py-3 text-left text-sm font-semibold ${
-                      isDarkMode ? "text-gray-400" : "text-gray-600"
-                    } cursor-pointer hover:bg-gray-700/50`}
-                    onClick={() => handleSort("keyAffectedSectors")}
-                  >
-                    <div className="flex items-center">
-                      KEY SECTORS
-                      {getSortIcon("keyAffectedSectors")}
-                    </div>
-                  </th>
-                  <th
-                    className={`px-4 py-3 text-left text-sm font-semibold ${
-                      isDarkMode ? "text-gray-400" : "text-gray-600"
-                    } cursor-pointer hover:bg-gray-700/50`}
-                    onClick={() => handleSort("marketImpact")}
-                  >
-                    <div className="flex items-center">
-                      MARKET IMPACT
-                      {getSortIcon("marketImpact")}
-                    </div>
-                  </th>
-                  <th
-                    className={`px-4 py-3 text-left text-sm font-semibold ${
-                      isDarkMode ? "text-gray-400" : "text-gray-600"
-                    } cursor-pointer hover:bg-gray-700/50`}
-                    onClick={() => handleSort("responseType")}
-                  >
-                    <div className="flex items-center">
-                      RESPONSE TYPE
-                      {getSortIcon("responseType")}
-                    </div>
-                  </th>
+                  <SortableHeader
+                    field="country"
+                    label="COUNTRY"
+                    activeField={localSortField}
+                    direction={localSortDirection}
+                    onSort={handleSort}
+                    isDarkMode={isDarkMode}
+                  />
+                  <SortableHeader
+                    field="rateDisplay"
+                    label="RATE IMPOSED BY USA"
+                    activeField={localSortField}
+                    direction={localSortDirection}
+                    onSort={handleSort}
+                    isDarkMode={isDarkMode}
+                  />
+                  <SortableHeader
+                    field="status"
+                    label="STATUS"
+                    activeField={localSortField}
+                    direction={localSortDirection}
+                    onSort={handleSort}
+                    isDarkMode={isDarkMode}
+                  />
+                  <SortableHeader
+                    field="countrysTariffOnUS"
+                    label="RATE IMPOSED ON USA"
+                    activeField={localSortField}
+                    direction={localSortDirection}
+                    onSort={handleSort}
+                    isDarkMode={isDarkMode}
+                  />
+                  <SortableHeader
+                    field="keyAffectedSectors"
+                    label="KEY SECTORS"
+                    activeField={localSortField}
+                    direction={localSortDirection}
+                    onSort={handleSort}
+                    isDarkMode={isDarkMode}
+                  />
+                  <SortableHeader
+                    field="marketImpact"
+                    label="MARKET IMPACT"
+                    activeField={localSortField}
+                    direction={localSortDirection}
+                    onSort={handleSort}
+                    isDarkMode={isDarkMode}
+                  />
+                  <SortableHeader
+                    field="responseType"
+                    label="RESPONSE TYPE"
+                    activeField={localSortField}
+                    direction={localSortDirection}
+                    onSort={handleSort}
+                    isDarkMode={isDarkMode}
+                  />
                 </tr>
               )}
             </thead>
@@ -1049,6 +1056,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
           <button
             onClick={() => onPageChange(page - 1)}
             disabled={page === 1}
+            aria-label="Previous page of tariffs"
             className={`p-2 rounded-lg ${
               page === 1
                 ? "opacity-50 cursor-not-allowed"
@@ -1058,6 +1066,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
             }`}
           >
             <ArrowLeftIcon
+              aria-hidden="true"
               className={`h-5 w-5 ${isDarkMode ? "text-gray-200" : "text-gray-700"}`}
             />
           </button>
@@ -1067,6 +1076,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
           <button
             onClick={() => onPageChange(page + 1)}
             disabled={page === totalPages}
+            aria-label="Next page of tariffs"
             className={`p-2 rounded-lg ${
               page === totalPages
                 ? "opacity-50 cursor-not-allowed"
@@ -1076,6 +1086,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
             }`}
           >
             <ArrowRightIcon
+              aria-hidden="true"
               className={`h-5 w-5 ${isDarkMode ? "text-gray-200" : "text-gray-700"}`}
             />
           </button>

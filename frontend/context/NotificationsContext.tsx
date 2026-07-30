@@ -20,8 +20,17 @@ export const NotificationsProvider: React.FC<{
   children
 }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const removeNotification = useCallback((id: string) => {
+    setNotifications(prev => prev.filter(notification => notification.id !== id));
+  }, []);
   const addNotification = useCallback((message: string, type: Notification['type'] = 'info') => {
-    const id = Date.now().toString();
+    // Date.now() collides when two notifications are raised in the same
+    // millisecond: React warns about duplicate keys, and dismissing one
+    // removed both.
+    const id =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     setNotifications(prev => [...prev, {
       id,
       message,
@@ -31,10 +40,7 @@ export const NotificationsProvider: React.FC<{
     setTimeout(() => {
       removeNotification(id);
     }, 5000);
-  }, []);
-  const removeNotification = useCallback((id: string) => {
-    setNotifications(prev => prev.filter(notification => notification.id !== id));
-  }, []);
+  }, [removeNotification]);
   return <NotificationsContext.Provider value={{
     notifications,
     addNotification,

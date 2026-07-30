@@ -7,18 +7,17 @@ export interface TariffEntry {
   status: string;
   rate: number;
   rateDisplay?: string;
-  scope: string;
-  additionalInfo: string;
   effectiveDate: string;
-  lastUpdated: string;
-  impact: "low" | "medium" | "high";
   tariffOrigin: string;
   to: string;
   isIncrease: boolean;
   change: "increase" | "decrease" | "no-change";
   changeDisplay: string;
-  firstImplemented?: string;
   nature: string;
+  // `scope`, `additionalInfo`, `impact`, `lastUpdated` and `firstImplemented`
+  // used to live here. None came from the CSVs: every row carried the same
+  // placeholder, and `lastUpdated` was a copy of the effective date, so an
+  // export claimed a 2018 tariff had been updated in 2018.
 
   // Optional fields for country-specific data (from tariffs_countries.csv)
   countrysTariffOnUS?: string;
@@ -48,4 +47,6 @@ export interface TariffQueryParams {
   sortOrder?: "asc" | "desc";
   page?: number;
   itemsPerPage?: number;
+  /** Skip this query's cache entry. Does not evict anyone else's. */
+  skipCache?: boolean;
 }

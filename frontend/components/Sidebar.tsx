@@ -1,5 +1,4 @@
-import React, { useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useContext } from "react";
 import { HomeIcon, BarChart2Icon, NewspaperIcon, XIcon } from "lucide-react";
 import { ThemeContext } from "../App";
 import tariffWarsLogo from "../assets/tariffwars-logo.png";
@@ -18,7 +17,6 @@ export const Sidebar = ({
   toggleMobileSidebar,
 }: SidebarProps) => {
   const { isDarkMode } = useContext(ThemeContext);
-  const navigate = useNavigate();
 
   const handleNavigate = (tab: string) => {
     setActiveTab(tab);
