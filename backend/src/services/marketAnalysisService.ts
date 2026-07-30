@@ -112,6 +112,18 @@ export class MarketAnalysisService {
     }
   }
 
+  // The prompts used to hardcode "around April 2025", so the model narrated a
+  // dataset that had moved on 15 months ahead of it — describing effective
+  // dates already in the past as upcoming. Always tell it the real date.
+  private currentPeriodLabel(): string {
+    return new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "UTC",
+    });
+  }
+
   private async generateWithOpenAI(prompt: string): Promise<string> {
     try {
       const response = await this.openai.chat.completions.create({
@@ -163,7 +175,7 @@ export class MarketAnalysisService {
 
       const averageTariffRate = this.calculateAverageTariffRate(tariffRates.data);
 
-      const prompt = `Based on the following tariff data and news articles, generate a market overview for the current period (around April 2025):
+      const prompt = `Based on the following tariff data and news articles, generate a market overview for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status such as Ended, Suspended or Proposed):
 
       Tariff Data Sample (Average Rate: ${averageTariffRate.toFixed(1)}%):
       ${JSON.stringify(tariffRates.data.slice(0, 5), null, 2)}
@@ -238,7 +250,7 @@ export class MarketAnalysisService {
         uniqueCommodities.includes(t.commodity)
       );
 
-      const prompt = `Based on the following tariff data sample for the current period (around April 2025), generate a detailed commodity analysis for 5-7 major commodities mentioned or implied:
+      const prompt = `Based on the following tariff data sample for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status such as Ended, Suspended or Proposed), generate a detailed commodity analysis for 5-7 major commodities mentioned or implied:
 
       Tariff Data Sample:
       ${JSON.stringify(commodityDataSample.slice(0, 15), null, 2)}
@@ -294,7 +306,7 @@ export class MarketAnalysisService {
         })
         .filter((r) => r.count > 0);
 
-      const prompt = `Based on the following regional tariff data summaries and news articles for the current period (around April 2025), generate a regional analysis for the key regions identified:
+      const prompt = `Based on the following regional tariff data summaries and news articles for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status such as Ended, Suspended or Proposed), generate a regional analysis for the key regions identified:
 
       Regional Tariff Summary:
       ${JSON.stringify(regionalData, null, 2)}
@@ -340,7 +352,7 @@ export class MarketAnalysisService {
       const tariffRates = await this.tariffService.getTariffRates({ itemsPerPage: 1000 });
       const news = await this.newsService.getTariffNews();
 
-      const prompt = `Based on the following tariff data and news articles for the current period (around April 2025), generate market predictions:
+      const prompt = `Based on the following tariff data and news articles for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status such as Ended, Suspended or Proposed), generate market predictions:
 
       Tariff Data Sample (Average Rate: ${this.calculateAverageTariffRate(tariffRates.data).toFixed(
         1
@@ -469,7 +481,7 @@ export class MarketAnalysisService {
         const tariffRates = await this.tariffService.getTariffRates({ itemsPerPage: 50 });
         const news = await this.newsService.getTariffNews();
 
-        const prompt = `Based on the following tariff data and news articles for the current period (around April 2025), generate 3-4 concise AI-powered insights for a dashboard widget. Prioritize identifying one significant 'alert' if applicable, and include a mix of 'positive' and 'negative' trends.
+        const prompt = `Based on the following tariff data and news articles for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status such as Ended, Suspended or Proposed), generate 3-4 concise AI-powered insights for a dashboard widget. Prioritize identifying one significant 'alert' if applicable, and include a mix of 'positive' and 'negative' trends.
 
       Tariff Data Sample (Average Rate: ${this.calculateAverageTariffRate(tariffRates.data).toFixed(
         1
