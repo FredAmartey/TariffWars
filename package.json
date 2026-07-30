@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "preview": "vite preview",
-    "validate-data": "node scripts/validate-data.mjs"
+    "validate-data": "node scripts/validate-data.mjs",
+    "record-history": "node scripts/record-history.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

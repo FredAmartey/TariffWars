@@ -1,4 +1,6 @@
 import express from "express";
+import { cacheableIfOk } from "../utils/cacheControl";
+import { clientKey } from "../utils/clientKey";
 import rateLimit from "express-rate-limit";
 import { MarketAnalysisService } from "../services/marketAnalysisService";
 import { TariffService } from "../services/tariffService";
@@ -14,13 +16,17 @@ const aiInsightsRefreshLimiter = rateLimit({
   skip: (req) => req.query.refresh !== "true",
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: clientKey,
 });
 
 // Stricter rate limiting for sensitive analysis endpoints
 const analysisLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 30, // limit each IP to 30 requests per 15 minutes
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
   message: { error: "Rate limit exceeded for market analysis API." },
+  keyGenerator: clientKey,
 });
 
 export const marketAnalysisRoutes = (tariffService: TariffService, newsService: NewsService) => {
@@ -39,10 +45,7 @@ export const marketAnalysisRoutes = (tariffService: TariffService, newsService: 
       // Let Vercel's edge cache serve them: first hit after expiry pays the
       // generation latency, everyone else gets CDN-speed responses. Browsers
       // always revalidate (max-age=0) so a fresh deploy shows up immediately.
-      res.setHeader(
-        "Cache-Control",
-        "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
-      );
+      cacheableIfOk(res, 3600, 86400);
     }
 
     if (req.query.refresh && req.query.refresh !== "true" && req.query.refresh !== "false") {

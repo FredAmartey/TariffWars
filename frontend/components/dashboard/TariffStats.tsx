@@ -81,12 +81,26 @@ export const TariffStats = () => {
     );
   }
 
-  // There is no historical snapshot to compare against, so the card reports
-  // how much of the dataset is actually in force rather than a fabricated
-  // year-over-year movement.
-  const coverageColorClass = isDarkMode
-    ? "bg-indigo-900/50 text-indigo-300"
-    : "bg-indigo-50 text-indigo-700";
+  // Measured against a recorded snapshot rather than derived from the current
+  // data, so it is absent until history reaches back far enough. Percentage
+  // points, because both figures are themselves percentages.
+  const yoy = metrics.yoyChangePoints;
+  const yoyRose = (yoy ?? 0) >= 0;
+  const YoyIcon = yoyRose ? TrendingUpIcon : TrendingDownIcon;
+  const yoyColorClass = yoyRose
+    ? isDarkMode
+      ? "bg-green-900/50 text-green-300"
+      : "bg-green-50 text-green-700"
+    : isDarkMode
+    ? "bg-red-900/50 text-red-300"
+    : "bg-red-50 text-red-700";
+  const yoyBaseline = metrics.yoyComparedTo
+    ? new Date(`${metrics.yoyComparedTo}T00:00:00Z`).toLocaleDateString("en-US", {
+        month: "short",
+        year: "numeric",
+        timeZone: "UTC",
+      })
+    : null;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -117,11 +131,15 @@ export const TariffStats = () => {
           <p className={`text-sm mt-1 ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
             Across active tariffs
           </p>
-          <div
-            className={`mt-4 inline-flex items-center px-2 py-1 rounded-full text-xs ${coverageColorClass}`}
-          >
-            {metrics.activeTariffs} of {metrics.totalTariffs} active
-          </div>
+          {yoy !== null && yoyBaseline && (
+            <div
+              className={`mt-4 inline-flex items-center px-2 py-1 rounded-full text-xs ${yoyColorClass}`}
+            >
+              <YoyIcon className="h-3 w-3 mr-1" />
+              {yoyRose ? "+" : ""}
+              {yoy.toFixed(1)} pts vs {yoyBaseline}
+            </div>
+          )}
         </div>
       </div>
       <div

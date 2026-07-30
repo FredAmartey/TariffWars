@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import { TariffService } from "./tariffService";
 import { NewsService } from "./newsService";
 import OpenAI from "openai";
@@ -57,6 +59,12 @@ export interface KeyMetrics {
   activeTariffs: number;
   totalTariffs: number;
   threatenedTariffs: number;
+  /** Change in the active average, in percentage points, against the closest
+   *  recorded snapshot to a year ago. Null until history reaches back far
+   *  enough — never a fabricated stand-in. */
+  yoyChangePoints: number | null;
+  /** Date of the snapshot the change was measured against (YYYY-MM-DD). */
+  yoyComparedTo: string | null;
   summaryDescription: string;
   highestTariffRate: number | null;
   highestTariffCommodity: string;
@@ -152,6 +160,68 @@ export class MarketAnalysisService {
     }
   }
 
+  // "N/A", "Restricted" and "Exempt" parse to 0, so averaging them in would
+  // report a line with no rate as a 0% tariff and drag the headline down.
+  private static readonly NON_NUMERIC_RATES = new Set([
+    "N/A",
+    "Restricted",
+    "Exempt",
+    "Banned",
+    "-",
+    "\u2013",
+  ]);
+
+  private carriesRate(t: TariffEntry): boolean {
+    // Restricted/Banned parse to -1 and the placeholders to 0, so a negative
+    // rate is always a sentinel rather than a real tariff.
+    return (
+      typeof t.rate === "number" &&
+      t.rate >= 0 &&
+      !MarketAnalysisService.NON_NUMERIC_RATES.has((t.rateDisplay ?? "").trim())
+    );
+  }
+
+  /**
+   * Change in the active average against the recorded snapshot closest to a
+   * year ago, in percentage points. Returns null rather than inventing a
+   * number when no snapshot is old enough to support the comparison.
+   */
+  private calculateYearOverYear(currentAverage: number): {
+    yoyChangePoints: number | null;
+    yoyComparedTo: string | null;
+  } {
+    const empty = { yoyChangePoints: null, yoyComparedTo: null };
+    let history: Array<{ date: string; activeAverageRate: number }>;
+    try {
+      const raw = fs.readFileSync(path.resolve(__dirname, "../data/history.json"), "utf8");
+      history = JSON.parse(raw);
+      if (!Array.isArray(history)) return empty;
+    } catch (error) {
+      console.warn("No tariff history available for year-over-year comparison:", error);
+      return empty;
+    }
+
+    const DAY = 86400000;
+    const now = Date.now();
+    const target = now - 365 * DAY;
+    // A snapshot from last week cannot stand in for one from last year.
+    const MIN_AGE_DAYS = 180;
+
+    const usable = history
+      .filter((r) => typeof r?.activeAverageRate === "number" && !Number.isNaN(Date.parse(r?.date)))
+      .filter((r) => (now - Date.parse(r.date)) / DAY >= MIN_AGE_DAYS);
+    if (usable.length === 0) return empty;
+
+    const baseline = usable.reduce((best, r) =>
+      Math.abs(Date.parse(r.date) - target) < Math.abs(Date.parse(best.date) - target) ? r : best
+    );
+
+    return {
+      yoyChangePoints: +(currentAverage - baseline.activeAverageRate).toFixed(1),
+      yoyComparedTo: baseline.date,
+    };
+  }
+
   private calculateAverageTariffRate(tariffs: TariffEntry[]): number {
     const rates = tariffs.map((t) => t.rate);
     if (rates.length === 0) return 0;
@@ -170,7 +240,7 @@ export class MarketAnalysisService {
 
       // Active-only, matching the Key Metrics card and the copy that renders it.
       const averageTariffRate = this.calculateAverageTariffRate(
-        tariffRates.data.filter((t) => t.status === "Active" && typeof t.rate === "number")
+        tariffRates.data.filter((t) => t.status === "Active" && this.carriesRate(t))
       );
 
       const prompt = `Based on the following tariff data and news articles, generate a market overview for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status: a rate is only in force when Status is Active — Proposed, Threatened and Under Investigation rates have NOT been imposed and must be described as proposed or threatened, while Ended and Suspended ones are no longer collected. A rate that carries an exception in its name, such as a lower rate for one country, applies at the stated exception for that country, not the headline rate):
@@ -298,7 +368,9 @@ export class MarketAnalysisService {
           );
           return {
             region: region,
-            avgRate: regionTariffs.length > 0 ? this.calculateAverageTariffRate(regionTariffs) : 0,
+            avgRate: this.calculateAverageTariffRate(
+              regionTariffs.filter((t) => this.carriesRate(t))
+            ),
             count: regionTariffs.length,
           };
         })
@@ -352,7 +424,9 @@ export class MarketAnalysisService {
 
       const prompt = `Based on the following tariff data and news articles for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status: a rate is only in force when Status is Active — Proposed, Threatened and Under Investigation rates have NOT been imposed and must be described as proposed or threatened, while Ended and Suspended ones are no longer collected. A rate that carries an exception in its name, such as a lower rate for one country, applies at the stated exception for that country, not the headline rate), generate market predictions:
 
-      Tariff Data Sample (Average Rate: ${this.calculateAverageTariffRate(tariffRates.data).toFixed(
+      Tariff Data Sample (Average Rate: ${this.calculateAverageTariffRate(
+        tariffRates.data.filter((t) => this.carriesRate(t))
+      ).toFixed(
         1
       )}%):
       ${JSON.stringify(tariffRates.data.slice(0, 5), null, 2)}
@@ -464,7 +538,9 @@ export class MarketAnalysisService {
 
         const prompt = `Based on the following tariff data and news articles for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status: a rate is only in force when Status is Active — Proposed, Threatened and Under Investigation rates have NOT been imposed and must be described as proposed or threatened, while Ended and Suspended ones are no longer collected. A rate that carries an exception in its name, such as a lower rate for one country, applies at the stated exception for that country, not the headline rate), generate 3-4 concise AI-powered insights for a dashboard widget. Prioritize identifying one significant 'alert' if applicable, and include a mix of 'positive' and 'negative' trends.
 
-      Tariff Data Sample (Average Rate: ${this.calculateAverageTariffRate(tariffRates.data).toFixed(
+      Tariff Data Sample (Average Rate: ${this.calculateAverageTariffRate(
+        tariffRates.data.filter((t) => this.carriesRate(t))
+      ).toFixed(
         1
       )}%):
       ${JSON.stringify(tariffRates.data.slice(0, 5), null, 2)}
@@ -525,6 +601,8 @@ export class MarketAnalysisService {
 
         return {
           averageRate: 0,
+          yoyChangePoints: null,
+          yoyComparedTo: null,
           activeTariffs: 0,
           totalTariffs: 0,
           threatenedTariffs: 0,
@@ -554,7 +632,10 @@ export class MarketAnalysisService {
       // Proposed and Suspended rows pulled a lapsed 250% dairy threat and a
       // superseded 200% spirits rate into the headline number, and disagreed
       // with the Highest Tariff metric right beside it, which is active-only.
-      const averageRate = this.calculateAverageTariffRate(activeTariffsData);
+      const averageRate = this.calculateAverageTariffRate(
+        activeTariffsData.filter((t) => this.carriesRate(t))
+      );
+      const { yoyChangePoints, yoyComparedTo } = this.calculateYearOverYear(averageRate);
       const activeTariffsCount = tariffs.filter((t) => t.status === "Active").length;
       const totalTariffsCount = tariffs.length;
       const threatenedTariffsCount = tariffs.filter((t) => t.status === "Threatened").length;
@@ -627,6 +708,8 @@ export class MarketAnalysisService {
 
       return {
         averageRate,
+        yoyChangePoints,
+        yoyComparedTo,
         activeTariffs: activeTariffsCount,
         totalTariffs: totalTariffsCount,
         threatenedTariffs: threatenedTariffsCount,
@@ -658,6 +741,8 @@ export class MarketAnalysisService {
 
       return {
         averageRate: 0,
+        yoyChangePoints: null,
+        yoyComparedTo: null,
         activeTariffs: 0,
         totalTariffs: 0,
         threatenedTariffs: 0,

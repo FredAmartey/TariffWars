@@ -1,0 +1,32 @@
+[
+  {
+    "date": "2025-04-13",
+    "activeAverageRate": 45.07,
+    "activeCount": 17,
+    "totalCount": 32
+  },
+  {
+    "date": "2026-07-10",
+    "activeAverageRate": 22.06,
+    "activeCount": 18,
+    "totalCount": 35
+  },
+  {
+    "date": "2026-07-20",
+    "activeAverageRate": 22.22,
+    "activeCount": 19,
+    "totalCount": 35
+  },
+  {
+    "date": "2026-07-27",
+    "activeAverageRate": 22.36,
+    "activeCount": 19,
+    "totalCount": 37
+  },
+  {
+    "date": "2026-07-30",
+    "activeAverageRate": 22.36,
+    "activeCount": 19,
+    "totalCount": 37
+  }
+]

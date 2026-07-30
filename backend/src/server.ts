@@ -1,8 +1,10 @@
-import express, { Request } from "express";
+import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
+import { clientKey } from "./utils/clientKey";
+import { cacheableIfOk } from "./utils/cacheControl";
 import { TariffService } from "./services/tariffService";
 import { NewsService } from "./services/newsService";
 import { TariffEntry } from "./types/tariff";
@@ -25,20 +27,6 @@ console.log("Starting server initialization...");
 
 // Configure rate limiting with IP handling
 console.log("Configuring rate limiting...");
-// fredamartey.com proxies through nginx before Vercel, so `req.ip` resolves to
-// the proxy rather than the visitor. Keying off the forwarded client address
-// keeps limits per-visitor instead of one shared bucket for the whole site.
-const clientKey = (req: Request): string => {
-  const realIP = req.headers["x-real-ip"];
-  const forwardedFor = req.headers["x-forwarded-for"];
-  return (
-    (typeof realIP === "string" ? realIP : undefined) ||
-    (typeof forwardedFor === "string" ? forwardedFor.split(",")[0].trim() : undefined) ||
-    req.ip ||
-    "unknown"
-  );
-};
-
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000"), // 15 minutes default
   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || "600"),
@@ -119,9 +107,23 @@ app.use((req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
-  res.setHeader("Pragma", "no-cache");
-  res.setHeader("Expires", "0");
+
+  // Everything served here is public, read-only data derived from CSVs the
+  // weekly agent rewrites, yet this used to send no-store on every route — so
+  // the CDN never held anything and each search, sort and page ran a lambda.
+  // Let the edge serve GETs; a data push redeploys and purges the cache, so
+  // staleness is bounded by the deploy, not just the TTL.
+  if (
+    (req.method === "GET" || req.method === "HEAD") &&
+    req.query.refresh !== "true" &&
+    req.query.bypass_cache !== "true"
+  ) {
+    cacheableIfOk(res, 3600, 86400);
+  } else {
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+  }
   next();
 });
 

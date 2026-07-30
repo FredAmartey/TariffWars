@@ -1,15 +1,29 @@
 import express from "express";
 import { NewsService } from "../services/newsService";
 import rateLimit from "express-rate-limit";
+import { clientKey } from "../utils/clientKey";
+import { cacheableIfOk } from "../utils/cacheControl";
 
 const router = express.Router();
 const newsService = new NewsService();
 
 
 const newsRateLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000, 
-  max: 25, 
+  windowMs: 5 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
   message: { error: "Too many news requests, please try again later." },
+  keyGenerator: clientKey,
+});
+
+// News turns over during the day, so it gets a shorter edge TTL than the
+// hourly default the rest of the API uses.
+router.use((req, res, next) => {
+  if (req.method === "GET" && req.query.refresh !== "true") {
+    cacheableIfOk(res, 900, 3600);
+  }
+  next();
 });
 
 router.get("/tariff-news", newsRateLimiter, async (req, res) => {
