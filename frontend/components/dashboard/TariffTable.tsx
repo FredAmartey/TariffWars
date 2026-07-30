@@ -103,19 +103,13 @@ export const TariffTable: React.FC<TariffTableProps> = ({
       `[TariffTable] fetchData triggered. Sort field: ${localSortField}, Sort direction: ${localSortDirection}, Page: ${page}`
     );
 
-    /*
-    // Temporarily disable cache check for debugging sorting
     if (cachedResult && now - cachedResult.timestamp < cacheTimeout) {
-      console.log(`[TariffTable] Using cached data for key: ${cacheKey}`);
       setData(cachedResult.data.data);
       setTotalItems(cachedResult.data.total);
       onTotalPagesChange(cachedResult.data.totalPages);
       setIsLoading(false);
       return;
     }
-    */
-
-    console.log(`[TariffTable] Fetching fresh data. Cache key: ${cacheKey}`);
 
     try {
       setIsLoading(true);
@@ -138,19 +132,15 @@ export const TariffTable: React.FC<TariffTableProps> = ({
         ),
       };
 
-      console.log(
-        "[TariffTable] Preparing to call apiService.getTariffRates with params:",
-        JSON.stringify(apiParams)
-      );
-
-      // Add a no-cache param to force bypass backend cache
-      (apiParams as any).bypass_cache = true;
-
       const response = await apiService.getTariffRates(apiParams);
 
-      console.log("[TariffTable useEffect] API Response Received:", response);
-
-      // Cache the response
+      // Cache the response, dropping entries that have aged out so a long
+      // session of unique searches can't grow this map without bound.
+      for (const [key, entry] of Object.entries(requestCache.current)) {
+        if (now - entry.timestamp >= cacheTimeout) {
+          delete requestCache.current[key];
+        }
+      }
       requestCache.current[cacheKey] = {
         data: response,
         timestamp: now,
@@ -193,78 +183,16 @@ export const TariffTable: React.FC<TariffTableProps> = ({
     [fetchData]
   );
 
+  // Every query change routes through the debounced fetcher, so typing a search
+  // term costs one request after the user stops rather than one per keystroke.
+  // The cleanup cancels the superseded timer — without it each keystroke's
+  // pending call would still fire 500ms later and the debounce would be moot.
   useEffect(() => {
-    const fetchTariffs = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        // Prepare parameters including filters
-        const apiParams = {
-          search: searchTerm,
-          sortBy: localSortField as keyof TariffEntry,
-          sortOrder: localSortDirection as "asc" | "desc",
-          page,
-          itemsPerPage,
-          type: (activeTab === "countries" ? "country" : "product") as "country" | "product",
-          // Add the filter processing logic here
-          ...filters.reduce(
-            (acc, filter) => ({
-              ...acc,
-              [filter.field]: filter.value,
-            }),
-            {}
-          ),
-        };
-
-        console.log(
-          "[TariffTable useEffect] Calling apiService.getTariffRates with params:",
-          apiParams
-        );
-
-        // Pass the prepared parameters object
-        const response = await apiService.getTariffRates(apiParams);
-
-        console.log("[TariffTable useEffect] API Response Received:", response);
-
-        if (response && response.data && Array.isArray(response.data)) {
-          console.log("[TariffTable useEffect] Setting data with length:", response.data.length);
-          setData(response.data);
-          setTotalItems(response.total || 0);
-          if (onTotalPagesChange) {
-            onTotalPagesChange(response.totalPages);
-          }
-        } else {
-          console.error("Invalid tariff data structure:", response);
-          setData([]);
-          setTotalItems(0);
-          if (onTotalPagesChange) {
-            onTotalPagesChange(1);
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching tariff rates:", err);
-        setError("Failed to load tariff data. Please try again later.");
-        setData([]);
-        setTotalItems(0);
-        if (onTotalPagesChange) {
-          onTotalPagesChange(1);
-        }
-      } finally {
-        setIsLoading(false);
-      }
+    debouncedFetchData();
+    return () => {
+      debouncedFetchData.cancel();
     };
-
-    fetchTariffs();
-  }, [
-    searchTerm,
-    localSortField,
-    localSortDirection,
-    filters,
-    page,
-    itemsPerPage,
-    onTotalPagesChange,
-    activeTab,
-  ]);
+  }, [debouncedFetchData]);
 
   // Add useEffect to sync props with local state
   useEffect(() => {
@@ -274,13 +202,6 @@ export const TariffTable: React.FC<TariffTableProps> = ({
     setLocalSortField(sortField);
     setLocalSortDirection(sortDirection);
   }, [sortField, sortDirection]);
-
-  // Clean up debounce on unmount
-  useEffect(() => {
-    return () => {
-      debouncedFetchData.cancel();
-    };
-  }, [debouncedFetchData]);
 
   // Add effect to reset page when tab changes
   useEffect(() => {

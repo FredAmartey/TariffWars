@@ -5,3 +5,4 @@ dist/
 .DS_Store
 .superpowers/
 node_modules.nosync/
+.vercel

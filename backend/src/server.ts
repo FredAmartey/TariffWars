@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import rateLimit from "express-rate-limit";
@@ -25,24 +25,28 @@ console.log("Starting server initialization...");
 
 // Configure rate limiting with IP handling
 console.log("Configuring rate limiting...");
+// fredamartey.com proxies through nginx before Vercel, so `req.ip` resolves to
+// the proxy rather than the visitor. Keying off the forwarded client address
+// keeps limits per-visitor instead of one shared bucket for the whole site.
+const clientKey = (req: Request): string => {
+  const realIP = req.headers["x-real-ip"];
+  const forwardedFor = req.headers["x-forwarded-for"];
+  return (
+    (typeof realIP === "string" ? realIP : undefined) ||
+    (typeof forwardedFor === "string" ? forwardedFor.split(",")[0].trim() : undefined) ||
+    req.ip ||
+    "unknown"
+  );
+};
+
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000"), // 15 minutes default
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || "100"), // limit each IP to 100 requests per windowMs
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || "600"),
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: false,
   message: { error: "Too many requests, please try again later." },
-  // Add proper IP extraction with guaranteed string return
-  keyGenerator: (req) => {
-    const realIP = req.headers["x-real-ip"];
-    const forwardedFor = req.headers["x-forwarded-for"];
-    return (
-      (typeof realIP === "string" ? realIP : undefined) ||
-      (typeof forwardedFor === "string" ? forwardedFor.split(",")[0] : undefined) ||
-      req.ip ||
-      "unknown"
-    );
-  },
+  keyGenerator: clientKey,
 });
 
 // Set up security middleware with helmet
@@ -122,10 +126,16 @@ app.use((req, res, next) => {
 });
 
 // API rate limiting for specific endpoints
+// Reading the tariff table is cheap (in-memory CSV) and interactive: searching,
+// sorting and paging all issue requests, so the old 50/15min cap throttled
+// ordinary browsing. Expensive AI routes keep their own tighter limiters.
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50, // limit each IP to 50 requests per windowMs
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
   message: { error: "Too many API requests, please try again later." },
+  keyGenerator: clientKey,
 });
 
 // Initialize services
