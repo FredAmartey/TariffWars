@@ -175,7 +175,7 @@ export class MarketAnalysisService {
 
       const averageTariffRate = this.calculateAverageTariffRate(tariffRates.data);
 
-      const prompt = `Based on the following tariff data and news articles, generate a market overview for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status such as Ended, Suspended or Proposed):
+      const prompt = `Based on the following tariff data and news articles, generate a market overview for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status: a rate is only in force when Status is Active — Proposed, Threatened and Under Investigation rates have NOT been imposed and must be described as proposed or threatened, while Ended and Suspended ones are no longer collected. A rate that carries an exception in its name, such as a lower rate for one country, applies at the stated exception for that country, not the headline rate):
 
       Tariff Data Sample (Average Rate: ${averageTariffRate.toFixed(1)}%):
       ${JSON.stringify(tariffRates.data.slice(0, 5), null, 2)}
@@ -250,7 +250,7 @@ export class MarketAnalysisService {
         uniqueCommodities.includes(t.commodity)
       );
 
-      const prompt = `Based on the following tariff data sample for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status such as Ended, Suspended or Proposed), generate a detailed commodity analysis for 5-7 major commodities mentioned or implied:
+      const prompt = `Based on the following tariff data sample for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status: a rate is only in force when Status is Active — Proposed, Threatened and Under Investigation rates have NOT been imposed and must be described as proposed or threatened, while Ended and Suspended ones are no longer collected. A rate that carries an exception in its name, such as a lower rate for one country, applies at the stated exception for that country, not the headline rate), generate a detailed commodity analysis for 5-7 major commodities mentioned or implied:
 
       Tariff Data Sample:
       ${JSON.stringify(commodityDataSample.slice(0, 15), null, 2)}
@@ -306,7 +306,7 @@ export class MarketAnalysisService {
         })
         .filter((r) => r.count > 0);
 
-      const prompt = `Based on the following regional tariff data summaries and news articles for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status such as Ended, Suspended or Proposed), generate a regional analysis for the key regions identified:
+      const prompt = `Based on the following regional tariff data summaries and news articles for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status: a rate is only in force when Status is Active — Proposed, Threatened and Under Investigation rates have NOT been imposed and must be described as proposed or threatened, while Ended and Suspended ones are no longer collected. A rate that carries an exception in its name, such as a lower rate for one country, applies at the stated exception for that country, not the headline rate), generate a regional analysis for the key regions identified:
 
       Regional Tariff Summary:
       ${JSON.stringify(regionalData, null, 2)}
@@ -352,7 +352,7 @@ export class MarketAnalysisService {
       const tariffRates = await this.tariffService.getTariffRates({ itemsPerPage: 1000 });
       const news = await this.newsService.getTariffNews();
 
-      const prompt = `Based on the following tariff data and news articles for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status such as Ended, Suspended or Proposed), generate market predictions:
+      const prompt = `Based on the following tariff data and news articles for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status: a rate is only in force when Status is Active — Proposed, Threatened and Under Investigation rates have NOT been imposed and must be described as proposed or threatened, while Ended and Suspended ones are no longer collected. A rate that carries an exception in its name, such as a lower rate for one country, applies at the stated exception for that country, not the headline rate), generate market predictions:
 
       Tariff Data Sample (Average Rate: ${this.calculateAverageTariffRate(tariffRates.data).toFixed(
         1
@@ -481,7 +481,7 @@ export class MarketAnalysisService {
         const tariffRates = await this.tariffService.getTariffRates({ itemsPerPage: 50 });
         const news = await this.newsService.getTariffNews();
 
-        const prompt = `Based on the following tariff data and news articles for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status such as Ended, Suspended or Proposed), generate 3-4 concise AI-powered insights for a dashboard widget. Prioritize identifying one significant 'alert' if applicable, and include a mix of 'positive' and 'negative' trends.
+        const prompt = `Based on the following tariff data and news articles for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status: a rate is only in force when Status is Active — Proposed, Threatened and Under Investigation rates have NOT been imposed and must be described as proposed or threatened, while Ended and Suspended ones are no longer collected. A rate that carries an exception in its name, such as a lower rate for one country, applies at the stated exception for that country, not the headline rate), generate 3-4 concise AI-powered insights for a dashboard widget. Prioritize identifying one significant 'alert' if applicable, and include a mix of 'positive' and 'negative' trends.
 
       Tariff Data Sample (Average Rate: ${this.calculateAverageTariffRate(tariffRates.data).toFixed(
         1
