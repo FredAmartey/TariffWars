@@ -18,12 +18,27 @@ const HISTORY_PATH = path.join(DATA_DIR, "history.json");
 // Rates that carry no number. Counting these as 0% would understate the average.
 const NON_NUMERIC = new Set(["N/A", "Restricted", "Exempt"]);
 
+// Mirrors backend/src/utils/effectiveStatus.ts: a Proposed row is already in
+// force once its effective date has passed. Both copies must agree, or this
+// snapshot and the live API would report different active counts on the days
+// between a tariff starting and the next weekly refresh recording it.
+const effectiveStatus = (status, effectiveDate) => {
+  if (status !== "Proposed") return status;
+  // Parsed as UTC so the turnover does not depend on the runner's timezone.
+  const startsAt = Date.parse(`${effectiveDate} UTC`);
+  if (Number.isNaN(startsAt)) return status;
+  return startsAt <= Date.now() ? "Active" : status;
+};
+
 const rows = parse(readFileSync(path.join(DATA_DIR, "tariffs_commodities.csv"), "utf8"), {
   columns: true,
   skip_empty_lines: true,
 });
 
-const active = rows.filter((r) => (r["Status"] || "").trim() === "Active");
+const active = rows.filter(
+  (r) =>
+    effectiveStatus((r["Status"] || "").trim(), (r["Effective Date"] || "").trim()) === "Active"
+);
 const rated = active
   .map((r) => String(r["Rate"] || "").trim())
   .filter((v) => !NON_NUMERIC.has(v))

@@ -94,6 +94,14 @@ export const TariffStats = () => {
     : isDarkMode
     ? "bg-red-900/50 text-red-300"
     : "bg-red-50 text-red-700";
+  // "since" only holds for a date that has actually arrived. The card reports
+  // the highest tariff currently being collected, so its start date is always
+  // in the past, but the field also carries "N/A", "TBD" and "Error" when
+  // there is nothing to report: drop the pill rather than say "since TBD".
+  const highestStartedOn = Number.isNaN(Date.parse(metrics.highestTariffEffectiveDate))
+    ? null
+    : metrics.highestTariffEffectiveDate;
+
   const yoyBaseline = metrics.yoyComparedTo
     ? new Date(`${metrics.yoyComparedTo}T00:00:00Z`).toLocaleDateString("en-US", {
         month: "short",
@@ -163,7 +171,7 @@ export const TariffStats = () => {
         </div>
         <div className="p-6 relative">
           <h3 className={`text-sm font-medium ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
-            Highest Tariff
+            Highest Active Tariff
           </h3>
           <p className={`text-3xl font-bold mt-2 ${isDarkMode ? "text-white" : "text-gray-800"}`}>
             {metrics.highestTariffRate !== null
@@ -174,13 +182,15 @@ export const TariffStats = () => {
             {metrics.highestTariffCommodity}
             {metrics.highestTariffCountries !== "N/A" && ` (${metrics.highestTariffCountries})`}
           </p>
-          <div
-            className={`mt-4 inline-flex items-center px-2 py-1 rounded-full text-xs ${
-              isDarkMode ? "bg-amber-900/50 text-amber-300" : "bg-amber-50 text-amber-700"
-            }`}
-          >
-            Effective: {metrics.highestTariffEffectiveDate}
-          </div>
+          {highestStartedOn && (
+            <div
+              className={`mt-4 inline-flex items-center px-2 py-1 rounded-full text-xs ${
+                isDarkMode ? "bg-amber-900/50 text-amber-300" : "bg-amber-50 text-amber-700"
+              }`}
+            >
+              Effective since {highestStartedOn}
+            </div>
+          )}
         </div>
       </div>
       <div

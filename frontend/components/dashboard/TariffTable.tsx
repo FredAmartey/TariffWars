@@ -29,6 +29,16 @@ interface TariffTableProps {
 
 type TabType = "countries" | "products";
 
+// The column was headed "Nature", which reads as how recent a tariff is, so
+// "New" beside a status of "Ended" or a 2025 date looked like a data error. It
+// classifies the kind of action and is independent of both status and date.
+const TARIFF_TYPE_TOOLTIP =
+  "Kind of trade action, independent of status and date. " +
+  "New: creates a tariff line. " +
+  "Additional: stacks on a duty already being collected. " +
+  "Reciprocal: retaliation imposed on the US. " +
+  "Temporary: time-limited by statute.";
+
 export const TariffTable: React.FC<TariffTableProps> = ({
   searchTerm = "",
   sortField = "effectiveDate",
@@ -657,9 +667,10 @@ export const TariffTable: React.FC<TariffTableProps> = ({
                       isDarkMode ? "text-gray-400" : "text-gray-600"
                     } cursor-pointer hover:bg-gray-700/50`}
                     onClick={() => handleSort("nature")}
+                    title={TARIFF_TYPE_TOOLTIP}
                   >
                     <div className="flex items-center">
-                      NATURE
+                      TYPE
                       {getSortIcon("nature")}
                     </div>
                   </th>
@@ -893,6 +904,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
                       className={`px-4 py-4 text-sm ${
                         isDarkMode ? "text-gray-200" : "text-gray-700"
                       }`}
+                      title={TARIFF_TYPE_TOOLTIP}
                     >
                       {entry.nature || "N/A"}
                     </td>

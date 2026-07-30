@@ -38,7 +38,21 @@ export const TariffRates = () => {
   const [tempFilterValueInput, setTempFilterValueInput] = useState<string>("");
 
   const filterableFields: FilterableField[] = [
-    { value: "status", label: "Status", predefinedValues: ["Active", "Paused", "Threatened"] },
+    {
+      value: "status",
+      // Offered "Paused", which matches no row in the dataset, while hiding the
+      // statuses that do. These are the values the data actually carries.
+      label: "Status",
+      predefinedValues: [
+        "Active",
+        "Proposed",
+        "Suspended",
+        "Threatened",
+        "Under Investigation",
+        "Ended",
+        "Withdrawn",
+      ],
+    },
     {
       value: "country",
       label: "Country",
@@ -47,7 +61,12 @@ export const TariffRates = () => {
     { value: "commodity", label: "Commodity" },
     { value: "tariffOrigin", label: "Tariff From" },
     { value: "to", label: "Tariff To" },
-    { value: "nature", label: "Nature" },
+    {
+      // Field name stays "nature" to match the API; only the label changes.
+      value: "nature",
+      label: "Type",
+      predefinedValues: ["New", "Additional", "Reciprocal", "Temporary"],
+    },
   ];
 
   const handleAddFilter = (field: string, value: string) => {

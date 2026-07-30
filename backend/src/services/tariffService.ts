@@ -3,6 +3,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { parse } from "csv-parse";
 import { stringify } from "csv-stringify/sync";
+import { effectiveStatus } from "../utils/effectiveStatus";
 
 export class TariffService {
   private cache: Map<string, { data: TariffEntry[]; timestamp: number }> = new Map();
@@ -86,7 +87,10 @@ export class TariffService {
           country: record.To || "N/A",
           product: record.Commodity || "N/A",
           commodity: record.Commodity || "N/A",
-          status: record.Status || "Unknown",
+          // Promotes a Proposed row once its start date has passed, so the
+          // dashboard does not keep calling a tariff upcoming while it is
+          // being collected. See utils/effectiveStatus.
+          status: effectiveStatus(record.Status || "Unknown", record["Effective Date"] || ""),
           rate: rateNum,
           rateDisplay: rateDisplayStr,
           scope: record.Scope || "N/A",

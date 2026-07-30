@@ -18,10 +18,20 @@ const DATA_DIR = flagValue("--data-dir") ?? path.join(ROOT, "backend", "src", "d
 // Churn comparison needs git history of the real data files; skip it for fixture dirs.
 const CHURN_ENABLED = flagValue("--data-dir") === undefined;
 
+// "Withdrawn" covers a threat that lapsed or was superseded before it ever took
+// effect. Those rows used to be "Ended", which claims they were once collected:
+// a 250% dairy tariff and a 200% spirits tariff read as historical fact when
+// neither was ever charged.
 const STATUS_ENUM = new Set([
-  "Active", "Paused", "Suspended", "Ended", "Proposed",
+  "Active", "Paused", "Suspended", "Ended", "Withdrawn", "Proposed",
   "Delayed", "Threatened", "Under Investigation", "N/A",
 ]);
+
+// Nature is the kind of trade action, not how recent it is, which is why "New"
+// sits happily next to a status of "Ended" or a 2025 date. Status was validated
+// from the start and this column never was, so the refresh agent could coin a
+// fifth value and CI would wave it through.
+const NATURE_ENUM = new Set(["New", "Additional", "Reciprocal", "Temporary"]);
 const RATE_SPECIALS = new Set(["Exempt", "Restricted", "N/A"]);
 const CHANGE_PLACEHOLDERS = new Set(["—", "-", "N/A", ""]);
 const MAX_CHURN = 0.6;
@@ -157,6 +167,12 @@ for (const spec of FILES) {
     const status = r[col("Status")].trim();
     if (!STATUS_ENUM.has(status)) {
       fail(`${where}: status "${status}" not in enum [${[...STATUS_ENUM].join(", ")}]`);
+    }
+    if (spec.headers.includes("Nature")) {
+      const nature = r[col("Nature")].trim();
+      if (!NATURE_ENUM.has(nature)) {
+        fail(`${where}: nature "${nature}" not in enum [${[...NATURE_ENUM].join(", ")}]`);
+      }
     }
     for (const c of spec.rateCols) checkRate(r[col(c)], `${where} (${c})`);
     for (const c of spec.changeCols) checkChange(r[col(c)], `${where} (${c})`);

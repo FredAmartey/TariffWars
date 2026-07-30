@@ -132,6 +132,13 @@ export class MarketAnalysisService {
     });
   }
 
+  // Five prompts carried this grounding clause verbatim, so every change to the
+  // status vocabulary had to land in five places or the panels would describe
+  // the same dataset by different rules. One copy, spliced into each.
+  private dataGrounding(): string {
+    return `today is ${this.currentPeriodLabel()}. Every "Effective Date" at or before today is already in force or concluded, so describe it in past or present tense, never as upcoming. Honor each row's Status: a rate is only being collected when Status is Active. Proposed, Threatened and Under Investigation rates have NOT been imposed and must be described as proposed or threatened. Ended, Suspended and Withdrawn rates are not being collected, and a Withdrawn one never took effect at all, so never state it as a rate anyone paid. A rate that carries an exception in its name, such as a lower rate for one country, applies at the stated exception for that country, not the headline rate`;
+  }
+
   private async generateWithOpenAI(prompt: string): Promise<string> {
     try {
       const response = await this.openai.chat.completions.create({
@@ -243,7 +250,7 @@ export class MarketAnalysisService {
         tariffRates.data.filter((t) => t.status === "Active" && this.carriesRate(t))
       );
 
-      const prompt = `Based on the following tariff data and news articles, generate a market overview for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status: a rate is only in force when Status is Active — Proposed, Threatened and Under Investigation rates have NOT been imposed and must be described as proposed or threatened, while Ended and Suspended ones are no longer collected. A rate that carries an exception in its name, such as a lower rate for one country, applies at the stated exception for that country, not the headline rate):
+      const prompt = `Based on the following tariff data and news articles, generate a market overview for the current period (${this.dataGrounding()}):
 
       Tariff Data Sample (Average Rate: ${averageTariffRate.toFixed(1)}%):
       ${JSON.stringify(tariffRates.data.slice(0, 5), null, 2)}
@@ -318,7 +325,7 @@ export class MarketAnalysisService {
         uniqueCommodities.includes(t.commodity)
       );
 
-      const prompt = `Based on the following tariff data sample for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status: a rate is only in force when Status is Active — Proposed, Threatened and Under Investigation rates have NOT been imposed and must be described as proposed or threatened, while Ended and Suspended ones are no longer collected. A rate that carries an exception in its name, such as a lower rate for one country, applies at the stated exception for that country, not the headline rate), generate a detailed commodity analysis for 5-7 major commodities mentioned or implied:
+      const prompt = `Based on the following tariff data sample for the current period (${this.dataGrounding()}), generate a detailed commodity analysis for 5-7 major commodities mentioned or implied:
 
       Tariff Data Sample:
       ${JSON.stringify(commodityDataSample.slice(0, 15), null, 2)}
@@ -376,7 +383,7 @@ export class MarketAnalysisService {
         })
         .filter((r) => r.count > 0);
 
-      const prompt = `Based on the following regional tariff data summaries and news articles for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status: a rate is only in force when Status is Active — Proposed, Threatened and Under Investigation rates have NOT been imposed and must be described as proposed or threatened, while Ended and Suspended ones are no longer collected. A rate that carries an exception in its name, such as a lower rate for one country, applies at the stated exception for that country, not the headline rate), generate a regional analysis for the key regions identified:
+      const prompt = `Based on the following regional tariff data summaries and news articles for the current period (${this.dataGrounding()}), generate a regional analysis for the key regions identified:
 
       Regional Tariff Summary:
       ${JSON.stringify(regionalData, null, 2)}
@@ -422,7 +429,7 @@ export class MarketAnalysisService {
       const tariffRates = await this.tariffService.getTariffRates({ itemsPerPage: 1000 });
       const news = await this.newsService.getTariffNews();
 
-      const prompt = `Based on the following tariff data and news articles for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status: a rate is only in force when Status is Active — Proposed, Threatened and Under Investigation rates have NOT been imposed and must be described as proposed or threatened, while Ended and Suspended ones are no longer collected. A rate that carries an exception in its name, such as a lower rate for one country, applies at the stated exception for that country, not the headline rate), generate market predictions:
+      const prompt = `Based on the following tariff data and news articles for the current period (${this.dataGrounding()}), generate market predictions:
 
       Tariff Data Sample (Average Rate: ${this.calculateAverageTariffRate(
         tariffRates.data.filter((t) => this.carriesRate(t))
@@ -536,7 +543,7 @@ export class MarketAnalysisService {
         const tariffRates = await this.tariffService.getTariffRates({ itemsPerPage: 50 });
         const news = await this.newsService.getTariffNews();
 
-        const prompt = `Based on the following tariff data and news articles for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status: a rate is only in force when Status is Active — Proposed, Threatened and Under Investigation rates have NOT been imposed and must be described as proposed or threatened, while Ended and Suspended ones are no longer collected. A rate that carries an exception in its name, such as a lower rate for one country, applies at the stated exception for that country, not the headline rate), generate 3-4 concise AI-powered insights for a dashboard widget. Prioritize identifying one significant 'alert' if applicable, and include a mix of 'positive' and 'negative' trends.
+        const prompt = `Based on the following tariff data and news articles for the current period (${this.dataGrounding()}), generate 3-4 concise AI-powered insights for a dashboard widget. Prioritize identifying one significant 'alert' if applicable, and include a mix of 'positive' and 'negative' trends.
 
       Tariff Data Sample (Average Rate: ${this.calculateAverageTariffRate(
         tariffRates.data.filter((t) => this.carriesRate(t))
@@ -628,10 +635,10 @@ export class MarketAnalysisService {
       );
       console.log(`Found ${activeTariffsData.length} active tariffs with numeric rates.`);
 
-      // Average only over what is actually collected. Including Ended,
+      // Average only over what is actually collected. Including Withdrawn,
       // Proposed and Suspended rows pulled a lapsed 250% dairy threat and a
       // superseded 200% spirits rate into the headline number, and disagreed
-      // with the Highest Tariff metric right beside it, which is active-only.
+      // with the Highest Active Tariff metric beside it, which is active-only.
       const averageRate = this.calculateAverageTariffRate(
         activeTariffsData.filter((t) => this.carriesRate(t))
       );
