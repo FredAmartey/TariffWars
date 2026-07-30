@@ -81,16 +81,12 @@ export const TariffStats = () => {
     );
   }
 
-  const yoyChangePositive = metrics.yoyChange >= 0;
-  const ChangeIcon = yoyChangePositive ? TrendingUpIcon : TrendingDownIcon;
-  const changeColorClass = yoyChangePositive
-    ? isDarkMode
-      ? "bg-green-900/50 text-green-300"
-      : "bg-green-50 text-green-700"
-    : isDarkMode
-    ? "bg-red-900/50 text-red-300"
-    : "bg-red-50 text-red-700";
-  const changePrefix = yoyChangePositive ? "+" : "";
+  // There is no historical snapshot to compare against, so the card reports
+  // how much of the dataset is actually in force rather than a fabricated
+  // year-over-year movement.
+  const coverageColorClass = isDarkMode
+    ? "bg-indigo-900/50 text-indigo-300"
+    : "bg-indigo-50 text-indigo-700";
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -119,14 +115,12 @@ export const TariffStats = () => {
             {metrics.averageRate.toFixed(2)}%
           </p>
           <p className={`text-sm mt-1 ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
-            Across all commodities
+            Across active tariffs
           </p>
           <div
-            className={`mt-4 inline-flex items-center px-2 py-1 rounded-full text-xs ${changeColorClass}`}
+            className={`mt-4 inline-flex items-center px-2 py-1 rounded-full text-xs ${coverageColorClass}`}
           >
-            <ChangeIcon className="h-3 w-3 mr-1" />
-            {changePrefix}
-            {metrics.yoyChange.toFixed(1)}% YoY
+            {metrics.activeTariffs} of {metrics.totalTariffs} active
           </div>
         </div>
       </div>

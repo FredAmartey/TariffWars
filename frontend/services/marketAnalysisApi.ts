@@ -15,8 +15,8 @@ export type {
 
 export interface KeyMetrics {
   averageRate: number;
-  yoyChange: number;
   activeTariffs: number;
+  totalTariffs: number;
   threatenedTariffs: number;
   summaryDescription: string;
   highestTariffRate: number | null;

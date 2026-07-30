@@ -159,12 +159,12 @@ const OverviewTab = ({
           Current Market Outlook
         </h3>
         <p className={`text-sm mb-4 ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
-          Global tariff rates have {yearOverYearChange > 0 ? "increased" : "decreased"} by an
-          average of {averageTariffRate.toFixed(1)}% over the past 12 months (YoY Change:{" "}
-          {yearOverYearChange.toFixed(1)}%), with significant variations across regions and
-          commodities. This {yearOverYearChange > 0 ? "upward" : "downward"} trend reflects{" "}
-          {yearOverYearChange > 0 ? "growing protectionist policies" : "improving trade relations"}{" "}
-          amid continued economic uncertainty and geopolitical tensions.
+          {/* This previously reported the average rate *level* as the amount rates had
+              changed by over 12 months, and leaned on a year-over-year figure no
+              historical data supports. State the level as a level. */}
+          Active tariffs average {averageTariffRate.toFixed(1)}%, with significant variations
+          across regions and commodities, amid continued economic uncertainty and geopolitical
+          tensions.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div className={`p-4 rounded-lg ${isDarkMode ? "bg-gray-800/70" : "bg-white"}`}>

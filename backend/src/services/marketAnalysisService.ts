@@ -54,8 +54,8 @@ export interface AIInsight {
 // Interface for Key Metrics data
 export interface KeyMetrics {
   averageRate: number;
-  yoyChange: number;
   activeTariffs: number;
+  totalTariffs: number;
   threatenedTariffs: number;
   summaryDescription: string;
   highestTariffRate: number | null;
@@ -154,13 +154,8 @@ export class MarketAnalysisService {
 
   private calculateAverageTariffRate(tariffs: TariffEntry[]): number {
     const rates = tariffs.map((t) => t.rate);
+    if (rates.length === 0) return 0;
     return rates.reduce((sum, rate) => sum + rate, 0) / rates.length;
-  }
-
-  private calculateYearOverYearChange(tariffs: TariffEntry[]): number {
-    const increases = tariffs.filter((t) => t.isIncrease).length;
-    const decreases = tariffs.filter((t) => !t.isIncrease).length;
-    return ((increases - decreases) / tariffs.length) * 100;
   }
 
   public clearCache(): void {
@@ -173,7 +168,10 @@ export class MarketAnalysisService {
       const tariffRates = await this.tariffService.getTariffRates({ itemsPerPage: 1000 });
       const news = await this.newsService.getTariffNews();
 
-      const averageTariffRate = this.calculateAverageTariffRate(tariffRates.data);
+      // Active-only, matching the Key Metrics card and the copy that renders it.
+      const averageTariffRate = this.calculateAverageTariffRate(
+        tariffRates.data.filter((t) => t.status === "Active" && typeof t.rate === "number")
+      );
 
       const prompt = `Based on the following tariff data and news articles, generate a market overview for the current period (today is ${this.currentPeriodLabel()}; every "Effective Date" at or before today is already in force or concluded — describe it in past or present tense, never as upcoming, and honor each row's Status: a rate is only in force when Status is Active — Proposed, Threatened and Under Investigation rates have NOT been imposed and must be described as proposed or threatened, while Ended and Suspended ones are no longer collected. A rate that carries an exception in its name, such as a lower rate for one country, applies at the stated exception for that country, not the headline rate):
 
@@ -413,23 +411,6 @@ export class MarketAnalysisService {
     return regionMap[country] || "Other";
   }
 
-  private generateRegionDescription(
-    region: string,
-    tariffs: TariffEntry[],
-    news: NewsArticle[]
-  ): string {
-    const avgRate = this.calculateAverageTariffRate(tariffs);
-    const change = this.calculateYearOverYearChange(tariffs);
-    const trend = change > 0 ? "increasing" : "decreasing";
-
-    return (
-      `${region} tariffs are currently ${trend}, with an average rate of ${avgRate.toFixed(1)}%. ` +
-      `The region has seen a ${Math.abs(change).toFixed(
-        1
-      )}% change in tariff rates over the past year.`
-    );
-  }
-
   private getKeySectors(tariffs: TariffEntry[]): string[] {
     const sectors = new Map<string, number>();
     tariffs.forEach((t) => {
@@ -544,8 +525,8 @@ export class MarketAnalysisService {
 
         return {
           averageRate: 0,
-          yoyChange: 0,
           activeTariffs: 0,
+          totalTariffs: 0,
           threatenedTariffs: 0,
           summaryDescription: "No tariff data available.",
           highestTariffRate: null,
@@ -569,12 +550,13 @@ export class MarketAnalysisService {
       );
       console.log(`Found ${activeTariffsData.length} active tariffs with numeric rates.`);
 
-      // Calculations using ALL tariffs (where appropriate)
-      const averageRate = this.calculateAverageTariffRate(
-        tariffs.filter((t) => typeof t.rate === "number")
-      );
-      const yoyChange = this.calculateYearOverYearChange(tariffs);
+      // Average only over what is actually collected. Including Ended,
+      // Proposed and Suspended rows pulled a lapsed 250% dairy threat and a
+      // superseded 200% spirits rate into the headline number, and disagreed
+      // with the Highest Tariff metric right beside it, which is active-only.
+      const averageRate = this.calculateAverageTariffRate(activeTariffsData);
       const activeTariffsCount = tariffs.filter((t) => t.status === "Active").length;
+      const totalTariffsCount = tariffs.length;
       const threatenedTariffsCount = tariffs.filter((t) => t.status === "Threatened").length;
 
       const highestTariffEntry = [...activeTariffsData].sort(
@@ -645,8 +627,8 @@ export class MarketAnalysisService {
 
       return {
         averageRate,
-        yoyChange,
         activeTariffs: activeTariffsCount,
+        totalTariffs: totalTariffsCount,
         threatenedTariffs: threatenedTariffsCount,
         summaryDescription,
 
@@ -676,8 +658,8 @@ export class MarketAnalysisService {
 
       return {
         averageRate: 0,
-        yoyChange: 0,
         activeTariffs: 0,
+        totalTariffs: 0,
         threatenedTariffs: 0,
         summaryDescription: "Error calculating key metrics.",
         highestTariffRate: null,
