@@ -1,0 +1,71 @@
+name: data-freshness
+
+# The weekly refresh routine only reports failures it survives long enough to
+# notice: its prompt opens a GitHub issue when validation fails, so a run that
+# dies earlier (or never fires) leaves no trace. This job watches the dataset
+# from outside so silence can't be mistaken for success.
+
+on:
+  schedule:
+    - cron: "0 14 * * *" # daily, 14:00 UTC — after the Monday 10:00 UTC routine
+  workflow_dispatch:
+    inputs:
+      threshold_days:
+        description: "Age in days that counts as stale (lower it to test the alert path)"
+        required: false
+        default: "9"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Measure dataset age
+        id: age
+        run: |
+          set -euo pipefail
+          LAST=$(node -p "require('./backend/src/data/meta.json').lastUpdated")
+          AGE=$(( ( $(date -u +%s) - $(date -u -d "${LAST}T00:00:00Z" +%s) ) / 86400 ))
+          # Refreshes land weekly, so 9 days is one missed Monday plus two days
+          # of grace before we call it stale.
+          THRESHOLD="${{ github.event.inputs.threshold_days || '9' }}"
+          echo "last=${LAST}" >> "$GITHUB_OUTPUT"
+          echo "age=${AGE}" >> "$GITHUB_OUTPUT"
+          echo "stale=$([ "${AGE}" -gt "${THRESHOLD}" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "meta.json lastUpdated=${LAST} — ${AGE} days old (threshold ${THRESHOLD})"
+
+      - name: Alert if stale
+        if: steps.age.outputs.stale == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LAST: ${{ steps.age.outputs.last }}
+          AGE: ${{ steps.age.outputs.age }}
+        run: |
+          set -euo pipefail
+          gh label create stale-data --color B60205 \
+            --description "Tariff dataset has not refreshed on schedule" --force
+
+          BODY=$(printf '%s\n' \
+            "The weekly refresh routine has not updated the dataset." \
+            "" \
+            "- \`backend/src/data/meta.json\` lastUpdated: **${LAST}** (${AGE} days ago)" \
+            "- Expected cadence: every Monday, 10:00 UTC" \
+            "" \
+            "The routine only opens an issue when validation fails, so a run that dies" \
+            "earlier — or never fires — reports nothing. This alert covers that gap." \
+            "" \
+            "Check the routine at https://claude.ai/code/routines")
+
+          # One open alert at a time; comment on it rather than filing duplicates daily.
+          EXISTING=$(gh issue list --state open --label stale-data --json number --jq '.[0].number // empty')
+          if [ -n "${EXISTING}" ]; then
+            gh issue comment "${EXISTING}" --body "${BODY}"
+          else
+            gh issue create --title "tariff data is stale (${AGE} days)" \
+              --label stale-data --body "${BODY}"
+          fi
