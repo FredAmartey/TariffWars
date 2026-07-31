@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      # Full npm ci pulls puppeteer/playwright; the validator only needs csv-parse.
+      # The validator only needs csv-parse, so skip the full install.
       - run: npm install --no-save --no-audit --no-fund csv-parse
       - run: node scripts/validate-data.mjs --base HEAD~1
         env:
