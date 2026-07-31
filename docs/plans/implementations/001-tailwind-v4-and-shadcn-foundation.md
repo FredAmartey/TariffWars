@@ -63,7 +63,7 @@ export default { plugins: { tailwindcss: {}, autoprefixer: {} } };
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 /* Import Inter font from Google Fonts */
-@import url('<https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'>);
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 ```
 
 `frontend/index.css` also contains, and these must survive the upgrade intact:
