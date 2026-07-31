@@ -48,10 +48,10 @@ html {
 /*
  * Respect the OS "reduce motion" setting.
  *
- * The app ships a 30-second infinite marquee, pulse-glow, fade-in-up and
- * several transform transitions, none of which consulted this. Loading
- * spinners are exempt on purpose: they report state rather than decorate, and
- * freezing one reads as a hung page.
+ * The app ships a 30-second infinite marquee and several transform
+ * transitions, none of which consulted this. Loading spinners are exempt on
+ * purpose: they report state rather than decorate, and freezing one reads as a
+ * hung page.
  */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -66,34 +66,4 @@ html {
   .animate-spin {
     animation: spin 1.5s linear infinite !important;
   }
-}
-
-/* Custom animations */
-@keyframes pulse-glow {
-  0%, 100% {
-    opacity: 0.8;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.05);
-  }
-}
-.animate-pulse-glow {
-  animation: pulse-glow 2s infinite ease-in-out;
-}
-/* Custom utility classes */
-.text-shadow {
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-.text-gradient {
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-}
-.bg-gradient-blue-purple {
-  background: linear-gradient(135deg, #4f46e5 0%, #7e22ce 100%);
-}
-.bg-gradient-green-blue {
-  background: linear-gradient(135deg, #059669 0%, #3b82f6 100%);
 }

@@ -14,7 +14,7 @@ import axios from "axios";
 // "X" (US Steel) used to be here and never returned a quote: it was delisted
 // after the Nippon Steel acquisition, so every round spent two requests on it
 // and came back 19 of 20.
-export const TRACKED_SYMBOLS = [
+const TRACKED_SYMBOLS = [
   "NUE", "STLD", "CLF", "TSLA", "AAPL", "GM", "INTC", "CAT", "BA",
   "SMH", "XME", "F", "MU", "JD", "NIO", "BABA", "TM", "CRSR", "HPQ",
 ] as const;

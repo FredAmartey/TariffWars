@@ -23,7 +23,9 @@ interface TariffTableProps {
   page: number;
   itemsPerPage: number;
   onPageChange: (page: number) => void;
-  onTotalPagesChange: (totalPages: number) => void;
+  /** Optional: the dashboard renders no pager of its own, so it has no
+      count to receive and used to pass an empty function to satisfy this. */
+  onTotalPagesChange?: (totalPages: number) => void;
   handleSortChange?: (e: ChangeEvent<HTMLSelectElement>) => void;
   /**
    * Lets an owner that renders its own sort control stay in step with the
@@ -114,7 +116,7 @@ const marketImpactClass = (entry: TariffEntry, isDarkMode: boolean): string => {
 };
 
 /** Human labels for every sortable field, shared by the table and its owners. */
-export const COLUMN_LABELS: Record<string, string> = {
+const COLUMN_LABELS: Record<string, string> = {
   commodity: "Commodity",
   tariffOrigin: "Tariff from",
   to: "Target",
@@ -384,7 +386,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
     if (cachedResult && now - cachedResult.timestamp < cacheTimeout) {
       setData(cachedResult.data.data);
       setTotalItems(cachedResult.data.total);
-      onTotalPagesChange(cachedResult.data.totalPages);
+      onTotalPagesChange?.(cachedResult.data.totalPages);
       // Clear the previous failure too. Serving cached rows while last
       // request's error banner stayed on screen showed good data under a
       // message saying the data could not be loaded.
@@ -430,13 +432,13 @@ export const TariffTable: React.FC<TariffTableProps> = ({
         requestCache.current[cacheKey] = { data: response, timestamp: now };
         setData(response.data);
         setTotalItems(response.total || 0);
-        onTotalPagesChange(response.totalPages);
+        onTotalPagesChange?.(response.totalPages);
       } else {
         console.error("Invalid tariff data structure:", response);
         setError("Tariff data came back in an unexpected format.");
         setData([]);
         setTotalItems(0);
-        onTotalPagesChange(1);
+        onTotalPagesChange?.(1);
       }
       setIsLoading(false);
     } catch (err) {

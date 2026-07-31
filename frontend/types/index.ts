@@ -1,20 +1,19 @@
+// Mirrors backend/src/types/tariff.ts. It had drifted: `scope`,
+// `additionalInfo`, `lastUpdated` and `impact` were dropped from the API
+// payload but kept here, so the compiler promised four fields that no response
+// has carried since. `product` and `isIncrease` are still sent but nothing
+// renders them.
 export interface TariffEntry {
   id: string;
   type: "country" | "product";
   country: string;
-  product: string;
   commodity: string;
   status: string;
   rate: number;
   rateDisplay?: string;
-  scope: string;
-  additionalInfo: string;
   effectiveDate: string;
-  lastUpdated: string;
-  impact: "low" | "medium" | "high";
   tariffOrigin: string;
   to: string;
-  isIncrease: boolean;
   change: "increase" | "decrease" | "no-change";
   changeDisplay: string;
   nature?: string;
@@ -34,13 +33,6 @@ export interface NewsArticle {
   source: { name: string };
   url?: string;
   imageUrl?: string;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  itemsPerPage: number;
 }
 
 export interface TariffResponse {

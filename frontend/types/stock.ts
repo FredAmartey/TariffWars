@@ -11,14 +11,14 @@ export interface StockData {
   price: number;
   change: number;
   changePercent: number;
-  volume: number;
   /** Millions of USD. Null when the provider has no profile for the symbol. */
   marketCap: number | null;
   previousClose?: number;
   dayHigh?: number;
   dayLow?: number;
-  tradeCount?: number;
-  index?: number;
+  // `volume`, `tradeCount` and `index` used to sit here. Finnhub's quote
+  // endpoint returns none of them, so the mapper filled the first two with a
+  // literal 0 and nothing ever read any of the three.
 }
 
 /** Shape returned by our own /api/stocks/quotes proxy. */

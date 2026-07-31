@@ -387,18 +387,7 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
       setIsLoadingNews(true);
       setNewsError(null);
       try {
-        const response = await apiService.getNewsArticles({});
-
-        if (!response || !response.data) {
-          throw new Error("Invalid response format from news API");
-        }
-
-        const data: NewsArticle[] = response.data;
-
-        if (!Array.isArray(data)) {
-          throw new Error("News data is not in the expected array format");
-        }
-
+        const data = await apiService.getNewsArticles();
         setArticles(data);
 
         // Fill in migrated placeholders once the real article shows up in the

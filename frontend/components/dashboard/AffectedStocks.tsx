@@ -2,33 +2,27 @@ import React, { useState, useEffect, useCallback, useContext } from "react";
 import { TrendingUpIcon, TrendingDownIcon, MinusIcon, PauseIcon, PlayIcon } from "lucide-react";
 import styles from "./AffectedStocks.module.css";
 import { StockData, StockDirection } from "../../types/stock";
-import { stockApi } from "../../services/api";
+import { apiService } from "../../services/api";
 import { ThemeContext } from "../../App"; // Import ThemeContext
 
-// The tracked symbol list lives on the backend now (services/stockService.ts),
-// which is also what bounds the symbols it will ask the provider about.
+// The tracked symbol list lives on the backend (services/stockService.ts),
+// which is also what bounds the symbols it will ask the provider about. These
+// three tables are keyed off it, so an entry for a symbol the backend never
+// requests can never render. They previously carried twelve such entries:
+// MSFT, AMZN, NVDA, GOOG, META, WMT, DE, FCX and AA were never tracked at all,
+// and X (US Steel) was dropped when it delisted.
 
 // Add company full names for display
 const COMPANY_NAMES: Record<string, string> = {
   AAPL: "Apple Inc.",
-  MSFT: "Microsoft Corporation",
-  AMZN: "Amazon.com, Inc.",
-  NVDA: "NVIDIA Corporation",
   TSLA: "Tesla, Inc.",
-  GOOG: "Alphabet Inc.",
-  META: "Meta Platforms, Inc.",
-  WMT: "Walmart Inc.",
   BA: "Boeing Company",
-  X: "United States Steel Corporation",
   XME: "SPDR Metals & Mining ETF",
   GM: "General Motors Company",
   F: "Ford Motor Company",
   NUE: "Nucor Corporation",
   CLF: "Cleveland-Cliffs Inc.",
   CAT: "Caterpillar Inc.",
-  DE: "Deere & Company",
-  FCX: "Freeport-McMoRan Inc.",
-  AA: "Alcoa Corporation",
   STLD: "Steel Dynamics, Inc.",
   MU: "Micron Technology, Inc.",
   JD: "JD.com, Inc.",
@@ -37,14 +31,12 @@ const COMPANY_NAMES: Record<string, string> = {
   TM: "Toyota Motor Corporation",
   CRSR: "Corsair Gaming, Inc.",
   HPQ: "HP Inc.",
+  INTC: "Intel Corporation",
+  SMH: "VanEck Semiconductor ETF",
 };
 
 // Mapping of impact reasons based on sector/symbol
 const IMPACT_REASONS: { [key: string]: { positive: string; negative: string } } = {
-  X: {
-    positive: "Benefiting from steel tariffs and domestic market protection",
-    negative: "Market concerns over tariff effectiveness",
-  },
   NUE: {
     positive: "Strong domestic steel demand and trade protection",
     negative: "Rising raw material costs impacting margins",
@@ -125,7 +117,6 @@ const IMPACT_REASONS: { [key: string]: { positive: string; negative: string } } 
 
 // Mapping of sectors for symbols
 const SECTORS: { [key: string]: string } = {
-  X: "Steel Manufacturing",
   NUE: "Steel Production",
   STLD: "Steel Manufacturing",
   CLF: "Mining & Steel",
@@ -327,7 +318,7 @@ export const AffectedStocks: React.FC = () => {
     setIsLoading(true);
     try {
       setError(null);
-      const { quotes, capturedAt } = await stockApi.getQuotes();
+      const { quotes, capturedAt } = await apiService.getStockQuotes();
       setCapturedAt(capturedAt);
 
       const seen = new Set<string>();
@@ -357,12 +348,10 @@ export const AffectedStocks: React.FC = () => {
             price: q.price,
             change: q.change,
             changePercent,
-            volume: 0,
             marketCap: q.marketCap,
             previousClose: q.previousClose,
             dayHigh: q.dayHigh,
             dayLow: q.dayLow,
-            tradeCount: 0,
           };
         });
 

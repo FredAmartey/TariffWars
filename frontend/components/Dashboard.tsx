@@ -77,13 +77,13 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
   const [exportDataset, setExportDataset] = useState<"product" | "country">("product");
   const [showMarketAnalysis, setShowMarketAnalysis] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  // TariffTable owns its own search, sort and filter state; these setters
-  // were never called, so the values here could only ever be the defaults.
+  // TariffTable owns its own search, sort and filter state. This page used to
+  // declare a frozen "", "effectiveDate", "desc" and [] and pass them down,
+  // which only restated the component's own defaults; the search string in
+  // particular was permanently empty, so the export wiring that read it and the
+  // modal copy that reported it were both unreachable. The dashboard has no
+  // search box: that lives on the Tariff Rates page.
   const itemsPerPage = 5;
-  const searchTerm = "";
-  const sortField = "effectiveDate";
-  const sortDirection: "asc" | "desc" = "desc";
-  const filters: Array<{ field: string; value: string }> = [];
 
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -112,7 +112,6 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
     // is open and what is being searched. It used to always export the
     // commodity list unfiltered, even from the Countries tab.
     const params = new URLSearchParams({ format: exportFormat, dataset: exportDataset });
-    if (searchTerm) params.set("search", searchTerm);
 
     window.open(
       `${window.location.origin}/projects/tariff-wars/api/tariffs/export?${params}`,
@@ -209,14 +208,9 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
                 and "Type". The full eight-column layout was ~60px wider than
                 this card, so the effective date was clipped mid-value. */}
             <TariffTable
-              searchTerm={searchTerm}
-              sortField={sortField}
-              sortDirection={sortDirection}
-              filters={filters}
               page={currentPage}
               itemsPerPage={itemsPerPage}
               onPageChange={setCurrentPage}
-              onTotalPagesChange={() => {}}
               onDatasetChange={setExportDataset}
               variant="compact"
             />
@@ -390,8 +384,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
             Export Data
           </h3>
           <p className={`mb-4 text-sm ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
-            Export the {exportDataset === "country" ? "countries" : "commodities"} table
-            {searchTerm ? ` matching "${searchTerm}"` : ""}:
+            Export the {exportDataset === "country" ? "countries" : "commodities"} table:
           </p>
           <div className="space-y-3">
             {["CSV", "JSON"].map((format) => (

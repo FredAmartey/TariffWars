@@ -59,47 +59,23 @@ class ApiService {
     }
   }
 
-  async getNewsArticles(params: {
-    search?: string;
-    sortField?: keyof NewsArticle;
-    sortDirection?: "asc" | "desc";
-    filters?: Array<{
-      field: string;
-      value: string;
-    }>;
-    page?: number;
-    itemsPerPage?: number;
-  }): Promise<{
-    data: NewsArticle[];
-    total: number;
-    page: number;
-    itemsPerPage: number;
-  }> {
+  /**
+   * The whole news feed. It takes no arguments because the endpoint takes no
+   * arguments: this used to accept search, sort, filter and pagination options,
+   * serialise them onto a request that ignores every one of them, and wrap the
+   * result in a `{ total, page, itemsPerPage }` envelope computed from those
+   * same ignored options. The only caller read `.data` and filtered and paged
+   * the list itself.
+   */
+  async getNewsArticles(): Promise<NewsArticle[]> {
     try {
-      const response = await apiClient.get("/api/news/tariff-news", {
-        params: {
-          ...params,
-          filters: params.filters ? JSON.stringify(params.filters) : undefined,
-        },
-      });
+      const response = await apiClient.get("/api/news/tariff-news");
 
-      // Ensure the response is an array before wrapping
-      if (Array.isArray(response.data)) {
-        const articles: NewsArticle[] = response.data;
-        const itemsPerPage = params.itemsPerPage || 10;
-        const page = params.page || 1;
-        // Wrap the array in the expected object structure
-        return {
-          data: articles,
-          total: articles.length,
-          page: page,
-          itemsPerPage: itemsPerPage,
-        };
-      } else {
-        // Handle unexpected non-array response from backend
+      if (!Array.isArray(response.data)) {
         console.error("Backend returned non-array for news:", response.data);
         throw new Error("Invalid data format received from news API backend.");
       }
+      return response.data;
     } catch (error) {
       console.error("Error in getNewsArticles service call:", error);
       throw error;
@@ -134,6 +110,3 @@ class ApiService {
 }
 
 export const apiService = new ApiService();
-export const stockApi = {
-  getQuotes: () => apiService.getStockQuotes(),
-};
