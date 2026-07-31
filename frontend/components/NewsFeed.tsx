@@ -10,6 +10,7 @@ import {
   SearchIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  NewspaperIcon,
 } from "lucide-react";
 import { useNotifications } from "../context/NotificationsContext";
 import { NewsArticle } from "../types/index";
@@ -80,6 +81,230 @@ function readBookmarks(): NewsArticle[] {
   }
 }
 
+/**
+ * Syndicated summaries routinely end in "Read More: https://…", which renders
+ * as a wrapped, unclickable URL eating three lines of the card.
+ */
+function cleanSummary(summary: string | undefined): string {
+  if (!summary) return "";
+  return summary
+    .replace(/\s*(read more|continue reading|full story)\s*:?\s*https?:\/\/\S+\s*$/i, "")
+    .replace(/\s*https?:\/\/\S+\s*$/i, "")
+    .trim();
+}
+
+const formatDate = (dateString: string | undefined) => {
+  if (!dateString) return "N/A";
+  let date = parseISO(dateString);
+  if (!isValid(date)) date = new Date(dateString);
+  return isValid(date) ? format(date, "MMM d, yyyy") : "N/A";
+};
+
+/**
+ * A thumbnail that degrades to a placeholder rather than to a hole.
+ *
+ * Roughly a quarter of upstream image URLs 404 or are hotlink-blocked. The
+ * previous handler set `display: none` on the broken image, which left the
+ * fixed-height well behind it empty, so those cards rendered ~190px of blank
+ * background above the headline.
+ */
+const ArticleImage: React.FC<{ article: NewsArticle; isDarkMode: boolean }> = ({
+  article,
+  isDarkMode,
+}) => {
+  const [failed, setFailed] = useState(false);
+
+  if (!article.imageUrl || failed) {
+    return (
+      <div
+        className={`w-full h-full flex items-center justify-center ${
+          isDarkMode
+            ? "bg-gradient-to-br from-gray-700 to-gray-800"
+            : "bg-gradient-to-br from-gray-100 to-gray-200"
+        }`}
+        aria-hidden="true"
+      >
+        <NewspaperIcon className={`h-10 w-10 ${isDarkMode ? "text-gray-500" : "text-gray-400"}`} />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={article.imageUrl}
+      alt=""
+      loading="lazy"
+      // Decorative: the headline immediately below already names the article,
+      // so announcing "Image for <headline>" only repeats it.
+      aria-hidden="true"
+      className="w-full h-full object-cover"
+      onError={() => setFailed(true)}
+    />
+  );
+};
+
+interface ArticleCardProps {
+  article: NewsArticle;
+  isDarkMode: boolean;
+  isBookmarked: boolean;
+  onToggleBookmark: (article: NewsArticle) => void;
+  onShare: (article: NewsArticle) => void;
+  /** Compact drops the thumbnail; used on narrow viewports. */
+  compact?: boolean;
+}
+
+/**
+ * One card, one interaction model.
+ *
+ * Desktop and mobile used to render separate markup with different behaviour:
+ * the mobile card opened the article on tap, while the desktop card carried
+ * `cursor-pointer` and a hover lift but no handler and no link, so the only way
+ * to open an article was a 16px icon. The headline is now a real anchor whose
+ * `::after` is stretched over the whole card, which gives both a full-card hit
+ * area and a genuine link (middle-click, open-in-new-tab, keyboard focus).
+ * Buttons sit above it on the z axis so they stay independently clickable.
+ */
+const ArticleCard: React.FC<ArticleCardProps> = ({
+  article,
+  isDarkMode,
+  isBookmarked,
+  onToggleBookmark,
+  onShare,
+  compact = false,
+}) => {
+  const summary = cleanSummary(article.summary);
+
+  return (
+    <article
+      className={`group relative rounded-lg flex flex-col overflow-hidden transition-shadow ${
+        isDarkMode
+          ? "bg-gray-800 border border-gray-700 hover:shadow-lg hover:shadow-blue-900/20"
+          : "bg-gray-50 border border-gray-200 hover:shadow-md"
+      } focus-within:ring-2 focus-within:ring-blue-500`}
+    >
+      {!compact && (
+        <div className="relative w-full h-48 flex-shrink-0">
+          <ArticleImage article={article} isDarkMode={isDarkMode} />
+          <button
+            type="button"
+            onClick={() => onToggleBookmark(article)}
+            className={`absolute top-2 right-2 z-10 p-1.5 rounded-full bg-black/50 hover:bg-black/75 ${
+              isBookmarked ? "text-yellow-400" : "text-white"
+            }`}
+            aria-label={
+              isBookmarked ? `Remove bookmark: ${article.title}` : `Bookmark: ${article.title}`
+            }
+            aria-pressed={isBookmarked}
+          >
+            <BookmarkIcon
+              className={`h-4 w-4 ${isBookmarked ? "fill-current" : ""}`}
+              aria-hidden="true"
+            />
+          </button>
+        </div>
+      )}
+
+      <div className="p-4 flex flex-col flex-grow">
+        <div className="flex items-start justify-between gap-2">
+          <h3
+            className={`text-lg font-semibold mb-2 ${isDarkMode ? "text-white" : "text-gray-900"}`}
+          >
+            {article.url ? (
+              <a
+                href={article.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                // The stretched pseudo-element is what makes the whole card a
+                // single click target without nesting interactive elements.
+                className="after:absolute after:inset-0 after:content-[''] hover:underline group-hover:text-blue-400 outline-none"
+              >
+                {article.title}
+              </a>
+            ) : (
+              article.title
+            )}
+          </h3>
+          {compact && (
+            <button
+              type="button"
+              onClick={() => onToggleBookmark(article)}
+              className={`relative z-10 flex-shrink-0 p-1.5 rounded-full ${
+                isBookmarked
+                  ? isDarkMode
+                    ? "text-yellow-400 bg-yellow-900/30"
+                    : "text-yellow-600 bg-yellow-100"
+                  : isDarkMode
+                  ? "text-gray-400 hover:bg-gray-700"
+                  : "text-gray-500 hover:bg-gray-100"
+              }`}
+              aria-label={
+                isBookmarked ? `Remove bookmark: ${article.title}` : `Bookmark: ${article.title}`
+              }
+              aria-pressed={isBookmarked}
+            >
+              <BookmarkIcon
+                className={`h-5 w-5 ${isBookmarked ? "fill-current" : ""}`}
+                aria-hidden="true"
+              />
+            </button>
+          )}
+        </div>
+
+        {summary && (
+          <p
+            className={`mb-4 text-sm flex-grow ${isDarkMode ? "text-gray-300" : "text-gray-700"} ${
+              compact ? "line-clamp-2" : ""
+            }`}
+          >
+            {summary}
+          </p>
+        )}
+
+        <div
+          className={`flex justify-between items-center text-xs mt-auto ${
+            isDarkMode ? "text-gray-400" : "text-gray-500"
+          }`}
+        >
+          <span className="flex items-center min-w-0">
+            <Globe className="h-3 w-3 mr-1 flex-shrink-0" aria-hidden="true" />
+            <span className="truncate">{article.source.name}</span>
+          </span>
+          <span className="flex items-center flex-shrink-0 ml-2">
+            <Calendar className="h-3 w-3 mr-1" aria-hidden="true" />
+            {formatDate(article.date)}
+          </span>
+        </div>
+
+        <div className="relative z-10 flex items-center space-x-2 mt-2">
+          <button
+            type="button"
+            onClick={() => onShare(article)}
+            aria-label={`Share: ${article.title}`}
+            className={`p-2 rounded-full ${
+              isDarkMode ? "hover:bg-gray-600 text-gray-300" : "hover:bg-gray-200 text-gray-500"
+            }`}
+          >
+            <Share2Icon className="h-4 w-4" aria-hidden="true" />
+          </button>
+          {article.url && (
+            <a
+              href={article.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Open in a new tab: ${article.title}`}
+              className={`p-2 rounded-full ${
+                isDarkMode ? "hover:bg-gray-600 text-blue-400" : "hover:bg-gray-200 text-blue-500"
+              }`}
+            >
+              <ExternalLink className="h-4 w-4" aria-hidden="true" />
+            </a>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+};
+
 export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
   const { isDarkMode } = useContext(ThemeContext);
   const { addNotification } = useNotifications();
@@ -125,7 +350,6 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
 
   const shareArticle = async (article: NewsArticle) => {
     if (!article.url) {
-      console.warn("Attempted to share article with undefined URL");
       addNotification("Cannot share article without a valid URL", "error");
       return;
     }
@@ -141,31 +365,11 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
         addNotification("Link copied to clipboard", "success");
       }
     } catch (error) {
+      // An aborted share sheet rejects too; that is a user cancelling, not a
+      // failure worth putting a red toast on screen.
+      if (error instanceof DOMException && error.name === "AbortError") return;
       console.error("Error sharing article:", error);
       addNotification("Failed to share article", "error");
-    }
-  };
-
-  const openArticle = (url: string | undefined) => {
-    console.log("openArticle called with URL:", url);
-    if (!url) {
-      console.warn("Attempted to open article with undefined/empty URL");
-      addNotification("Cannot open article without a valid URL", "error");
-      return;
-    }
-
-    try {
-      console.log("Attempting to open window with URL:", url);
-      const newWindow = window.open(url, "_blank", "noopener,noreferrer");
-
-      // Check if the window was successfully opened
-      if (!newWindow || newWindow.closed || typeof newWindow.closed === "undefined") {
-        console.error("Failed to open new window, possibly blocked by popup blocker");
-        addNotification("Failed to open article. Popup might be blocked.", "error");
-      }
-    } catch (error) {
-      console.error("Error opening article URL:", error);
-      addNotification("Failed to open article", "error");
     }
   };
 
@@ -183,16 +387,13 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
       setIsLoadingNews(true);
       setNewsError(null);
       try {
-        console.log("Fetching news articles...");
         const response = await apiService.getNewsArticles({});
-        console.log("News API Response:", response);
 
         if (!response || !response.data) {
           throw new Error("Invalid response format from news API");
         }
 
         const data: NewsArticle[] = response.data;
-        console.log("Processed news data:", data);
 
         if (!Array.isArray(data)) {
           throw new Error("News data is not in the expected array format");
@@ -209,7 +410,7 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
           })
         );
       } catch (err: any) {
-        console.error("Error fetching news via apiService:", err);
+        console.error("Error fetching news:", err);
         setNewsError(`Failed to load news: ${err.message || "Please check the API connection"}`);
         setArticles([]);
       } finally {
@@ -240,8 +441,7 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
   // Clamp rather than trust `currentPage`: if the list shrinks under the reader
   // (removing the last bookmark on a page, or a narrower search), an unclamped
   // index slices past the end and shows an empty list with no pager to escape
-  // from. The pager and the bookmark filter do not currently render together,
-  // so this is defensive.
+  // from.
   const safePage = Math.min(currentPage, Math.max(totalPages - 1, 0));
   const startIndex = safePage * articlesPerPage;
   const endIndex = startIndex + articlesPerPage;
@@ -251,28 +451,6 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
       ? filteredNews.slice(0, articlesPerPage)
       : filteredNews.slice(startIndex, endIndex)
     : filteredNews;
-
-  const formatDate = (dateString: string | undefined) => {
-    if (!dateString) return "N/A";
-
-    try {
-      let date = parseISO(dateString);
-
-      if (!isValid(date)) {
-        date = new Date(dateString);
-      }
-
-      if (!isValid(date)) {
-        console.warn("Could not parse date string:", dateString);
-        return "N/A";
-      }
-
-      return format(date, "MMM d, yyyy");
-    } catch (error) {
-      console.error("Error formatting date:", error, "for string:", dateString);
-      return "N/A";
-    }
-  };
 
   const handlePrevious = () => {
     setCurrentPage((prev) => Math.max(prev - 1, 0));
@@ -286,384 +464,160 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+        <span className="sr-only">Loading news</span>
       </div>
     );
   }
 
   if (newsError) {
-    return <div className="text-center text-red-500 p-4">{newsError}</div>;
+    return (
+      <div className="text-center text-red-500 p-4" role="alert">
+        {newsError}
+      </div>
+    );
   }
 
   return (
     <div className={`news-feed ${isDarkMode ? "dark" : ""}`}>
-      <header
-        className={`p-6 rounded-xl ${
-          isDarkMode
-            ? "bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border border-blue-800/30"
-            : "bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100"
-        }`}
-      >
-        {/* Standalone this is the page heading; embedded in the dashboard the
-            page already has an h1, and a second one there inverted the outline. */}
-        {preview ? (
-          <h2 className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-gray-800"}`}>
-            Global Tariff News
-          </h2>
-        ) : (
-          <h1 className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-gray-800"}`}>
-            Global Tariff News
-          </h1>
-        )}
-        <p className={`mt-1 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
-          Stay updated with the latest international trade tariff news and developments.
-        </p>
-      </header>
-      {/* The search box and bookmark filter below were held in state with no
-          controls to drive them, so neither could ever be used. */}
+      {/* Embedded in the dashboard the surrounding card already carries a
+          "Recent Tariff News" heading and a description, so repeating the
+          banner here stacked two titles on one section. */}
       {!preview && (
-        <div className="mt-4 flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <SearchIcon
-              className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
-              aria-hidden="true"
-            />
-            <input
-              type="search"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(0);
-              }}
-              placeholder="Search headlines, summaries and sources"
-              aria-label="Search news"
-              className={`w-full pl-9 pr-3 py-2 rounded-lg border text-sm ${
-                isDarkMode
-                  ? "bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-500"
-                  : "bg-white border-gray-300 text-gray-800 placeholder-gray-400"
-              }`}
-            />
-          </div>
-          <div className="flex gap-2" role="group" aria-label="Filter news">
-            {(["all", "bookmarked"] as const).map((filter) => (
-              <button
-                key={filter}
-                onClick={() => {
-                  setActiveFilter(filter);
+        <>
+          <header
+            className={`p-6 rounded-xl ${
+              isDarkMode
+                ? "bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border border-blue-800/30"
+                : "bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100"
+            }`}
+          >
+            <h1 className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-gray-800"}`}>
+              Global Tariff News
+            </h1>
+            <p className={`mt-1 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
+              Stay updated with the latest international trade tariff news and developments.
+            </p>
+          </header>
+          <div className="mt-4 flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <SearchIcon
+                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
+                aria-hidden="true"
+              />
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
                   setCurrentPage(0);
                 }}
-                aria-pressed={activeFilter === filter}
-                className={`px-3 py-2 rounded-lg text-sm ${
-                  activeFilter === filter
-                    ? "bg-indigo-600 text-white"
-                    : isDarkMode
-                    ? "bg-gray-800 text-gray-300 border border-gray-700"
-                    : "bg-white text-gray-700 border border-gray-300"
+                placeholder="Search headlines, summaries and sources"
+                aria-label="Search news"
+                className={`w-full pl-9 pr-3 py-2 rounded-lg border text-sm ${
+                  isDarkMode
+                    ? "bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-500"
+                    : "bg-white border-gray-300 text-gray-800 placeholder-gray-400"
                 }`}
-              >
-                {filter === "all" ? "All news" : `Bookmarked (${bookmarkedArticles.length})`}
-              </button>
-            ))}
+              />
+            </div>
+            <div className="flex gap-2" role="group" aria-label="Filter news">
+              {(["all", "bookmarked"] as const).map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => {
+                    setActiveFilter(filter);
+                    setCurrentPage(0);
+                  }}
+                  aria-pressed={activeFilter === filter}
+                  className={`px-3 py-2 rounded-lg text-sm ${
+                    activeFilter === filter
+                      ? "bg-indigo-600 text-white"
+                      : isDarkMode
+                      ? "bg-gray-800 text-gray-300 border border-gray-700"
+                      : "bg-white text-gray-700 border border-gray-300"
+                  }`}
+                >
+                  {filter === "all" ? "All news" : `Bookmarked (${bookmarkedArticles.length})`}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+          {/* Search and filtering change the list without moving focus, so the
+              count has to be announced for it to be perceivable. */}
+          <p className="sr-only" role="status">
+            {filteredNews.length} article{filteredNews.length === 1 ? "" : "s"}
+            {searchTerm ? ` matching "${searchTerm}"` : ""}
+          </p>
+        </>
       )}
       <div className={`p-4 ${isDarkMode ? "bg-gray-900" : "bg-white"}`}>
-        {isLoadingNews ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {displayedNews.length > 0 ? (
-                displayedNews.map((article) => {
-                  if (isMobile) {
-                    return (
-                      <article
-                        key={`mobile-${article.url || article.title}`}
-                        onClick={() => {
-                          console.log("[Mobile Card Click] Trying to open:", article.url);
-                          openArticle(article.url);
-                        }}
-                        className={`article-card rounded-lg overflow-hidden transition-shadow duration-300 cursor-pointer ${
-                          isDarkMode
-                            ? "bg-gray-800 border border-gray-700 hover:shadow-lg hover:shadow-blue-900/20"
-                            : "bg-white border border-gray-200 hover:shadow-md"
-                        }`}
-                      >
-                        <div className="p-4">
-                          <div className="flex justify-between items-start mb-2">
-                            <div className="flex-1 mr-2">
-                              <h3
-                                className={`text-base font-semibold mb-1 ${
-                                  isDarkMode ? "text-blue-300" : "text-blue-600"
-                                }`}
-                              >
-                                <span
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    console.log(
-                                      "[Mobile Title Click] Trying to open:",
-                                      article.url
-                                    );
-                                    openArticle(article.url);
-                                  }}
-                                  className="cursor-pointer hover:underline"
-                                >
-                                  {article.title}
-                                </span>
-                              </h3>
-                              <div
-                                className={`flex items-center text-xs space-x-2 ${
-                                  isDarkMode ? "text-gray-400" : "text-gray-500"
-                                }`}
-                              >
-                                <span className="flex items-center flex-shrink-0">
-                                  <Globe className="h-3 w-3 mr-1" />
-                                  {article.source.name}
-                                </span>
-                                <span className="flex items-center flex-shrink-0">
-                                  <Calendar className="h-3 w-3 mr-1" />
-                                  {formatDate(article.date)}
-                                </span>
-                              </div>
-                            </div>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                console.log("[Mobile Bookmark Click] URL:", article.url);
-                                toggleBookmark(article);
-                              }}
-                              className={`p-1.5 rounded-full transition-colors flex-shrink-0 ${
-                                bookmarkedUrls.has(article.url)
-                                  ? isDarkMode
-                                    ? "text-yellow-400 bg-yellow-900/30 hover:bg-yellow-800/50"
-                                    : "text-yellow-600 bg-yellow-100 hover:bg-yellow-200"
-                                  : isDarkMode
-                                  ? "text-gray-400 hover:bg-gray-700"
-                                  : "text-gray-500 hover:bg-gray-100"
-                              }`}
-                              aria-label={
-                                bookmarkedUrls.has(article.url)
-                                  ? "Remove bookmark"
-                                  : "Bookmark article"
-                              }
-                            >
-                              <BookmarkIcon
-                                className={`h-5 w-5 ${
-                                  bookmarkedUrls.has(article.url)
-                                    ? "fill-current"
-                                    : ""
-                                }`}
-                              />
-                            </button>
-                          </div>
-                          {article.summary && (
-                            <p
-                              className={`text-sm mb-3 ${
-                                isDarkMode ? "text-gray-300" : "text-gray-600"
-                              } line-clamp-2`}
-                            >
-                              {article.summary}
-                            </p>
-                          )}
-                          <div className="flex items-center justify-start space-x-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                console.log(
-                                  "[Mobile Read More Click] Trying to open:",
-                                  article.url
-                                );
-                                openArticle(article.url);
-                              }}
-                              key={`read-more-${article.url || article.title}`}
-                              className={`text-xs font-medium flex items-center px-3 py-1.5 rounded-md ${
-                                isDarkMode
-                                  ? "bg-blue-600/40 text-blue-200 hover:bg-blue-500/50 active:bg-blue-600/60"
-                                  : "bg-blue-100 text-blue-700 hover:bg-blue-200 active:bg-blue-300"
-                              }`}
-                            >
-                              <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                              Read More
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                console.log("[Mobile Share Click] URL:", article.url);
-                                shareArticle(article);
-                              }}
-                              className={`text-xs flex items-center px-2.5 py-1 rounded-md ${
-                                isDarkMode
-                                  ? "bg-gray-600/30 text-gray-300 hover:bg-gray-600/50"
-                                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                              }`}
-                            >
-                              <Share2Icon className="h-3.5 w-3.5 mr-1" />
-                              Share
-                            </button>
-                          </div>
-                        </div>
-                      </article>
-                    );
-                  } else {
-                    return (
-                      <div
-                        key={`desktop-${article.url || article.title}`}
-                        className={`rounded-lg cursor-pointer transition-all duration-200 hover:shadow-lg flex flex-col overflow-hidden ${
-                          isDarkMode
-                            ? "bg-gray-800 hover:bg-gray-700"
-                            : "bg-gray-50 hover:bg-gray-100"
-                        }`}
-                      >
-                        <div className="relative w-full h-48">
-                          {article.imageUrl && (
-                            <img
-                              src={article.imageUrl}
-                              alt={`Image for ${article.title}`}
-                              className="w-full h-full object-cover"
-                              onError={(e) => (e.currentTarget.style.display = "none")}
-                            />
-                          )}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleBookmark(article);
-                            }}
-                            className={`absolute top-2 right-2 p-1.5 rounded-full bg-black bg-opacity-50 text-white hover:bg-opacity-75 ${
-                              bookmarkedUrls.has(article.url)
-                                ? "fill-current text-yellow-400"
-                                : ""
-                            }`}
-                            aria-label="Bookmark article"
-                          >
-                            <BookmarkIcon className={`h-4 w-4`} />
-                          </button>
-                        </div>
-                        <div className="p-4 flex flex-col flex-grow">
-                          <h3
-                            className={`text-lg font-semibold mb-2 group-hover:text-blue-500 flex-grow ${
-                              isDarkMode ? "text-white" : "text-gray-900"
-                            }`}
-                          >
-                            {article.title}
-                          </h3>
-                          <p
-                            className={`mb-4 text-sm flex-grow ${
-                              isDarkMode ? "text-gray-300" : "text-gray-700"
-                            }`}
-                          >
-                            {article.summary}
-                          </p>
-                          <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mt-auto">
-                            <span className="flex items-center">
-                              <Globe className="h-3 w-3 mr-1" />
-                              {article.source.name}
-                            </span>
-                            <span className="flex items-center">
-                              <Calendar className="h-3 w-3 mr-1" />
-                              {formatDate(article.date)}
-                            </span>
-                          </div>
-                          <div
-                            onClick={(e) => e.stopPropagation()}
-                            className="flex items-center space-x-2 mt-2"
-                          >
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                shareArticle(article);
-                              }}
-                              aria-label={`Share: ${article.title}`}
-                              className={`p-2 rounded-full ${
-                                isDarkMode
-                                  ? "hover:bg-gray-600 text-gray-300"
-                                  : "hover:bg-gray-200 text-gray-500"
-                              }`}
-                            >
-                              <Share2Icon className="h-4 w-4" aria-hidden="true" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openArticle(article.url);
-                              }}
-                              aria-label={`Open in a new tab: ${article.title}`}
-                              className={`p-2 rounded-full ${
-                                isDarkMode
-                                  ? "hover:bg-gray-600 text-blue-500"
-                                  : "hover:bg-gray-200 text-blue-500"
-                              }`}
-                            >
-                              <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  }
-                })
-              ) : (
-                <div
-                  className={`col-span-3 p-8 text-center rounded-lg ${
-                    isDarkMode ? "bg-gray-800" : "bg-gray-50"
-                  }`}
-                >
-                  <p
-                    className={`text-lg font-medium ${
-                      isDarkMode ? "text-gray-300" : "text-gray-600"
-                    }`}
-                  >
-                    {activeFilter === "bookmarked"
-                      ? "No bookmarked articles yet."
-                      : searchTerm
-                      ? "No news articles match your search."
-                      : "No news articles available at this time."}
-                  </p>
-                  <p className="mt-2 text-sm text-gray-500">
-                    {activeFilter === "bookmarked"
-                      ? "Bookmark an article to keep it here."
-                      : "Please check back later for updates."}
-                  </p>
-                </div>
-              )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {displayedNews.length > 0 ? (
+            displayedNews.map((article) => (
+              <ArticleCard
+                key={article.url || article.title}
+                article={article}
+                isDarkMode={isDarkMode}
+                isBookmarked={bookmarkedUrls.has(article.url)}
+                onToggleBookmark={toggleBookmark}
+                onShare={shareArticle}
+                compact={isMobile}
+              />
+            ))
+          ) : (
+            <div
+              className={`col-span-full p-8 text-center rounded-lg ${
+                isDarkMode ? "bg-gray-800" : "bg-gray-50"
+              }`}
+            >
+              <p
+                className={`text-lg font-medium ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}
+              >
+                {activeFilter === "bookmarked"
+                  ? "No bookmarked articles yet."
+                  : searchTerm
+                  ? "No news articles match your search."
+                  : "No news articles available at this time."}
+              </p>
+              <p className="mt-2 text-sm text-gray-500">
+                {activeFilter === "bookmarked"
+                  ? "Bookmark an article to keep it here."
+                  : "Please check back later for updates."}
+              </p>
             </div>
+          )}
+        </div>
 
-            {preview && !isMobile && totalPages > 1 && (
-              <div className="flex justify-center items-center mt-6 space-x-4">
-                <button
-                  onClick={handlePrevious}
-                  disabled={safePage === 0}
-                  aria-label="Previous page of news"
-                  className={`p-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed ${
-                    isDarkMode
-                      ? "bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800"
-                      : "bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100"
-                  }`}
-                >
-                  <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
-                </button>
-                <span className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
-                  Page {safePage + 1} of {totalPages}
-                </span>
-                <button
-                  onClick={handleNext}
-                  disabled={safePage >= totalPages - 1}
-                  aria-label="Next page of news"
-                  className={`p-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed ${
-                    isDarkMode
-                      ? "bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800"
-                      : "bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100"
-                  }`}
-                >
-                  <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
-                </button>
-              </div>
-            )}
-
-            {/* A second empty state used to render directly beneath the first,
-                so an empty feed showed two different messages at once. The
-                one inside the grid above covers it. */}
-          </>
+        {preview && !isMobile && totalPages > 1 && (
+          <div className="flex justify-center items-center mt-6 space-x-4">
+            <button
+              onClick={handlePrevious}
+              disabled={safePage === 0}
+              aria-label="Previous page of news"
+              className={`p-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed ${
+                isDarkMode
+                  ? "bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800"
+                  : "bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100"
+              }`}
+            >
+              <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
+            </button>
+            <span className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
+              Page {safePage + 1} of {totalPages}
+            </span>
+            <button
+              onClick={handleNext}
+              disabled={safePage >= totalPages - 1}
+              aria-label="Next page of news"
+              className={`p-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed ${
+                isDarkMode
+                  ? "bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800"
+                  : "bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100"
+              }`}
+            >
+              <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
         )}
       </div>
     </div>

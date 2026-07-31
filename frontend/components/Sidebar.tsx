@@ -3,6 +3,12 @@ import { HomeIcon, BarChart2Icon, NewspaperIcon, XIcon } from "lucide-react";
 import { ThemeContext } from "../App";
 import tariffWarsLogo from "../assets/tariffwars-logo.png";
 
+const NAV_ITEMS = [
+  { tab: "dashboard", label: "Dashboard", icon: HomeIcon },
+  { tab: "tariff-rates", label: "Tariff Rates", icon: BarChart2Icon },
+  { tab: "news-feed", label: "News Feed", icon: NewspaperIcon },
+] as const;
+
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
@@ -37,16 +43,21 @@ export const Sidebar = ({
           isDarkMode ? "border-gray-700" : "border-gray-200"
         } flex items-center lg:items-start justify-between`}
       >
+        {/* `h-8` is the base, not a variant. Every height used to live behind a
+            `md:`/`lg:` prefix, so below `md` with the drawer closed the logo fell
+            back to its intrinsic 208px width, filled the 240px panel's content
+            box and pushed the close button 16px past the panel edge: a sliver of
+            it sat on top of the page at the left of every mobile screen. */}
         <img
           src={tariffWarsLogo}
           alt="TariffWars Logo"
-          className={`w-auto transition-all duration-200 ${
-            isMobileSidebarOpen ? "h-8 opacity-100" : "md:opacity-0 md:h-8 lg:opacity-100 lg:h-56"
+          className={`w-auto h-8 max-w-full transition-all duration-200 ${
+            isMobileSidebarOpen ? "opacity-100" : "md:opacity-0 lg:opacity-100 lg:h-56"
           }`}
         />
         <button
           onClick={toggleMobileSidebar}
-          className={`p-1 rounded-md md:hidden ${
+          className={`p-1 rounded-md md:hidden flex-shrink-0 ${
             isDarkMode ? "text-gray-400 hover:bg-gray-700" : "text-gray-600 hover:bg-gray-100"
           }`}
           aria-label="Close menu"
@@ -54,77 +65,41 @@ export const Sidebar = ({
           <XIcon className="h-6 w-6" />
         </button>
       </div>
-      <nav className="flex-1 p-4">
+      <nav className="flex-1 p-4" aria-label="Main">
         <ul className="space-y-2">
-          <li>
-            <button
-              onClick={() => handleNavigate("dashboard")}
-              className={`flex items-center justify-center md:justify-start w-full p-2 rounded-md ${
-                activeTab === "dashboard"
-                  ? isDarkMode
-                    ? "bg-gray-700 text-white"
-                    : "bg-gray-100 text-blue-600"
-                  : isDarkMode
-                  ? "text-gray-400 hover:bg-gray-700"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
-            >
-              <HomeIcon className="h-5 w-5" />
-              <span
-                className={`ml-3 transition-opacity duration-200 ${
-                  isMobileSidebarOpen ? "opacity-100" : "md:opacity-0 lg:opacity-100"
-                }`}
-              >
-                Dashboard
-              </span>
-            </button>
-          </li>
-          <li>
-            <button
-              onClick={() => handleNavigate("tariff-rates")}
-              className={`flex items-center justify-center md:justify-start w-full p-2 rounded-md ${
-                activeTab === "tariff-rates"
-                  ? isDarkMode
-                    ? "bg-gray-700 text-white"
-                    : "bg-gray-100 text-blue-600"
-                  : isDarkMode
-                  ? "text-gray-400 hover:bg-gray-700"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
-            >
-              <BarChart2Icon className="h-5 w-5" />
-              <span
-                className={`ml-3 transition-opacity duration-200 ${
-                  isMobileSidebarOpen ? "opacity-100" : "md:opacity-0 lg:opacity-100"
-                }`}
-              >
-                Tariff Rates
-              </span>
-            </button>
-          </li>
-          <li>
-            <button
-              onClick={() => handleNavigate("news-feed")}
-              className={`flex items-center justify-center md:justify-start w-full p-2 rounded-md ${
-                activeTab === "news-feed"
-                  ? isDarkMode
-                    ? "bg-gray-700 text-white"
-                    : "bg-gray-100 text-blue-600"
-                  : isDarkMode
-                  ? "text-gray-400 hover:bg-gray-700"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
-            >
-              <NewspaperIcon className="h-5 w-5" />
-              <span
-                className={`ml-3 transition-opacity duration-200 ${
-                  isMobileSidebarOpen ? "opacity-100" : "md:opacity-0 lg:opacity-100"
-                }`}
-              >
-                News Feed
-              </span>
-            </button>
-          </li>
+          {NAV_ITEMS.map(({ tab, label, icon: Icon }) => {
+            const active = activeTab === tab;
+            return (
+              <li key={tab}>
+                <button
+                  onClick={() => handleNavigate(tab)}
+                  // The active tab was conveyed by background colour alone.
+                  aria-current={active ? "page" : undefined}
+                  title={label}
+                  className={`flex items-center justify-center md:justify-start w-full p-2 rounded-md ${
+                    active
+                      ? isDarkMode
+                        ? "bg-gray-700 text-white"
+                        : "bg-gray-100 text-blue-600"
+                      : isDarkMode
+                      ? "text-gray-400 hover:bg-gray-700"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  <Icon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+                  {/* Collapsed to icons at `md`, so the label is hidden with
+                      opacity rather than removed: it stays the accessible name. */}
+                  <span
+                    className={`ml-3 transition-opacity duration-200 ${
+                      isMobileSidebarOpen ? "opacity-100" : "md:opacity-0 lg:opacity-100"
+                    }`}
+                  >
+                    {label}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </nav>
     </aside>

@@ -32,6 +32,42 @@ html {
 .dark-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
+/*
+ * One visible focus style for the whole app.
+ *
+ * Exactly one element carried a focus ring (the tariff search box); everything
+ * else fell back to the UA default, which is close to invisible against the
+ * dark theme. `:focus-visible` keeps it off for mouse clicks.
+ */
+:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+/*
+ * Respect the OS "reduce motion" setting.
+ *
+ * The app ships a 30-second infinite marquee, pulse-glow, fade-in-up and
+ * several transform transitions, none of which consulted this. Loading
+ * spinners are exempt on purpose: they report state rather than decorate, and
+ * freezing one reads as a hung page.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-spin {
+    animation: spin 1.5s linear infinite !important;
+  }
+}
+
 /* Custom animations */
 @keyframes pulse-glow {
   0%, 100% {

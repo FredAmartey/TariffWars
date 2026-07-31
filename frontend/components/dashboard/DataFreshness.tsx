@@ -57,23 +57,48 @@ export const DataFreshness: React.FC = () => {
         Data updated {formatted}
       </span>
       {meta.sources.length > 0 && (
-        <span className="ml-2">
-          Sources:{" "}
-          {meta.sources.map((s, i) => (
-            <React.Fragment key={s.url}>
-              {i > 0 && ", "}
-              <a
-                href={s.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:no-underline"
-              >
-                {s.name}
-              </a>
-            </React.Fragment>
-          ))}
-        </span>
+        // Every source's full headline used to be rendered inline, as one run
+        // of a dozen underlined sentences. On a phone that block ran ~700px:
+        // longer than the table it was annotating. Publisher names, folded
+        // away, carry the same provenance in a line.
+        <details className="mt-2">
+          <summary className="cursor-pointer underline hover:no-underline w-fit">
+            {meta.sources.length} source{meta.sources.length === 1 ? "" : "s"}
+          </summary>
+          <ul className="mt-1 space-y-1">
+            {meta.sources.map((s) => (
+              <li key={s.url}>
+                <a
+                  href={s.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:no-underline"
+                  // The publisher is the label; the headline stays reachable as
+                  // the accessible name and the tooltip.
+                  title={s.name}
+                  aria-label={s.name}
+                >
+                  {publisherOf(s)}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </details>
       )}
     </div>
   );
 };
+
+/**
+ * "USTR: Takes Action in Forced Labor Section 301 Investigations" -> "USTR".
+ * Falls back to the host when a source is not titled that way.
+ */
+function publisherOf(source: { name: string; url: string }): string {
+  const [prefix] = source.name.split(":");
+  if (prefix && prefix.trim() && prefix.length <= 48) return prefix.trim();
+  try {
+    return new URL(source.url).hostname.replace(/^www\./, "");
+  } catch {
+    return source.name;
+  }
+}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useContext } from "react";
-import { TrendingUpIcon, TrendingDownIcon, MinusIcon } from "lucide-react";
+import { TrendingUpIcon, TrendingDownIcon, MinusIcon, PauseIcon, PlayIcon } from "lucide-react";
 import styles from "./AffectedStocks.module.css";
 import { StockData, StockDirection } from "../../types/stock";
 import { stockApi } from "../../services/api";
@@ -171,12 +171,17 @@ const CardContent: React.FC<{ stock: StockData; isDarkMode: boolean }> = ({
     }
   };
 
+  // Light mode used to inherit the dark card's fixed white/gray-400 text, which
+  // sat on a pale lavender gradient at roughly 1.3:1 contrast.
+  const headingColor = isDarkMode ? "text-white" : "text-gray-900";
+  const mutedColor = isDarkMode ? "text-gray-400" : "text-gray-600";
+
   return (
     <div className={`p-6 h-full flex flex-col ${isDarkMode ? "text-white" : "text-gray-900"}`}>
       <div className="flex justify-between items-start mb-2">
         <div>
-          <h3 className="text-2xl font-bold text-white">{stock.symbol}</h3>
-          <p className="text-gray-400 text-sm">{COMPANY_NAMES[stock.symbol] || stock.name}</p>
+          <h3 className={`text-2xl font-bold ${headingColor}`}>{stock.symbol}</h3>
+          <p className={`${mutedColor} text-sm`}>{COMPANY_NAMES[stock.symbol] || stock.name}</p>
         </div>
         {stock.impact === "positive" ? (
           <TrendingUpIcon className="h-6 w-6 text-green-400" aria-hidden="true" />
@@ -192,31 +197,41 @@ const CardContent: React.FC<{ stock: StockData; isDarkMode: boolean }> = ({
           <span
             className={`text-4xl font-bold ${
               stock.impact === "positive"
-                ? "text-green-400"
+                ? isDarkMode
+                  ? "text-green-400"
+                  : "text-green-700"
                 : stock.impact === "negative"
-                ? "text-red-400"
-                : "text-gray-400"
+                ? isDarkMode
+                  ? "text-red-400"
+                  : "text-red-700"
+                : mutedColor
             }`}
           >
             {stock.impact === "positive" ? "+" : stock.impact === "negative" ? "-" : ""}
             {stock.percentage.toFixed(2)}%
           </span>
         </div>
-        <p className="text-gray-400 mt-2 text-sm">
+        <p className={`${mutedColor} mt-2 text-sm`}>
           ${stock.price.toFixed(2)} • Mkt Cap: {formatMarketCap(stock.marketCap)}
         </p>
       </div>
 
       <div className="mt-auto">
-        <div className="bg-gray-800/50 rounded-lg p-4">
+        <div className={`rounded-lg p-4 ${isDarkMode ? "bg-gray-800/50" : "bg-white/60"}`}>
           {/* The copy below is a fixed narrative keyed off the day's price
               direction, not measured tariff exposure. Label it honestly. */}
-          <h4 className="text-gray-300 font-semibold mb-2">Possible tariff angle</h4>
-          <p className="text-gray-400 text-sm">{stock.reason}</p>
+          <h4 className={`font-semibold mb-2 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+            Possible tariff angle
+          </h4>
+          <p className={`${mutedColor} text-sm`}>{stock.reason}</p>
         </div>
 
         <div className="mt-4">
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-400/10 text-indigo-400">
+          <span
+            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+              isDarkMode ? "bg-indigo-400/10 text-indigo-400" : "bg-indigo-100 text-indigo-700"
+            }`}
+          >
             {stock.sector}
           </span>
         </div>
@@ -265,19 +280,23 @@ const SkeletonCard: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
   );
 };
 
-// Rename the CSS animation variable to avoid conflict
-const scrollAnimationStyles = `
-@keyframes scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-`;
-
-// Inject styles into the document
-const styleSheet = document.createElement("style");
-styleSheet.type = "text/css";
-styleSheet.innerText = scrollAnimationStyles;
-document.head.appendChild(styleSheet);
+/**
+ * Whether the reader has asked the OS to cut down on motion.
+ *
+ * The panel's default presentation is a track that scrolls for as long as the
+ * page is open, which is exactly what this setting exists to switch off.
+ */
+const usePrefersReducedMotion = (): boolean => {
+  const [prefers, setPrefers] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setPrefers(query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, []);
+  return prefers;
+};
 
 export const AffectedStocks: React.FC = () => {
   const { isDarkMode } = useContext(ThemeContext); // Get dark mode status
@@ -288,6 +307,9 @@ export const AffectedStocks: React.FC = () => {
   // provider hiccup are labelled rather than shown as live. This is an absolute
   // instant so it stays accurate however long the response sat in a CDN.
   const [capturedAt, setCapturedAt] = useState<string | null>(null);
+
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const [isPaused, setIsPaused] = useState(false);
 
   // --- Add Mobile Detection State & Effect ---
   const [isMobile, setIsMobile] = useState(false);
@@ -378,8 +400,10 @@ export const AffectedStocks: React.FC = () => {
   // --- Keep original filteredData logic ---
   const filteredData = stockData.filter((stock) => stock.price > 0 && stock.reason);
 
-  // --- Keep original duplicatedStockData logic IF NEEDED for desktop marquee ---
-  const duplicatedStockData = [...filteredData, ...filteredData];
+  // The track is rendered twice so the loop has no visible seam. Pointless when
+  // nothing is scrolling, and it would double every card in the static list.
+  const animate = !isMobile && !prefersReducedMotion;
+  const trackData = animate ? [...filteredData, ...filteredData] : filteredData;
 
   const quoteUrl = (symbol: string) => `https://finance.yahoo.com/quote/${symbol}`;
 
@@ -417,6 +441,10 @@ export const AffectedStocks: React.FC = () => {
   const ageMs = Number.isNaN(capturedMs) ? null : Date.now() - capturedMs;
   const staleMinutes = ageMs !== null && ageMs > 5 * 60 * 1000 ? Math.round(ageMs / 60000) : null;
 
+  const cardBackground = isDarkMode
+    ? "linear-gradient(145deg, rgba(17, 24, 39, 0.95), rgba(88, 28, 135, 0.8))"
+    : "linear-gradient(145deg, rgba(224, 231, 255, 0.9), rgba(237, 233, 254, 0.9))";
+
   return (
     <div className="relative">
       {staleMinutes !== null && (
@@ -425,71 +453,62 @@ export const AffectedStocks: React.FC = () => {
           provider is not responding.
         </p>
       )}
-      {isMobile ? (
-        // --- Mobile Horizontal Scroll View ---
-        <div className="flex overflow-x-auto space-x-4 pb-4 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800/50">
-          {filteredData.map((stock) => (
-            <a
-              key={`mobile-${stock.symbol}`}
-              href={quoteUrl(stock.symbol)}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`${stock.name} (${stock.symbol}) on Yahoo Finance`}
-              className={`block rounded-xl overflow-hidden cursor-pointer w-72 flex-shrink-0 border ${
-                isDarkMode ? "border-gray-600/50" : "shadow-md border-gray-200"
-              }`}
-              style={{
-                background: isDarkMode
-                  ? "linear-gradient(145deg, rgba(17, 24, 39, 0.95), rgba(88, 28, 135, 0.8))"
-                  : "linear-gradient(145deg, rgba(224, 231, 255, 0.9), rgba(237, 233, 254, 0.9))",
-                backdropFilter: "blur(16px)",
-              }}
-            >
-              <CardContent stock={stock} isDarkMode={isDarkMode} />
-            </a>
-          ))}
-          {!filteredData.length && (
-            <div className="text-center p-4 text-gray-500 w-full flex-shrink-0">
-              No stocks found.
-            </div>
-          )}
-        </div>
-      ) : (
-        // --- Original Desktop Marquee/Layout ---
-        // <<< PASTE YOUR ORIGINAL DESKTOP VIEW JSX HERE (Unchanged) >>>
-        // <<< It should use CardContent and potentially duplicatedStockData >>>
-        <div className="relative overflow-hidden">
-          <div
-            className={styles.cardContainer}
-            style={{ animation: `${styles.scroll || "scroll"} 30s linear infinite` }}
-            // Add hover pause/resume if needed
+
+      {animate && (
+        // Hover and keyboard focus already pause the track in CSS, but neither
+        // helps a touch user or anyone who simply wants it to stop, so the
+        // control is explicit as well.
+        <div className="flex justify-end mb-2">
+          <button
+            type="button"
+            onClick={() => setIsPaused((paused) => !paused)}
+            aria-pressed={isPaused}
+            className={`inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-md ${
+              isDarkMode
+                ? "bg-gray-700/70 text-gray-300 hover:bg-gray-600"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
           >
-            {duplicatedStockData.map((stock, index) => (
+            {isPaused ? (
+              <PlayIcon className="h-3 w-3" aria-hidden="true" />
+            ) : (
+              <PauseIcon className="h-3 w-3" aria-hidden="true" />
+            )}
+            {isPaused ? "Resume scrolling" : "Pause scrolling"}
+          </button>
+        </div>
+      )}
+
+      <div className={animate ? "relative overflow-hidden" : "relative overflow-x-auto pb-4"}>
+        <div
+          className={`${styles.cardContainer} ${animate ? styles.marquee : ""}`}
+          data-paused={animate && isPaused ? "true" : undefined}
+        >
+          {trackData.map((stock, index) => {
+            // The animated track renders the list twice for a seamless loop, so
+            // the second copy is hidden from assistive tech and skipped by Tab
+            // to avoid announcing every stock again.
+            const isDuplicate = animate && index >= filteredData.length;
+            return (
               <a
                 key={`${stock.symbol}-${index}`}
                 href={quoteUrl(stock.symbol)}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`${stock.name} (${stock.symbol}) on Yahoo Finance`}
-                // The marquee renders the list twice for a seamless loop, so the
-                // second copy is hidden from assistive tech to avoid announcing
-                // every stock a second time.
-                aria-hidden={index >= filteredData.length}
-                tabIndex={index >= filteredData.length ? -1 : undefined}
-                className={`${styles.card} h-96 rounded-xl overflow-hidden block`}
-                style={{
-                  background: isDarkMode
-                    ? "linear-gradient(145deg, rgba(17, 24, 39, 0.95), rgba(88, 28, 135, 0.8))"
-                    : "linear-gradient(145deg, rgba(224, 231, 255, 0.9), rgba(237, 233, 254, 0.9))", // Example light mode gradient
-                  backdropFilter: "blur(16px)",
-                }}
+                aria-hidden={isDuplicate}
+                tabIndex={isDuplicate ? -1 : undefined}
+                className={`${styles.card} h-96 rounded-xl overflow-hidden block border ${
+                  isDarkMode ? "border-gray-600/50" : "border-gray-200 shadow-md"
+                }`}
+                style={{ background: cardBackground, backdropFilter: "blur(16px)" }}
               >
                 <CardContent stock={stock} isDarkMode={isDarkMode} />
               </a>
-            ))}
-          </div>
+            );
+          })}
         </div>
-      )}
+      </div>
     </div>
   );
 };

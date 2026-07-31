@@ -1,12 +1,8 @@
 import React, { useState, useContext } from "react";
 import { ThemeContext } from "../App";
-import { TariffTable } from "./dashboard/TariffTable";
-import {
-  SearchIcon,
-  FilterIcon,
-  XIcon,
-  SlidersIcon,
-} from "lucide-react";
+import { TariffTable, sortOptionsFor } from "./dashboard/TariffTable";
+import { Modal } from "./Modal";
+import { SearchIcon, FilterIcon, XIcon, SlidersIcon } from "lucide-react";
 
 // Updated FilterOption type
 type FilterOption = {
@@ -164,7 +160,11 @@ export const TariffRates = () => {
                   Add Filter
                 </button>
                 <div className="relative">
+                  <label htmlFor="tariffSort" className="sr-only">
+                    Sort tariffs by
+                  </label>
                   <select
+                    id="tariffSort"
                     value={`${sortField}-${sortDirection}`}
                     onChange={handleSortChange}
                     className={`appearance-none px-4 py-2 pl-10 rounded-md ${
@@ -173,15 +173,14 @@ export const TariffRates = () => {
                         : "bg-white border-gray-300 text-gray-900"
                     } border`}
                   >
-                    <option value="rate-desc">Highest Rate First</option>
-                    <option value="rate-asc">Lowest Rate First</option>
-                    <option value="changeDisplay-desc">Biggest Change First</option>
-                    <option value="changeDisplay-asc">Smallest Change First</option>
-                    <option value="effectiveDate-desc">Newest First</option>
-                    <option value="effectiveDate-asc">Oldest First</option>
+                    {sortOptionsFor(sortField, sortDirection).map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <SlidersIcon className="h-4 w-4 text-gray-400" />
+                    <SlidersIcon className="h-4 w-4 text-gray-400" aria-hidden="true" />
                   </div>
                 </div>
                 <div className="relative">
@@ -257,22 +256,36 @@ export const TariffRates = () => {
               itemsPerPage={itemsPerPage}
               onPageChange={setCurrentPage}
               onTotalPagesChange={setTotalPages}
+              handleSortChange={handleSortChange}
+              // Column-header sorting used to write only to the table's own
+              // state, leaving the dropdown above announcing the previous order.
+              onSortChange={(field, direction) => {
+                setSortField(field);
+                setSortDirection(direction);
+                setCurrentPage(1);
+              }}
             />
           </div>
         </div>
       </div>
 
-      {showFilterModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div
-            className={`rounded-xl p-6 max-w-md w-full ${
-              isDarkMode ? "bg-gray-800 border border-gray-700" : "bg-white shadow-xl"
-            }`}
-          >
-            <h3 className={`text-lg font-bold mb-4 ${isDarkMode ? "text-white" : "text-gray-800"}`}>
-              Add Filter
-            </h3>
-            <div className="space-y-4">
+      {/* This was the last hand-rolled overlay in the app: a bare div with no
+          dialog role, no Escape, no focus trap and nothing returning focus to
+          the trigger. The shared Modal supplies all of that. */}
+      <Modal
+        isOpen={showFilterModal}
+        onClose={() => {
+          setShowFilterModal(false);
+          setTempFilterValueInput("");
+        }}
+        title="Add Filter"
+        isDarkMode={isDarkMode}
+      >
+        <div className="p-6">
+          <h3 className={`text-lg font-bold mb-4 ${isDarkMode ? "text-white" : "text-gray-800"}`}>
+            Add Filter
+          </h3>
+          <div className="space-y-4">
               <div>
                 <label
                   htmlFor="filterField"
@@ -376,10 +389,9 @@ export const TariffRates = () => {
                   Apply Filter
                 </button>
               )}
-            </div>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 };

@@ -205,6 +205,9 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
                 </h3>
               </div>
             </div>
+            {/* Compact drops "Tariff from" (USA on all but a handful of rows)
+                and "Type". The full eight-column layout was ~60px wider than
+                this card, so the effective date was clipped mid-value. */}
             <TariffTable
               searchTerm={searchTerm}
               sortField={sortField}
@@ -215,6 +218,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
               onPageChange={setCurrentPage}
               onTotalPagesChange={() => {}}
               onDatasetChange={setExportDataset}
+              variant="compact"
             />
             <DataFreshness />
           </div>
@@ -268,17 +272,23 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
             </div>
             <div className="flex items-center">
               {(!isMobile || (isMobile && isStocksOpen)) && (
-                <button
+                // "Full Report" was a button firing window.open at a generic
+                // Yahoo topic page, so it promised a report on these stocks and
+                // was neither a report nor about them. It is now an honest,
+                // labelled link out to tariff market coverage.
+                <a
+                  href="https://finance.yahoo.com/topic/tariffs"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className={`text-sm flex items-center ${
                     isDarkMode
                       ? "text-blue-400 hover:text-blue-300"
                       : "text-blue-600 hover:text-blue-700"
                   }`}
-                  onClick={() => window.open("https://finance.yahoo.com/topic/tariffs", "_blank")}
                 >
-                  Full Report
-                  <ChevronRightIcon className="h-4 w-4 ml-1" />
-                </button>
+                  Tariff coverage on Yahoo Finance
+                  <ChevronRightIcon className="h-4 w-4 ml-1" aria-hidden="true" />
+                </a>
               )}
               {isMobile && (
                 <button

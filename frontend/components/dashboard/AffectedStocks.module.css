@@ -132,10 +132,41 @@
   animation: slideInRight 400ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
+/* The marquee track. Lived in a runtime-injected <style> element built with
+   document.createElement on module import; keeping it here means it ships with
+   the stylesheet and is scoped like everything else in this module. */
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
 .cardContainer {
   display: flex;
   gap: 1rem;
   transition: transform 400ms cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+.marquee {
+  animation: scroll 30s linear infinite;
+}
+
+/* Pausing is a real requirement, not a nicety: the cards are links, so a
+   moving track is a moving click target, and WCAG 2.2.2 asks for a way to
+   stop anything that animates for more than five seconds. */
+.marquee:hover,
+.marquee:focus-within,
+.marquee[data-paused="true"] {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    animation: none;
+  }
 }
 
 /* Add a class for when we need to disable transition during reset */

@@ -13,26 +13,11 @@ const apiClient = axios.create({
   withCredentials: true, // Enable credentials
 });
 
-apiClient.interceptors.request.use((request) => {
-  // Construct the final URL relative to the baseURL
-  const finalUrl = `${apiClient.defaults.baseURL}${request.url}`;
-  console.log("API Request Starting:", {
-    url: finalUrl,
-    method: request.method,
-    params: request.params,
-  });
-
-  return request;
-});
-
+// Successful requests and responses were both logged unconditionally, so a
+// dashboard load printed a dozen entries into every visitor's console. Failures
+// are still reported: those are worth seeing.
 apiClient.interceptors.response.use(
-  (response) => {
-    console.log("API Response Success:", {
-      status: response.status,
-      url: response.config.url,
-    });
-    return response;
-  },
+  (response) => response,
   (error) => {
     console.error("API Response Error:", {
       url: error.config?.url,
@@ -103,7 +88,6 @@ class ApiService {
         const articles: NewsArticle[] = response.data;
         const itemsPerPage = params.itemsPerPage || 10;
         const page = params.page || 1;
-        console.log("Wrapping news API array response:", articles);
         // Wrap the array in the expected object structure
         return {
           data: articles,
