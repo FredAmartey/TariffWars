@@ -12,6 +12,7 @@
     "record-history": "node scripts/record-history.mjs"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.3.3",
     "@types/lodash": "^4.17.16",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
@@ -31,12 +32,10 @@
     "@typescript-eslint/eslint-plugin": "^5.54.0",
     "@typescript-eslint/parser": "^5.54.0",
     "@vitejs/plugin-react": "^4.2.1",
-    "autoprefixer": "latest",
     "eslint": "^8.50.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.1",
-    "postcss": "latest",
-    "tailwindcss": "3.4.17",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5.5.4",
     "vite": "^5.2.0"
   }

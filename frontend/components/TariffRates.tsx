@@ -103,8 +103,8 @@ export const TariffRates = () => {
       <div
         className={`p-6 rounded-xl ${
           isDarkMode
-            ? "bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border border-blue-800/30"
-            : "bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100"
+            ? "bg-linear-to-r from-blue-900/30 to-indigo-900/30 border border-blue-800/30"
+            : "bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-100"
         }`}
       >
         <h1 className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-gray-800"}`}>
@@ -118,7 +118,7 @@ export const TariffRates = () => {
         className={`rounded-xl overflow-hidden ${
           isDarkMode
             ? "bg-gray-800/80 border border-gray-700"
-            : "bg-white border border-gray-200 shadow-sm"
+            : "bg-white border border-gray-200 shadow-xs"
         }`}
       >
         <div className="p-6">
@@ -134,7 +134,7 @@ export const TariffRates = () => {
                     isDarkMode
                       ? "bg-gray-700 border-gray-600 placeholder-gray-400"
                       : "bg-white border-gray-300 placeholder-gray-500"
-                  } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  } border focus:outline-hidden focus:ring-2 focus:ring-blue-500`}
                   placeholder="Search by commodity, country..."
                   value={searchTerm}
                   onChange={(e) => {

@@ -163,8 +163,8 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
       <div
         className={`rounded-xl overflow-hidden ${
           isDarkMode
-            ? "bg-gradient-to-r from-indigo-900/40 to-purple-900/40 border border-indigo-800/50"
-            : "bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100"
+            ? "bg-linear-to-r from-indigo-900/40 to-purple-900/40 border border-indigo-800/50"
+            : "bg-linear-to-r from-indigo-50 to-purple-50 border border-indigo-100"
         }`}
       >
         <div className="p-6">
@@ -188,7 +188,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
           className={`col-span-1 lg:col-span-2 rounded-xl overflow-hidden ${
             isDarkMode
               ? "bg-gray-800/80 border border-gray-700"
-              : "bg-white border border-gray-200 shadow-sm"
+              : "bg-white border border-gray-200 shadow-xs"
           }`}
         >
           <div className="p-6">
@@ -220,8 +220,8 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
         <div
           className={`rounded-xl overflow-hidden ${
             isDarkMode
-              ? "bg-gradient-to-br from-blue-900/30 to-purple-900/30 border border-blue-800/50"
-              : "bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-100"
+              ? "bg-linear-to-br from-blue-900/30 to-purple-900/30 border border-blue-800/50"
+              : "bg-linear-to-br from-blue-50 to-purple-50 border border-blue-100"
           }`}
         >
           <div className="p-6">
@@ -249,7 +249,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
         className={`rounded-xl overflow-hidden ${
           isDarkMode
             ? "bg-gray-800/80 border border-gray-700"
-            : "bg-white border border-gray-200 shadow-sm"
+            : "bg-white border border-gray-200 shadow-xs"
         }`}
       >
         <div className="p-6">
@@ -316,7 +316,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
         className={`rounded-xl overflow-hidden ${
           isDarkMode
             ? "bg-gray-800/80 border border-gray-700"
-            : "bg-white border border-gray-200 shadow-sm"
+            : "bg-white border border-gray-200 shadow-xs"
         }`}
       >
         <div className="p-6">

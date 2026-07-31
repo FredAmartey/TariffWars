@@ -106,8 +106,8 @@ const AppContent: React.FC = () => {
                 <header
                   className={`md:hidden flex items-center justify-between p-4 sticky top-0 z-30 ${
                     isDarkMode
-                      ? "bg-gray-900/80 backdrop-blur-sm border-b border-gray-700/50"
-                      : "bg-white/80 backdrop-blur-sm border-b border-gray-200/50"
+                      ? "bg-gray-900/80 backdrop-blur-xs border-b border-gray-700/50"
+                      : "bg-white/80 backdrop-blur-xs border-b border-gray-200/50"
                   }`}
                 >
                   <button

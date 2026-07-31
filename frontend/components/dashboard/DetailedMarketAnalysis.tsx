@@ -539,8 +539,8 @@ const PredictionsTab = ({
       <div
         className={`p-5 rounded-lg ${
           isDarkMode
-            ? "bg-gradient-to-br from-blue-900/20 to-purple-900/20 border border-blue-900/20"
-            : "bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-100"
+            ? "bg-linear-to-br from-blue-900/20 to-purple-900/20 border border-blue-900/20"
+            : "bg-linear-to-br from-blue-50 to-purple-50 border border-blue-100"
         }`}
       >
         <h3 className={`text-lg font-medium mb-3 ${isDarkMode ? "text-white" : "text-gray-800"}`}>
@@ -645,8 +645,8 @@ interface RegionTheme {
 
 const REGION_THEMES: Record<string, RegionTheme> = {
   "North America": {
-    cardDark: "bg-gradient-to-br from-blue-900/20 to-blue-900/20 border border-blue-900/20",
-    cardLight: "bg-gradient-to-br from-blue-50 to-blue-50 border border-blue-100",
+    cardDark: "bg-linear-to-br from-blue-900/20 to-blue-900/20 border border-blue-900/20",
+    cardLight: "bg-linear-to-br from-blue-50 to-blue-50 border border-blue-100",
     chipDark: "bg-blue-900/50",
     chipLight: "bg-blue-100",
     iconDark: "text-blue-300",
@@ -657,8 +657,8 @@ const REGION_THEMES: Record<string, RegionTheme> = {
     tagLight: "bg-blue-100 text-blue-700",
   },
   "Asia-Pacific": {
-    cardDark: "bg-gradient-to-br from-red-900/20 to-red-900/20 border border-red-900/20",
-    cardLight: "bg-gradient-to-br from-red-50 to-red-50 border border-red-100",
+    cardDark: "bg-linear-to-br from-red-900/20 to-red-900/20 border border-red-900/20",
+    cardLight: "bg-linear-to-br from-red-50 to-red-50 border border-red-100",
     chipDark: "bg-red-900/50",
     chipLight: "bg-red-100",
     iconDark: "text-red-300",
@@ -669,8 +669,8 @@ const REGION_THEMES: Record<string, RegionTheme> = {
     tagLight: "bg-red-100 text-red-700",
   },
   Europe: {
-    cardDark: "bg-gradient-to-br from-indigo-900/20 to-indigo-900/20 border border-indigo-900/20",
-    cardLight: "bg-gradient-to-br from-indigo-50 to-indigo-50 border border-indigo-100",
+    cardDark: "bg-linear-to-br from-indigo-900/20 to-indigo-900/20 border border-indigo-900/20",
+    cardLight: "bg-linear-to-br from-indigo-50 to-indigo-50 border border-indigo-100",
     chipDark: "bg-indigo-900/50",
     chipLight: "bg-indigo-100",
     iconDark: "text-indigo-300",
@@ -681,8 +681,8 @@ const REGION_THEMES: Record<string, RegionTheme> = {
     tagLight: "bg-indigo-100 text-indigo-700",
   },
   "Latin America": {
-    cardDark: "bg-gradient-to-br from-amber-900/20 to-amber-900/20 border border-amber-900/20",
-    cardLight: "bg-gradient-to-br from-amber-50 to-amber-50 border border-amber-100",
+    cardDark: "bg-linear-to-br from-amber-900/20 to-amber-900/20 border border-amber-900/20",
+    cardLight: "bg-linear-to-br from-amber-50 to-amber-50 border border-amber-100",
     chipDark: "bg-amber-900/50",
     chipLight: "bg-amber-100",
     iconDark: "text-amber-300",
@@ -693,8 +693,8 @@ const REGION_THEMES: Record<string, RegionTheme> = {
     tagLight: "bg-amber-100 text-amber-700",
   },
   Other: {
-    cardDark: "bg-gradient-to-br from-teal-900/20 to-teal-900/20 border border-teal-900/20",
-    cardLight: "bg-gradient-to-br from-teal-50 to-teal-50 border border-teal-100",
+    cardDark: "bg-linear-to-br from-teal-900/20 to-teal-900/20 border border-teal-900/20",
+    cardLight: "bg-linear-to-br from-teal-50 to-teal-50 border border-teal-100",
     chipDark: "bg-teal-900/50",
     chipLight: "bg-teal-100",
     iconDark: "text-teal-300",
@@ -705,8 +705,8 @@ const REGION_THEMES: Record<string, RegionTheme> = {
     tagLight: "bg-teal-100 text-teal-700",
   },
   Global: {
-    cardDark: "bg-gradient-to-br from-slate-900/20 to-slate-900/20 border border-slate-900/20",
-    cardLight: "bg-gradient-to-br from-slate-50 to-slate-50 border border-slate-100",
+    cardDark: "bg-linear-to-br from-slate-900/20 to-slate-900/20 border border-slate-900/20",
+    cardLight: "bg-linear-to-br from-slate-50 to-slate-50 border border-slate-100",
     chipDark: "bg-slate-900/50",
     chipLight: "bg-slate-100",
     iconDark: "text-slate-300",

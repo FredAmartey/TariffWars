@@ -24,24 +24,24 @@ type Tone = "neutral" | "escalation" | "relief";
 const TONE_STYLES: Record<Tone, { card: { dark: string; light: string }; pill: { dark: string; light: string }; icon: string }> = {
   neutral: {
     card: {
-      dark: "bg-gradient-to-br from-indigo-900/50 to-indigo-800/30 border border-indigo-700/50",
-      light: "bg-white border border-indigo-100 shadow-sm",
+      dark: "bg-linear-to-br from-indigo-900/50 to-indigo-800/30 border border-indigo-700/50",
+      light: "bg-white border border-indigo-100 shadow-xs",
     },
     pill: { dark: "bg-indigo-900/50 text-indigo-300", light: "bg-indigo-50 text-indigo-700" },
     icon: "text-indigo-400",
   },
   escalation: {
     card: {
-      dark: "bg-gradient-to-br from-red-900/50 to-red-800/30 border border-red-700/50",
-      light: "bg-white border border-red-100 shadow-sm",
+      dark: "bg-linear-to-br from-red-900/50 to-red-800/30 border border-red-700/50",
+      light: "bg-white border border-red-100 shadow-xs",
     },
     pill: { dark: "bg-red-900/50 text-red-300", light: "bg-red-50 text-red-700" },
     icon: "text-red-400",
   },
   relief: {
     card: {
-      dark: "bg-gradient-to-br from-green-900/50 to-green-800/30 border border-green-700/50",
-      light: "bg-white border border-green-100 shadow-sm",
+      dark: "bg-linear-to-br from-green-900/50 to-green-800/30 border border-green-700/50",
+      light: "bg-white border border-green-100 shadow-xs",
     },
     pill: { dark: "bg-green-900/50 text-green-300", light: "bg-green-50 text-green-700" },
     icon: "text-green-400",
@@ -78,7 +78,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
       <div className="absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8" aria-hidden="true">
         <div
           className={`w-full h-full rounded-full ${
-            isDarkMode ? "bg-white/[0.04]" : "bg-gray-900/[0.04]"
+            isDarkMode ? "bg-white/4" : "bg-gray-900/4"
           }`}
         ></div>
       </div>
@@ -155,10 +155,10 @@ export const TariffStats = () => {
                 : "bg-gray-100 border border-gray-200"
             }`}
           >
-            <div className="h-4 bg-gray-600 rounded w-1/2 mb-2"></div>
-            <div className="h-8 bg-gray-500 rounded w-1/3 mb-2"></div>
-            <div className="h-3 bg-gray-600 rounded w-3/4 mb-3"></div>
-            <div className="h-5 bg-gray-500 rounded w-1/4"></div>
+            <div className="h-4 bg-gray-600 rounded-sm w-1/2 mb-2"></div>
+            <div className="h-8 bg-gray-500 rounded-sm w-1/3 mb-2"></div>
+            <div className="h-3 bg-gray-600 rounded-sm w-3/4 mb-3"></div>
+            <div className="h-5 bg-gray-500 rounded-sm w-1/4"></div>
           </div>
         ))}
         <span className="sr-only" role="status">

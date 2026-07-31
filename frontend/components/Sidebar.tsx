@@ -33,7 +33,7 @@ export const Sidebar = ({
       className={`\
         flex flex-col transition-transform duration-300 ease-in-out z-50\
         ${isDarkMode ? "bg-gray-800" : "bg-white border-r border-gray-200"}\
-        fixed inset-y-0 left-0 w-[15rem] md:w-16 lg:w-[15rem]\
+        fixed inset-y-0 left-0 w-60 md:w-16 lg:w-60\
         md:relative md:translate-x-0\
         ${isMobileSidebarOpen ? "translate-x-0 shadow-xl" : "-translate-x-full"}\
       `}
@@ -57,7 +57,7 @@ export const Sidebar = ({
         />
         <button
           onClick={toggleMobileSidebar}
-          className={`p-1 rounded-md md:hidden flex-shrink-0 ${
+          className={`p-1 rounded-md md:hidden shrink-0 ${
             isDarkMode ? "text-gray-400 hover:bg-gray-700" : "text-gray-600 hover:bg-gray-100"
           }`}
           aria-label="Close menu"
@@ -86,7 +86,7 @@ export const Sidebar = ({
                       : "text-gray-600 hover:bg-gray-100"
                   }`}
                 >
-                  <Icon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+                  <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
                   {/* Collapsed to icons at `md`, so the label is hidden with
                       opacity rather than removed: it stays the accessible name. */}
                   <span
