@@ -1,6 +1,13 @@
-/* Import Inter font from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap')
-layer(utilities);
+/* Import Inter font from Google Fonts. Unlayered on purpose: it only
+   defines @font-face rules, so it can't conflict with anything, and
+   giving it layer(utilities) previously made `utilities` the first
+   layer declared in the stylesheet, which put it BELOW `base` in CSS
+   layer precedence, i.e. below Tailwind's own preflight, so preflight's
+   margin and padding reset was beating every spacing utility. Placed
+   ahead of `@import 'tailwindcss'` (still unlayered, so this doesn't
+   reintroduce the bug) so it precedes tailwind's own inlined content
+   and doesn't trip the "@import must precede all rules" build warning. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import 'tailwindcss';
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
