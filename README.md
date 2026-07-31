@@ -132,6 +132,7 @@ without a build. Point it elsewhere with `API_ORIGIN`.
 npx tsc --noEmit       # frontend types
 npm run lint           # frontend lint
 npm run build          # frontend production build
+npm test               # frontend unit tests
 npm run validate-data  # dataset
 cd backend && npm test # backend build and unit tests
 ```
