@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useCallback, useContext } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { TrendingUpIcon, TrendingDownIcon, MinusIcon, PauseIcon, PlayIcon } from "lucide-react";
 import styles from "./AffectedStocks.module.css";
 import { StockData, StockDirection } from "../../types/stock";
 import { apiService } from "../../services/api";
-import { ThemeContext } from "../../App"; // Import ThemeContext
 
 // The tracked symbol list lives on the backend (services/stockService.ts),
 // which is also what bounds the symbols it will ask the provider about. These
@@ -139,10 +138,7 @@ const SECTORS: { [key: string]: string } = {
 };
 
 // Helper sub-component for card content
-const CardContent: React.FC<{ stock: StockData; isDarkMode: boolean }> = ({
-  stock,
-  isDarkMode,
-}) => {
+const CardContent: React.FC<{ stock: StockData }> = ({ stock }) => {
   // Format market cap as simply as possible: $22.5M or $22.5B for larger values
   const formatMarketCap = (marketCap: number | null) => {
     // Null means the provider had no profile for this symbol. It used to be
@@ -164,11 +160,11 @@ const CardContent: React.FC<{ stock: StockData; isDarkMode: boolean }> = ({
 
   // Light mode used to inherit the dark card's fixed white/gray-400 text, which
   // sat on a pale lavender gradient at roughly 1.3:1 contrast.
-  const headingColor = isDarkMode ? "text-white" : "text-gray-900";
-  const mutedColor = isDarkMode ? "text-gray-400" : "text-gray-600";
+  const headingColor = "text-foreground";
+  const mutedColor = "text-muted-foreground";
 
   return (
-    <div className={`p-6 h-full flex flex-col ${isDarkMode ? "text-white" : "text-gray-900"}`}>
+    <div className="p-6 h-full flex flex-col text-foreground">
       <div className="flex justify-between items-start mb-2">
         <div>
           <h3 className={`text-2xl font-bold ${headingColor}`}>{stock.symbol}</h3>
@@ -188,13 +184,9 @@ const CardContent: React.FC<{ stock: StockData; isDarkMode: boolean }> = ({
           <span
             className={`text-4xl font-bold ${
               stock.impact === "positive"
-                ? isDarkMode
-                  ? "text-green-400"
-                  : "text-green-700"
+                ? "text-green-700 dark:text-green-400"
                 : stock.impact === "negative"
-                ? isDarkMode
-                  ? "text-red-400"
-                  : "text-red-700"
+                ? "text-red-700 dark:text-red-400"
                 : mutedColor
             }`}
           >
@@ -208,21 +200,15 @@ const CardContent: React.FC<{ stock: StockData; isDarkMode: boolean }> = ({
       </div>
 
       <div className="mt-auto">
-        <div className={`rounded-lg p-4 ${isDarkMode ? "bg-gray-800/50" : "bg-white/60"}`}>
+        <div className="rounded-lg p-4 bg-card/50">
           {/* The copy below is a fixed narrative keyed off the day's price
               direction, not measured tariff exposure. Label it honestly. */}
-          <h4 className={`font-semibold mb-2 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
-            Possible tariff angle
-          </h4>
+          <h4 className="font-semibold mb-2 text-muted-foreground">Possible tariff angle</h4>
           <p className={`${mutedColor} text-sm`}>{stock.reason}</p>
         </div>
 
         <div className="mt-4">
-          <span
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-              isDarkMode ? "bg-indigo-400/10 text-indigo-400" : "bg-indigo-100 text-indigo-700"
-            }`}
-          >
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-400/10 dark:text-indigo-400">
             {stock.sector}
           </span>
         </div>
@@ -232,15 +218,9 @@ const CardContent: React.FC<{ stock: StockData; isDarkMode: boolean }> = ({
 };
 
 // Add SkeletonCard component for loading state
-const SkeletonCard: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
+const SkeletonCard: React.FC = () => {
   return (
-    <div
-      className={`h-96 rounded-xl overflow-hidden animate-pulse ${
-        isDarkMode
-          ? "bg-linear-to-r from-gray-700/50 to-gray-800/50"
-          : "bg-linear-to-r from-gray-200 to-gray-300"
-      }`}
-    >
+    <div className="h-96 rounded-xl overflow-hidden animate-pulse bg-linear-to-r from-gray-200 to-gray-300 dark:from-gray-700/50 dark:to-gray-800/50">
       <div className="p-6 h-full flex flex-col">
         <div className="flex justify-between items-start mb-4">
           <div>
@@ -290,7 +270,6 @@ const usePrefersReducedMotion = (): boolean => {
 };
 
 export const AffectedStocks: React.FC = () => {
-  const { isDarkMode } = useContext(ThemeContext); // Get dark mode status
   const [stockData, setStockData] = useState<StockData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -401,7 +380,7 @@ export const AffectedStocks: React.FC = () => {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
         {[...Array(5)].map((_, index) => (
-          <SkeletonCard key={index} isDarkMode={isDarkMode} />
+          <SkeletonCard key={index} />
         ))}
       </div>
     );
@@ -413,7 +392,7 @@ export const AffectedStocks: React.FC = () => {
 
   if (!filteredData || filteredData.length === 0) {
     return (
-      <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+      <div className="p-4 text-center text-muted-foreground">
         No stock data available at this time.
       </div>
     );
@@ -429,10 +408,6 @@ export const AffectedStocks: React.FC = () => {
   const capturedMs = capturedAt ? Date.parse(capturedAt) : NaN;
   const ageMs = Number.isNaN(capturedMs) ? null : Date.now() - capturedMs;
   const staleMinutes = ageMs !== null && ageMs > 5 * 60 * 1000 ? Math.round(ageMs / 60000) : null;
-
-  const cardBackground = isDarkMode
-    ? "linear-gradient(145deg, rgba(17, 24, 39, 0.95), rgba(88, 28, 135, 0.8))"
-    : "linear-gradient(145deg, rgba(224, 231, 255, 0.9), rgba(237, 233, 254, 0.9))";
 
   return (
     <div className="relative">
@@ -452,11 +427,7 @@ export const AffectedStocks: React.FC = () => {
             type="button"
             onClick={() => setIsPaused((paused) => !paused)}
             aria-pressed={isPaused}
-            className={`inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-md ${
-              isDarkMode
-                ? "bg-gray-700/70 text-gray-300 hover:bg-gray-600"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
+            className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-md bg-muted text-muted-foreground hover:bg-accent dark:bg-muted/70"
           >
             {isPaused ? (
               <PlayIcon className="h-3 w-3" aria-hidden="true" />
@@ -487,12 +458,10 @@ export const AffectedStocks: React.FC = () => {
                 aria-label={`${stock.name} (${stock.symbol}) on Yahoo Finance`}
                 aria-hidden={isDuplicate}
                 tabIndex={isDuplicate ? -1 : undefined}
-                className={`${styles.card} h-96 rounded-xl overflow-hidden block border ${
-                  isDarkMode ? "border-gray-600/50" : "border-gray-200 shadow-md"
-                }`}
-                style={{ background: cardBackground, backdropFilter: "blur(16px)" }}
+                className={`${styles.card} h-96 rounded-xl overflow-hidden block border border-border shadow-md dark:shadow-none`}
+                style={{ background: "var(--stock-card-gradient)", backdropFilter: "blur(16px)" }}
               >
-                <CardContent stock={stock} isDarkMode={isDarkMode} />
+                <CardContent stock={stock} />
               </a>
             );
           })}

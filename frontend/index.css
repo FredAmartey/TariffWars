@@ -187,6 +187,16 @@ html {
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* AffectedStocks marquee card background. Not expressible as a flat
+     semantic token (bg-card etc.) because it is a two-stop gradient, so it
+     gets its own custom property instead, carrying the exact rgba stops the
+     old isDarkMode ternary used to pick between. */
+  --stock-card-gradient: linear-gradient(
+    145deg,
+    rgba(224, 231, 255, 0.9),
+    rgba(237, 233, 254, 0.9)
+  );
 }
 
 .dark {
@@ -221,4 +231,10 @@ html {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  --stock-card-gradient: linear-gradient(
+    145deg,
+    rgba(17, 24, 39, 0.95),
+    rgba(88, 28, 135, 0.8)
+  );
 }
