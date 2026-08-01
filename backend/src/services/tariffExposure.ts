@@ -63,6 +63,11 @@ export const INDUSTRY_GOODS: ReadonlyArray<{ industry: string; goods: RegExp }> 
   { industry: "Pharmaceuticals", goods: /pharmaceutic/i },
   { industry: "Biotechnology", goods: /pharmaceutic/i },
   { industry: "Energy", goods: /solar panel|critical minerals/i },
+  // Solar installers land here rather than in Energy. The panel manufacturers
+  // are classified "Semiconductors", which is why none of them are tracked:
+  // they would have reported the 25% semiconductor duty instead of the 50% one
+  // on the panels themselves.
+  { industry: "Electrical Equipment", goods: /solar panel/i },
   { industry: "Utilities", goods: /solar panel/i },
   { industry: "Logistics & Transportation", goods: /port fees|cargo handling|vessel/i },
   { industry: "Building", goods: /lumber|timber|upholstered furniture|steel|aluminum/i },

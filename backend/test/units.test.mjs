@@ -207,3 +207,14 @@ test("interleaveBySector keeps the heaviest sector first without repeating it", 
     "the second card names a different sector"
   );
 });
+
+test("exposureFor routes solar installers to the panel tariff, not the chip one", () => {
+  // Finnhub classes the panel makers (First Solar, Enphase, SolarEdge) as
+  // "Semiconductors", so tracking them would have reported the 25% chip duty
+  // against companies whose real exposure is the 50% one on panels. Installers
+  // land in "Electrical Equipment", which can be mapped without that collision.
+  const solar = { ...row(), commodity: "Solar Panels (Section 301 four-year review)", rate: 50 };
+  const chips = { ...row(), commodity: "Semiconductors", rate: 25 };
+  assert.equal(exposureFor("Electrical Equipment", [solar, chips])?.rate, 50);
+  assert.equal(exposureFor("Semiconductors", [solar, chips])?.commodity, "Semiconductors");
+});

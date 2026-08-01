@@ -55,6 +55,26 @@ const TRACKED_SYMBOLS: ReadonlyArray<{
   { symbol: "TM" },
   { symbol: "CRSR" },
   { symbol: "HPQ" },
+  // Added to reach sectors that carried a live tariff and no company. The
+  // 100% duty on patented pharmaceuticals is the heaviest rate in the whole
+  // dataset and the panel could not show a single name against it; softwood
+  // lumber and upholstered furniture had the same problem via Building, and
+  // solar panels via Sunrun.
+  //
+  // Every one of these was checked against the provider's own classification
+  // before being added, because guessing it does not work: Weyerhaeuser is
+  // "Real Estate" (a timber REIT), Mohawk and Leggett & Platt are "Consumer
+  // products" rather than Furniture, and First Solar and Enphase are
+  // "Semiconductors", so adding them would have rendered "25% on
+  // Semiconductors" against companies whose real exposure is the 50% solar
+  // panel line. All four were dropped for that reason.
+  { symbol: "PFE" },
+  { symbol: "MRK" },
+  { symbol: "LLY" },
+  { symbol: "JNJ" },
+  { symbol: "ABBV" },
+  { symbol: "BLDR" },
+  { symbol: "RUN" },
 ];
 
 /**
@@ -93,14 +113,37 @@ export interface StockQuote {
 
 const FINNHUB_BASE = "https://finnhub.io/api/v1";
 
+/** The three fields of /stock/profile2 this app reads. */
+interface FinnhubProfile {
+  name?: string;
+  finnhubIndustry?: string;
+  marketCapitalization?: number;
+}
+
 export class StockService {
   // Per symbol, not per batch. A batch timestamp let a symbol that kept failing
   // ride along on its neighbours' refreshes: the merged snapshot was restamped
   // fresh every round, so one symbol's price could stay frozen for hours while
   // being served, and CDN-cached, as current.
   private quotes: Map<string, { quote: StockQuote; at: number }> = new Map();
+  /**
+   * Company profiles, cached separately and for far longer than quotes.
+   *
+   * Both used to be refetched together on the quote TTL, so every refresh cost
+   * two upstream calls per symbol. A company's name, industry and market cap do
+   * not move on a five-minute cadence, and the fan-out is the binding
+   * constraint here: `fetchAll` issues every call at once against a 60-per-
+   * minute quota, so at two calls a symbol the tracked list could not grow past
+   * about thirty names without rate-limiting itself on every round. At one call
+   * a symbol in the steady state the same quota reaches roughly fifty-five.
+   *
+   * A stale profile is also a much smaller problem than a stale price: it means
+   * a market cap is a day old, next to a quote that is minutes old and labelled.
+   */
+  private profiles: Map<string, { profile: FinnhubProfile; at: number }> = new Map();
   // Quotes move all day but the panel is ambient, not a trading tool.
   private readonly ttl = 5 * 60 * 1000;
+  private readonly profileTtl = 24 * 60 * 60 * 1000;
   // Concurrent cold requests would otherwise each fan out 40 upstream calls.
   private inFlight: Promise<StockQuote[]> | null = null;
   /**
@@ -261,21 +304,48 @@ export class StockService {
     return results.filter((r): r is StockQuote => r !== null);
   }
 
+  /**
+   * A symbol's profile, from cache when one is still inside the day.
+   *
+   * Never throws: the profile is supplementary, so a failure here degrades the
+   * card (no market cap, the tracked-list fallback for name and industry)
+   * rather than dropping the quote. A failed lookup is not cached, so the next
+   * round retries it instead of pinning the gap for 24 hours.
+   */
+  private async getProfile(symbol: string, now: number): Promise<FinnhubProfile | null> {
+    const held = this.profiles.get(symbol);
+    if (held && now - held.at < this.profileTtl) return held.profile;
+
+    try {
+      const response = await axios.get(`${FINNHUB_BASE}/stock/profile2`, {
+        params: { symbol, token: this.apiKey },
+        timeout: 8000,
+      });
+      const profile = response.data as FinnhubProfile | undefined;
+      // An empty object is what the provider returns for a symbol it has no
+      // profile for, such as an ETF. Caching it is correct and stops every
+      // round retrying a lookup that will never succeed.
+      if (!profile || typeof profile !== "object") return held?.profile ?? null;
+      this.profiles.set(symbol, { profile, at: now });
+      return profile;
+    } catch {
+      // Fall back to whatever is held, even if past the TTL: a day-old industry
+      // beats dropping the company off the panel during a provider hiccup.
+      return held?.profile ?? null;
+    }
+  }
+
   private async fetchOne(
     tracked: (typeof TRACKED_SYMBOLS)[number]
   ): Promise<StockQuote | null> {
     const { symbol } = tracked;
-    const [quote, profile] = await Promise.all([
+    const now = Date.now();
+    const [quote, p] = await Promise.all([
       axios.get(`${FINNHUB_BASE}/quote`, {
         params: { symbol, token: this.apiKey },
         timeout: 8000,
       }),
-      axios
-        .get(`${FINNHUB_BASE}/stock/profile2`, {
-          params: { symbol, token: this.apiKey },
-          timeout: 8000,
-        })
-        .catch(() => null),
+      this.getProfile(symbol, now),
     ]);
 
     const q = quote.data;
@@ -284,7 +354,6 @@ export class StockService {
     }
 
     const change = q.c - q.pc;
-    const p = profile?.data;
     return {
       symbol,
       // The override is a fallback, never an authority: a real profile always
