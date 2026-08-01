@@ -177,17 +177,21 @@ const NO_FILTERS: Array<{ field: string; value: string }> = [];
  *
  * The table used to size itself from its content, so every sort reflowed it:
  * measured shifts of up to 41px, which moved the header out from under the
- * cursor that had just clicked it. Weights are chosen for the kind of value a
- * column holds, not for whichever row happens to be longest.
+ * cursor that had just clicked it.
+ *
+ * The numbers are taken from what the browser's auto layout actually chose for
+ * this data, measured on the deployed table, rather than guessed. A first pass
+ * did guess, and gave MARKET IMPACT 14 when auto settles on ~22; the prose
+ * columns were squeezed into ribbons and the rows grew to compensate.
  */
 const COUNTRY_COLUMNS = [
-  { key: "country", label: "COUNTRY", width: 16 },
-  { key: "rateDisplay", label: "RATE IMPOSED BY USA", width: 13 },
-  { key: "status", label: "STATUS", width: 11 },
-  { key: "countrysTariffOnUS", label: "RATE IMPOSED ON USA", width: 13 },
-  { key: "keyAffectedSectors", label: "KEY SECTORS", width: 20 },
-  { key: "marketImpact", label: "MARKET IMPACT", width: 14 },
-  { key: "responseType", label: "RESPONSE TYPE", width: 13 },
+  { key: "country", label: "COUNTRY", width: 12 },
+  { key: "rateDisplay", label: "RATE IMPOSED BY USA", width: 11 },
+  { key: "status", label: "STATUS", width: 10 },
+  { key: "countrysTariffOnUS", label: "RATE IMPOSED ON USA", width: 12 },
+  { key: "keyAffectedSectors", label: "KEY SECTORS", width: 18 },
+  { key: "marketImpact", label: "MARKET IMPACT", width: 22 },
+  { key: "responseType", label: "RESPONSE TYPE", width: 15 },
 ] as const;
 
 /**
@@ -342,12 +346,12 @@ const PRODUCT_COLUMNS: Array<{
   width: number;
 }> =
   [
-    { key: "commodity", label: "COMMODITY", compact: true, width: 30 },
-    { key: "tariffOrigin", label: "TARIFF FROM", compact: false, width: 9 },
-    { key: "to", label: "TO", compact: true, width: 13 },
-    { key: "rate", label: "RATE", compact: true, width: 8 },
-    { key: "changeDisplay", label: "CHANGE", compact: true, width: 9 },
-    { key: "status", label: "STATUS", compact: true, width: 11 },
+    { key: "commodity", label: "COMMODITY", compact: true, width: 33 },
+    { key: "tariffOrigin", label: "TARIFF FROM", compact: false, width: 8 },
+    { key: "to", label: "TO", compact: true, width: 16 },
+    { key: "rate", label: "RATE", compact: true, width: 7 },
+    { key: "changeDisplay", label: "CHANGE", compact: true, width: 7 },
+    { key: "status", label: "STATUS", compact: true, width: 9 },
     { key: "nature", label: "TYPE", tooltip: TARIFF_TYPE_TOOLTIP, compact: false, width: 8 },
     { key: "effectiveDate", label: "EFFECTIVE DATE", compact: true, width: 12 },
   ];
