@@ -28,7 +28,7 @@ const BOOKMARK_KEY = "tariffNewsBookmarks";
  * saved by an older build would otherwise be handed straight back to the user
  * as something to activate.
  */
-function isSafeUrl(raw: unknown): raw is string {
+export function isSafeUrl(raw: unknown): raw is string {
   if (typeof raw !== "string" || !raw.trim()) return false;
   try {
     const { protocol } = new URL(raw);
@@ -47,7 +47,7 @@ function isSafeUrl(raw: unknown): raw is string {
  * A migrated entry keeps the link working immediately, and is upgraded to the
  * full article as soon as it appears in a live feed.
  */
-function readBookmarks(): NewsArticle[] {
+export function readBookmarks(): NewsArticle[] {
   try {
     const raw = localStorage.getItem(BOOKMARK_KEY);
     if (!raw) return [];
@@ -85,7 +85,7 @@ function readBookmarks(): NewsArticle[] {
  * Syndicated summaries routinely end in "Read More: https://…", which renders
  * as a wrapped, unclickable URL eating three lines of the card.
  */
-function cleanSummary(summary: string | undefined): string {
+export function cleanSummary(summary: string | undefined): string {
   if (!summary) return "";
   return summary
     .replace(/\s*(read more|continue reading|full story)\s*:?\s*https?:\/\/\S+\s*$/i, "")

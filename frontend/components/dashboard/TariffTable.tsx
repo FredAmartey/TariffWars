@@ -55,7 +55,7 @@ type TabType = "countries" | "products";
  */
 const INACTIVE_STATUSES = new Set(["Withdrawn", "Ended", "Suspended", "Paused", "Expired"]);
 
-const isInactive = (status: string | undefined) => INACTIVE_STATUSES.has(status ?? "");
+export const isInactive = (status: string | undefined) => INACTIVE_STATUSES.has(status ?? "");
 
 const MUTED_BADGE = (isDarkMode: boolean) =>
   isDarkMode ? "bg-gray-700 text-gray-400" : "bg-gray-100 text-gray-500";
