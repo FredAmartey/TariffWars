@@ -14,10 +14,48 @@ import axios from "axios";
 // "X" (US Steel) used to be here and never returned a quote: it was delisted
 // after the Nippon Steel acquisition, so every round spent two requests on it
 // and came back 19 of 20.
-const TRACKED_SYMBOLS = [
-  "NUE", "STLD", "CLF", "TSLA", "AAPL", "GM", "INTC", "CAT", "BA",
-  "SMH", "XME", "F", "MU", "JD", "NIO", "BABA", "TM", "CRSR", "HPQ",
-] as const;
+/**
+ * The candidate universe, not the panel's contents.
+ *
+ * Which of these actually renders is decided by whether a tariff is currently
+ * being charged on their industry (see tariffExposure.ts), so the panel changes
+ * as the data does rather than showing the same nineteen tickers forever.
+ *
+ * The list itself is still hand-picked, and that is a real limit worth stating:
+ * selecting from the whole market needs an industry screener, and the provider
+ * offers none on this plan. `/stock/symbol` returns ~10,000 US symbols with no
+ * industry attached, and resolving industry means one profile call each, which
+ * at 60 calls/minute is about three hours per refresh.
+ *
+ * `industry` and `name` are overrides, used only when the provider has no
+ * profile for the symbol. Both current cases are sector ETFs: a fund is not a
+ * company, so /stock/profile2 legitimately returns nothing for them.
+ */
+const TRACKED_SYMBOLS: ReadonlyArray<{
+  symbol: string;
+  name?: string;
+  industry?: string;
+}> = [
+  { symbol: "NUE" },
+  { symbol: "STLD" },
+  { symbol: "CLF" },
+  { symbol: "TSLA" },
+  { symbol: "AAPL" },
+  { symbol: "GM" },
+  { symbol: "INTC" },
+  { symbol: "CAT" },
+  { symbol: "BA" },
+  { symbol: "SMH", name: "VanEck Semiconductor ETF", industry: "Semiconductors" },
+  { symbol: "XME", name: "SPDR Metals & Mining ETF", industry: "Metals & Mining" },
+  { symbol: "F" },
+  { symbol: "MU" },
+  { symbol: "JD" },
+  { symbol: "NIO" },
+  { symbol: "BABA" },
+  { symbol: "TM" },
+  { symbol: "CRSR" },
+  { symbol: "HPQ" },
+];
 
 /**
  * Share of tracked symbols that must be present and current for the snapshot
@@ -34,6 +72,15 @@ const MIN_COVERAGE = 0.9;
 
 export interface StockQuote {
   symbol: string;
+  /**
+   * Company name and industry as the provider reports them.
+   *
+   * Both already came back on the profile call this service was making for
+   * market cap and were being discarded, while the frontend carried a 19-entry
+   * COMPANY_NAMES map and a 19-entry SECTORS map restating them by hand.
+   */
+  name: string | null;
+  industry: string | null;
   price: number;
   previousClose: number;
   change: number;
@@ -209,12 +256,15 @@ export class StockService {
 
   private async fetchAll(): Promise<StockQuote[]> {
     const results = await Promise.all(
-      TRACKED_SYMBOLS.map((symbol) => this.fetchOne(symbol).catch(() => null))
+      TRACKED_SYMBOLS.map((tracked) => this.fetchOne(tracked).catch(() => null))
     );
     return results.filter((r): r is StockQuote => r !== null);
   }
 
-  private async fetchOne(symbol: string): Promise<StockQuote | null> {
+  private async fetchOne(
+    tracked: (typeof TRACKED_SYMBOLS)[number]
+  ): Promise<StockQuote | null> {
+    const { symbol } = tracked;
     const [quote, profile] = await Promise.all([
       axios.get(`${FINNHUB_BASE}/quote`, {
         params: { symbol, token: this.apiKey },
@@ -234,8 +284,16 @@ export class StockService {
     }
 
     const change = q.c - q.pc;
+    const p = profile?.data;
     return {
       symbol,
+      // The override is a fallback, never an authority: a real profile always
+      // wins, so a company that later gets reclassified follows the provider.
+      name: typeof p?.name === "string" && p.name ? p.name : tracked.name ?? null,
+      industry:
+        typeof p?.finnhubIndustry === "string" && p.finnhubIndustry
+          ? p.finnhubIndustry
+          : tracked.industry ?? null,
       price: q.c,
       previousClose: q.pc,
       change,
@@ -245,10 +303,7 @@ export class StockService {
       // Reporting a guess as a market cap is worse than reporting none: the old
       // client-side estimator divided share counts that were already in
       // millions by another million and rendered the result as fact.
-      marketCap:
-        profile && typeof profile.data?.marketCapitalization === "number"
-          ? profile.data.marketCapitalization
-          : null,
+      marketCap: typeof p?.marketCapitalization === "number" ? p.marketCapitalization : null,
     };
   }
 }

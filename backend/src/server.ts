@@ -167,7 +167,7 @@ app.get("/health", (req, res) => {
 // Set up routes with their respective services - apply API rate limiter
 app.use("/api/tariffs", apiLimiter, tariffRoutes(tariffService));
 app.use("/api/news", apiLimiter, newsRoutes(newsService));
-app.use("/api/stocks", apiLimiter, stockRoutes(stockService));
+app.use("/api/stocks", apiLimiter, stockRoutes(stockService, tariffService));
 app.use("/api/market-analysis", apiLimiter, marketAnalysisRoutes(tariffService, newsService));
 
 // 404 handler
