@@ -245,7 +245,7 @@ const SortableHeader = ({
     <th
       scope="col"
       aria-sort={active ? (direction === "asc" ? "ascending" : "descending") : "none"}
-      className="px-4 py-3 text-left text-sm font-semibold text-muted-foreground hover:bg-accent/50"
+      className="px-4 py-3 text-left text-sm font-semibold text-muted-foreground hover:bg-gray-700/50"
       title={tooltip}
     >
       <button
