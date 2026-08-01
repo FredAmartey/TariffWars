@@ -82,7 +82,14 @@ const commodityQualifier = (name: string): string | undefined => {
   const open = name.indexOf(" (");
   if (open === -1) return undefined;
   const inner = name.slice(open + 2).replace(/\)\s*$/, "").trim();
-  return inner || undefined;
+  if (!inner) return undefined;
+  // Sentence-case the first character only. Inside the parentheses these read
+  // as a continuation of the name, so they are written lowercase ("patented;
+  // EU, Japan…"); standing alone as a label they should not be. Touching only
+  // the first character leaves the ones that already start with an acronym
+  // (IEEPA, UK, US-EU), a proper noun (Section 301, Japan) or a digit
+  // ("10%-15% retaliation…") exactly as the dataset wrote them.
+  return inner.charAt(0).toUpperCase() + inner.slice(1);
 };
 
 const MetricCard: React.FC<MetricCardProps> = ({
@@ -112,11 +119,17 @@ const MetricCard: React.FC<MetricCardProps> = ({
           {typeof detail === "string" ? shortCommodity(detail) : detail}
         </p>
         {footnote && (
+          // Wraps rather than truncating: the pill carries the scope, cap or
+          // expiry that qualifies the figure above it, so an ellipsis hid
+          // exactly the part worth reading. `rounded-lg` rather than
+          // `rounded-full` because a stadium shape reads oddly once the text
+          // runs past one line. The four cards sit in a grid, whose items
+          // stretch to the tallest in the row, so a taller pill keeps them all
+          // the same height rather than making one card ragged.
           <div
-            className={`mt-4 inline-flex max-w-full items-center px-2 py-1 rounded-full text-xs ${styles.pill}`}
-            title={typeof footnote === "string" ? footnote : undefined}
+            className={`mt-4 inline-flex max-w-full items-center px-2 py-1 rounded-lg text-xs ${styles.pill}`}
           >
-            <span className="truncate">{footnote}</span>
+            {footnote}
           </div>
         )}
       </div>
