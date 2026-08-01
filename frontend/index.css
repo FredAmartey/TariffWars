@@ -41,6 +41,32 @@
   }
 }
 
+/*
+ * Restore the pointer cursor on buttons.
+ *
+ * Tailwind v3's preflight set `button { cursor: pointer }`. v4 dropped it in
+ * favour of the UA default, which is `cursor: default`, so after the upgrade
+ * every one of the app's 29 buttons stopped signalling that it was clickable.
+ * Anchors were unaffected (they get `pointer` from the UA stylesheet), which
+ * is what made it read as "some things respond and some don't" rather than as
+ * a uniform change.
+ *
+ * `select` is included for consistency rather than as part of the regression:
+ * the UA default there is `default` and v3's preflight did not change it, but
+ * it is an interactive control and should read like one.
+ *
+ * `:not(:disabled)` keeps a disabled control from claiming to be actionable;
+ * the pager arrows at either end of the range rely on that.
+ */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  select:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
+}
+
 /* Apply Inter font to all elements */
 html {
   font-family: 'Inter', sans-serif;
