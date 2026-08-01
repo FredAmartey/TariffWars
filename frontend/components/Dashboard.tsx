@@ -377,7 +377,6 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
         isOpen={showExportModal}
         onClose={() => setShowExportModal(false)}
         title="Export Data"
-        isDarkMode={isDarkMode}
       >
         <div className="p-6">
           <h3 className={`text-lg font-bold mb-4 ${isDarkMode ? "text-white" : "text-gray-800"}`}>
@@ -420,7 +419,6 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode, setActiveTab }) => {
         isOpen={showMarketAnalysis}
         onClose={() => setShowMarketAnalysis(false)}
         title="Detailed Market Analysis"
-        isDarkMode={isDarkMode}
         widthClass="max-w-4xl"
       >
         <div className="overflow-hidden max-h-[90vh] flex flex-col">

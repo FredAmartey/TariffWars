@@ -279,7 +279,6 @@ export const TariffRates = () => {
           setTempFilterValueInput("");
         }}
         title="Add Filter"
-        isDarkMode={isDarkMode}
       >
         <div className="p-6">
           <h3 className={`text-lg font-bold mb-4 ${isDarkMode ? "text-white" : "text-gray-800"}`}>
