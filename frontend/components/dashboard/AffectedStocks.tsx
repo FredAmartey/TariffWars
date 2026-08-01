@@ -7,138 +7,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// The tracked symbol list lives on the backend (services/stockService.ts),
-// which is also what bounds the symbols it will ask the provider about. These
-// three tables are keyed off it, so an entry for a symbol the backend never
-// requests can never render. They previously carried twelve such entries:
-// MSFT, AMZN, NVDA, GOOG, META, WMT, DE, FCX and AA were never tracked at all,
-// and X (US Steel) was dropped when it delisted.
+// The company name, industry and tariff exposure all arrive from the API now.
+// This file used to carry three hand-written 19-entry tables for them: names
+// and sectors that duplicated fields the backend was already fetching and
+// discarding, and a pair of pre-written sentences per ticker that were selected
+// by the day's price direction and presented as tariff analysis.
 
-// Add company full names for display
-const COMPANY_NAMES: Record<string, string> = {
-  AAPL: "Apple Inc.",
-  TSLA: "Tesla, Inc.",
-  BA: "Boeing Company",
-  XME: "SPDR Metals & Mining ETF",
-  GM: "General Motors Company",
-  F: "Ford Motor Company",
-  NUE: "Nucor Corporation",
-  CLF: "Cleveland-Cliffs Inc.",
-  CAT: "Caterpillar Inc.",
-  STLD: "Steel Dynamics, Inc.",
-  MU: "Micron Technology, Inc.",
-  JD: "JD.com, Inc.",
-  NIO: "NIO Inc.",
-  BABA: "Alibaba Group Holding",
-  TM: "Toyota Motor Corporation",
-  CRSR: "Corsair Gaming, Inc.",
-  HPQ: "HP Inc.",
-  INTC: "Intel Corporation",
-  SMH: "VanEck Semiconductor ETF",
-};
-
-// Mapping of impact reasons based on sector/symbol
-const IMPACT_REASONS: { [key: string]: { positive: string; negative: string } } = {
-  NUE: {
-    positive: "Strong domestic steel demand and trade protection",
-    negative: "Rising raw material costs impacting margins",
-  },
-  STLD: {
-    positive: "Higher domestic steel prices boosting revenue",
-    negative: "Increased competition in steel market",
-  },
-  CLF: {
-    positive: "Strong steel demand and pricing power",
-    negative: "Cost pressures from raw materials",
-  },
-  TSLA: {
-    positive: "Successfully managing supply chain challenges",
-    negative: "Battery & parts cost increases affecting margins",
-  },
-  AAPL: {
-    positive: "Supply chain resilience and strong demand",
-    negative: "Supply chain disruptions impacting production",
-  },
-  GM: {
-    positive: "Strong pricing power offsetting costs",
-    negative: "Raw material cost increases affecting margins",
-  },
-  INTC: {
-    positive: "Benefiting from domestic chip investment",
-    negative: "Semiconductor trade restrictions impact",
-  },
-  CAT: {
-    positive: "Strong infrastructure demand",
-    negative: "Steel cost increases affecting margins",
-  },
-  BA: {
-    positive: "Strong order book and deliveries",
-    negative: "Aluminum costs and trade tensions impact",
-  },
-  SMH: {
-    positive: "Semiconductor sector showing strength",
-    negative: "Chip trade restrictions affecting outlook",
-  },
-  XME: {
-    positive: "Metal tariffs boosting sector performance",
-    negative: "Concerns over tariff effectiveness",
-  },
-  F: {
-    positive: "Domestic market strength offsetting tariff costs",
-    negative: "Component cost increases affecting vehicle margins",
-  },
-  MU: {
-    positive: "Memory chip demand outpacing tariff costs",
-    negative: "Semiconductor tariffs impacting production costs",
-  },
-  JD: {
-    positive: "Domestic China growth offsetting US trade tensions",
-    negative: "Chinese export tariffs severely limiting growth",
-  },
-  NIO: {
-    positive: "Battery technology advances improving margins",
-    negative: "US-China trade tensions affecting global expansion",
-  },
-  BABA: {
-    positive: "Strong domestic market insulating from tariffs",
-    negative: "US-China trade war restricting global market access",
-  },
-  TM: {
-    positive: "Global production limiting tariff exposure",
-    negative: "Vehicle and parts tariffs impacting profit margins",
-  },
-  CRSR: {
-    positive: "Gaming demand offsetting component costs",
-    negative: "Component tariffs severely impacting electronics margins",
-  },
-  HPQ: {
-    positive: "Enterprise demand providing stable income",
-    negative: "Component tariffs dramatically increasing production costs",
-  },
-};
-
-// Mapping of sectors for symbols
-const SECTORS: { [key: string]: string } = {
-  NUE: "Steel Production",
-  STLD: "Steel Manufacturing",
-  CLF: "Mining & Steel",
-  TSLA: "Automotive",
-  AAPL: "Technology",
-  GM: "Automotive",
-  INTC: "Technology",
-  CAT: "Industrial Machinery",
-  BA: "Aerospace",
-  SMH: "Semiconductor ETF",
-  XME: "Mining ETF",
-  F: "Automotive",
-  MU: "Semiconductor",
-  JD: "E-commerce",
-  NIO: "Electric Vehicles",
-  BABA: "E-commerce",
-  TM: "Automotive",
-  CRSR: "Computer Hardware",
-  HPQ: "Computer Hardware",
-};
+/**
+ * " since June 4, 2025", or nothing.
+ *
+ * The dataset writes "TBD" and "N/A" into this column for tariffs with no
+ * committed start, and "since TBD" reads as a date the reader has simply not
+ * been told. A row only reaches this panel once it is being charged, so an
+ * unparseable date means the CSV has no date to give, not that it is pending.
+ */
+const startedOn = (effectiveDate: string): string =>
+  Number.isNaN(Date.parse(`${effectiveDate} UTC`)) ? "" : ` since ${effectiveDate}`;
 
 // Helper sub-component for card content
 const CardContent: React.FC<{ stock: StockData }> = ({ stock }) => {
@@ -171,7 +55,7 @@ const CardContent: React.FC<{ stock: StockData }> = ({ stock }) => {
       <div className="flex justify-between items-start mb-2">
         <div>
           <h3 className={`text-2xl font-bold ${headingColor}`}>{stock.symbol}</h3>
-          <p className={`${mutedColor} text-sm`}>{COMPANY_NAMES[stock.symbol] || stock.name}</p>
+          <p className={`${mutedColor} text-sm`}>{stock.name}</p>
         </div>
         {stock.impact === "positive" ? (
           <TrendingUpIcon className="h-6 w-6 text-green-400" aria-hidden="true" />
@@ -203,18 +87,37 @@ const CardContent: React.FC<{ stock: StockData }> = ({ stock }) => {
       </div>
 
       <div className="mt-auto">
+        {/*
+          The tariff line itself, not a narrative about it. This block used to
+          be headed "Possible tariff angle" over one of two sentences chosen by
+          whether the stock closed up or down, which meant the same company
+          under the same tariffs was given opposite explanations on consecutive
+          days. What is stated now is a row from the same CSV the tables render,
+          and the wording is scoped to the industry because that is the level
+          the join actually supports: the provider's classification puts Apple,
+          HP and Corsair all in "Technology".
+        */}
         <div className="rounded-lg p-4 bg-card/50">
-          {/* The copy below is a fixed narrative keyed off the day's price
-              direction, not measured tariff exposure. Label it honestly. */}
-          <h4 className="font-semibold mb-2 text-muted-foreground">Possible tariff angle</h4>
-          <p className={`${mutedColor} text-sm`}>{stock.reason}</p>
+          <h4 className="mb-2 font-semibold text-muted-foreground">
+            Tariff on this sector
+          </h4>
+          <p className="text-sm text-foreground">
+            <span className="font-semibold">{stock.exposure.rateDisplay}</span>{" "}
+            on {stock.exposure.commodity}
+          </p>
+          <p className={`${mutedColor} mt-1 text-xs`}>
+            {stock.exposure.status}
+            {startedOn(stock.exposure.effectiveDate)}
+          </p>
         </div>
 
-        <div className="mt-4">
-          <Badge className="bg-indigo-100 text-indigo-800 dark:bg-indigo-400/10 dark:text-indigo-300">
-            {stock.sector}
-          </Badge>
-        </div>
+        {stock.industry && (
+          <div className="mt-4">
+            <Badge className="bg-indigo-100 text-indigo-800 dark:bg-indigo-400/10 dark:text-indigo-300">
+              {stock.industry}
+            </Badge>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -311,6 +214,12 @@ export const AffectedStocks: React.FC = () => {
       const processed: StockData[] = quotes
         .filter((q) => {
           if (!q.symbol || seen.has(q.symbol)) return false;
+          // `exposure` is required by the type and always sent by this API, but
+          // the stocks response is shared-cached at the edge for five minutes,
+          // so for a few minutes after a deploy the CDN can still be serving a
+          // body from the previous build that has no exposure on it. Dropping
+          // those beats reading .rateDisplay off undefined in the render.
+          if (!q.exposure) return false;
           seen.add(q.symbol);
           return true;
         })
@@ -323,14 +232,11 @@ export const AffectedStocks: React.FC = () => {
 
           return {
             symbol: q.symbol,
-            name: COMPANY_NAMES[q.symbol] || q.symbol,
+            name: q.name || q.symbol,
             impact: direction,
             percentage: Math.abs(changePercent),
-            reason:
-              direction === "neutral"
-                ? "No movement today"
-                : IMPACT_REASONS[q.symbol]?.[direction] || "Market reaction to tariffs",
-            sector: SECTORS[q.symbol] || "N/A",
+            industry: q.industry,
+            exposure: q.exposure,
             price: q.price,
             change: q.change,
             changePercent,
@@ -373,7 +279,9 @@ export const AffectedStocks: React.FC = () => {
   }, []);
 
   // --- Keep original filteredData logic ---
-  const filteredData = stockData.filter((stock) => stock.price > 0 && stock.reason);
+  // Exposure is guaranteed by the API, which omits any symbol without one, so
+  // the only thing left to guard here is a quote that came back priceless.
+  const filteredData = stockData.filter((stock) => stock.price > 0);
 
   // The track is rendered twice so the loop has no visible seam. Pointless when
   // nothing is scrolling, and it would double every card in the static list.
@@ -398,9 +306,18 @@ export const AffectedStocks: React.FC = () => {
   }
 
   if (!filteredData || filteredData.length === 0) {
+    // Reaching here without an error means the request succeeded and returned
+    // nothing, which is now a real answer rather than a failure: the API omits
+    // any company whose industry has no duty currently charged on it. Saying
+    // "no stock data available" would report a working outcome as an outage.
+    // A provider failure sets `error` above and never gets this far.
     return (
       <div className="p-4 text-center text-muted-foreground">
-        No stock data available at this time.
+        <p>No tracked company is in a sector currently under tariff.</p>
+        <p className="mt-1 text-sm">
+          This panel lists companies by the duties being charged on their sector, so it empties
+          when those lapse.
+        </p>
       </div>
     );
   }

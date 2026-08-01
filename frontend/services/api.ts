@@ -105,6 +105,9 @@ class ApiService {
     if (!response.data || !Array.isArray(response.data.quotes)) {
       throw new Error("Invalid data format received from the stock API.");
     }
+    // Only symbols with a live tariff on their industry come back, so an empty
+    // list is a real answer ("nothing tracked is currently affected") rather
+    // than a failure, and is rendered as such.
     return { quotes: response.data.quotes, capturedAt: response.data.capturedAt ?? null };
   }
 }
