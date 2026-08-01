@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { apiService } from "../../services/api";
+import { Badge } from "@/components/ui/badge";
 
 interface TariffMeta {
   lastUpdated: string;
@@ -47,9 +48,9 @@ export const DataFreshness: React.FC = () => {
 
   return (
     <div className="mt-3 text-xs text-muted-foreground">
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
+      <Badge className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
         Data updated {formatted}
-      </span>
+      </Badge>
       {meta.sources.length > 0 && (
         // Every source's full headline used to be rendered inline, as one run
         // of a dozen underlined sentences. On a phone that block ran ~700px:

@@ -12,7 +12,6 @@ import {
   TrendingUpIcon,
   LineChartIcon,
   ChevronRightIcon,
-  XIcon,
   SunIcon,
   MoonIcon,
   BarChart2Icon,
@@ -21,6 +20,9 @@ import {
 } from "lucide-react";
 import { AffectedStocks } from "./dashboard/AffectedStocks";
 import { Modal } from "./Modal";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { DialogFooter } from "@/components/ui/dialog";
 
 interface CollapsibleHeaderProps {
   title: string;
@@ -43,18 +45,17 @@ const CollapsibleHeader: React.FC<CollapsibleHeaderProps> = ({
       <h3 className="text-lg font-semibold text-foreground">{title}</h3>
     </div>
     {isMobile && (
-      <button
+      <Button
+        variant="ghost"
+        size="icon-sm"
         onClick={toggleOpen}
-        className="p-1 rounded-md text-muted-foreground hover:bg-accent"
+        className="text-muted-foreground"
         aria-expanded={isOpen}
+        aria-label={`${isOpen ? "Collapse" : "Expand"} ${title}`}
         aria-controls={`collapsible-${title.replace(/\s+/g, "-").toLowerCase()}`}
       >
-        {isOpen ? (
-          <ChevronDownIcon className="h-5 w-5" />
-        ) : (
-          <ChevronRightIcon className="h-5 w-5" />
-        )}
-      </button>
+        {isOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
+      </Button>
     )}
   </div>
 );
@@ -126,29 +127,28 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
             Real-time analysis and impact assessment of international trade policies
           </p>
         </div>
-        <div className="flex space-x-3">
-          <button
+        <div className="flex items-center gap-3">
+          <Button
+            variant="secondary"
+            size="icon-lg"
             onClick={toggleTheme}
-            className="p-2 rounded-full bg-muted hover:bg-accent text-gray-700 dark:text-yellow-300"
+            className="rounded-full text-foreground dark:text-yellow-300"
             aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
           >
-            {theme === "dark" ? (
-              <SunIcon className="h-5 w-5" />
-            ) : (
-              <MoonIcon className="h-5 w-5" />
-            )}
-          </button>
-          <button
-            onClick={() => setShowExportModal(true)}
-            className="px-4 py-2 rounded-full flex items-center bg-indigo-500 hover:bg-indigo-600 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-medium"
-          >
-            <DownloadIcon className="h-4 w-4 mr-2" />
+            {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+          </Button>
+          <Button size="lg" onClick={() => setShowExportModal(true)} className="rounded-full">
+            <DownloadIcon />
             Export Data
-          </button>
+          </Button>
         </div>
       </div>
-      <div className="rounded-xl overflow-hidden bg-linear-to-r from-indigo-50 to-purple-50 border border-indigo-100 dark:from-indigo-900/40 dark:to-purple-900/40 dark:border-indigo-800/50">
-        <div className="p-6">
+      {/* The gradient panels pass their own background and ring rather than
+          taking Card's `bg-card` + `ring-foreground/10`, but still use Card for
+          the radius, overflow and `--card-spacing` padding system, so every
+          panel on the page shares one spacing scale. */}
+      <Card className={`${GRADIENT_PANEL} from-indigo-50 to-purple-50 ring-indigo-200 dark:from-indigo-900/40 dark:to-purple-900/40 dark:ring-indigo-800/50`}>
+        <CardContent>
           <div className="flex items-center mb-4">
             <TrendingUpIcon className="h-5 w-5 mr-2 text-indigo-500 dark:text-indigo-400" />
             <h3 className="text-lg font-semibold text-indigo-700 dark:text-indigo-300">
@@ -156,11 +156,11 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
             </h3>
           </div>
           <TariffStats />
-        </div>
-      </div>
+        </CardContent>
+      </Card>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="col-span-1 lg:col-span-2 rounded-xl overflow-hidden bg-card border border-border shadow-xs dark:shadow-none">
-          <div className="p-6">
+        <Card className={`col-span-1 lg:col-span-2 ${PANEL}`}>
+          <CardContent>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
                 <BarChart2Icon className="h-5 w-5 mr-2 text-muted-foreground" />
@@ -178,10 +178,10 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
               variant="compact"
             />
             <DataFreshness />
-          </div>
-        </div>
-        <div className="rounded-xl overflow-hidden bg-linear-to-br from-blue-50 to-purple-50 border border-blue-100 dark:from-blue-900/30 dark:to-purple-900/30 dark:border-blue-800/50">
-          <div className="p-6">
+          </CardContent>
+        </Card>
+        <Card className={`${GRADIENT_PANEL} bg-linear-to-br from-blue-50 to-purple-50 ring-blue-200 dark:from-blue-900/30 dark:to-purple-900/30 dark:ring-blue-800/50`}>
+          <CardContent>
             <CollapsibleHeader
               title="AI Market Analysis"
               icon={TrendingUpIcon}
@@ -198,11 +198,11 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
             >
               <AIInsights showDetailedAnalysis={() => setShowMarketAnalysis(true)} />
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
-      <div className="rounded-xl overflow-hidden bg-card border border-border shadow-xs dark:shadow-none">
-        <div className="p-6">
+      <Card className={PANEL}>
+        <CardContent>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center">
               <LineChartIcon className="h-5 w-5 mr-2 text-muted-foreground" />
@@ -225,18 +225,17 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
                 </a>
               )}
               {isMobile && (
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => setIsStocksOpen(!isStocksOpen)}
-                  className="ml-2 p-1 rounded-md text-muted-foreground hover:bg-accent"
+                  className="ml-2 text-muted-foreground"
                   aria-expanded={isStocksOpen}
+                  aria-label={`${isStocksOpen ? "Collapse" : "Expand"} Likely Affected Stocks`}
                   aria-controls="collapsible-affected-stocks"
                 >
-                  {isStocksOpen ? (
-                    <ChevronDownIcon className="h-5 w-5" />
-                  ) : (
-                    <ChevronRightIcon className="h-5 w-5" />
-                  )}
-                </button>
+                  {isStocksOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
+                </Button>
               )}
             </div>
           </div>
@@ -246,10 +245,10 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
           >
             <AffectedStocks />
           </div>
-        </div>
-      </div>
-      <div className="rounded-xl overflow-hidden bg-card border border-border shadow-xs dark:shadow-none">
-        <div className="p-6">
+        </CardContent>
+      </Card>
+      <Card className={PANEL}>
+        <CardContent>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center">
               <NewspaperIcon className="h-5 w-5 mr-2 text-muted-foreground" />
@@ -257,27 +256,28 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
             </div>
             <div className="flex items-center">
               {(!isMobile || (isMobile && isNewsOpen)) && (
-                <button
-                  className="text-sm flex items-center text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="text-blue-600 dark:text-blue-400"
                   onClick={() => setActiveTab("news-feed")}
                 >
                   View More
-                  <ChevronRightIcon className="h-4 w-4 ml-1" />
-                </button>
+                  <ChevronRightIcon />
+                </Button>
               )}
               {isMobile && (
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => setIsNewsOpen(!isNewsOpen)}
-                  className="ml-2 p-1 rounded-md text-muted-foreground hover:bg-accent"
+                  className="ml-2 text-muted-foreground"
                   aria-expanded={isNewsOpen}
+                  aria-label={`${isNewsOpen ? "Collapse" : "Expand"} Recent Tariff News`}
                   aria-controls="collapsible-tariff-news"
                 >
-                  {isNewsOpen ? (
-                    <ChevronDownIcon className="h-5 w-5" />
-                  ) : (
-                    <ChevronRightIcon className="h-5 w-5" />
-                  )}
-                </button>
+                  {isNewsOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
+                </Button>
               )}
             </div>
           </div>
@@ -287,64 +287,61 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
           >
             <NewsFeed preview={true} />
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
       <Modal
         isOpen={showExportModal}
         onClose={() => setShowExportModal(false)}
         title="Export Data"
+        description={`Export the ${
+          exportDataset === "country" ? "countries" : "commodities"
+        } table:`}
       >
-        <div className="p-6">
-          <h3 className="text-lg font-bold mb-4 text-foreground">Export Data</h3>
-          <p className="mb-4 text-sm text-muted-foreground">
-            Export the {exportDataset === "country" ? "countries" : "commodities"} table:
-          </p>
-          <div className="space-y-3">
-            {["CSV", "JSON"].map((format) => (
-              <button
-                key={format}
-                onClick={() => handleExport(format)}
-                className="w-full p-3 flex items-center justify-between rounded-lg bg-muted hover:bg-accent text-foreground"
-              >
-                <span>Export as {format}</span>
-                <DownloadIcon className="h-4 w-4" aria-hidden="true" />
-              </button>
-            ))}
-          </div>
-          <div className="mt-6 flex justify-end">
-            <button
-              onClick={() => setShowExportModal(false)}
-              className="px-4 py-2 rounded-md bg-muted hover:bg-accent text-foreground"
+        <div className="space-y-3">
+          {["CSV", "JSON"].map((format) => (
+            <Button
+              key={format}
+              variant="outline"
+              onClick={() => handleExport(format)}
+              className="w-full h-auto justify-between p-3"
             >
-              Cancel
-            </button>
-          </div>
+              <span>Export as {format}</span>
+              <DownloadIcon aria-hidden="true" />
+            </Button>
+          ))}
         </div>
+        <DialogFooter showCloseButton />
       </Modal>
       <Modal
         isOpen={showMarketAnalysis}
         onClose={() => setShowMarketAnalysis(false)}
         title="Detailed Market Analysis"
-        widthClass="max-w-4xl"
+        widthClass="sm:max-w-4xl"
       >
-        <div className="overflow-hidden max-h-[90vh] flex flex-col">
-          <div className="p-4 border-b border-border bg-muted dark:bg-muted/50 flex justify-between items-center">
-            <h3 className="text-lg font-bold text-foreground">Detailed Market Analysis</h3>
-            <button
-              onClick={() => setShowMarketAnalysis(false)}
-              aria-label="Close market analysis"
-              className="p-2 rounded-full hover:bg-accent"
-            >
-              <XIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-6">
-            <DetailedMarketAnalysis />
-          </div>
+        {/* The dialog is bounded, not the page: the body scrolls inside a
+            viewport-relative box so the four sections can be any length
+            without the whole overlay growing past the screen. The negative
+            inset lets a scrolled section run to the dialog's edges while its
+            content keeps DialogContent's padding. */}
+        <div className="-mx-4 max-h-[70vh] flex-1 overflow-y-auto px-4">
+          <DetailedMarketAnalysis />
         </div>
       </Modal>
     </div>
   );
 };
+
+/** The standard panel surface. Card supplies the ring, radius and overflow. */
+const PANEL = "[--card-spacing:--spacing(6)]";
+
+/**
+ * A panel that paints its own gradient instead of `bg-card`.
+ *
+ * `bg-transparent` is load-bearing rather than redundant: `bg-card` sets
+ * background-COLOR and `bg-linear-to-*` sets background-IMAGE, so without it
+ * Card's opaque colour stays underneath and the dark theme's translucent
+ * gradient stops composite over it instead of over the page.
+ */
+const GRADIENT_PANEL = `${PANEL} bg-transparent bg-linear-to-r ring-1`;
 
 export default Dashboard;

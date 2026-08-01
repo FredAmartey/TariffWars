@@ -1,9 +1,32 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { TariffTable, sortOptionsFor } from "./dashboard/TariffTable";
 import { Modal } from "./Modal";
+import { DialogFooter } from "@/components/ui/dialog";
 import { SearchIcon, FilterIcon, XIcon, SlidersIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Updated FilterOption type
+/**
+ * The classes SelectTrigger applies, on the two plain inputs.
+ *
+ * No Input primitive is installed, and the search box sits directly beside two
+ * Selects; without this they disagreed on height, radius, border token and
+ * focus ring.
+ */
+const FIELD =
+  "h-9 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none " +
+  "placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 " +
+  "focus-visible:ring-ring/50 dark:bg-input/30";
+
 type FilterOption = {
   field: string;
   value: string;
@@ -82,15 +105,15 @@ export const TariffRates = () => {
     setCurrentPage(1);
   };
 
-  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const [field, direction] = e.target.value.split("-");
+  const handleSortChange = (value: string) => {
+    const [field, direction] = value.split("-");
     setSortField(field);
     setSortDirection(direction as "asc" | "desc");
     setCurrentPage(1);
   };
 
-  const handleFieldChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setTempFilterField(e.target.value);
+  const handleFieldChange = (value: string) => {
+    setTempFilterField(value);
     setTempFilterValueInput("");
   };
 
@@ -98,24 +121,31 @@ export const TariffRates = () => {
 
   return (
     <div className="space-y-6">
-      <div className="p-6 rounded-xl bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-100 dark:from-blue-900/30 dark:to-indigo-900/30 dark:border-blue-800/30">
-        <h1 className="text-2xl font-bold text-foreground">Global Tariff Rates</h1>
-        <p className="mt-1 text-muted-foreground">
-          Comprehensive database of current international trade tariffs and recent changes
-        </p>
-      </div>
-      <div className="rounded-xl overflow-hidden bg-card border border-border shadow-xs dark:shadow-none">
-        <div className="p-6">
+      {/* `bg-transparent` before the gradient is load-bearing: Card's `bg-card`
+          is a background-COLOR and the gradient a background-IMAGE, so without
+          it the dark theme's translucent stops composite over an opaque card
+          instead of the page. */}
+      <Card className="[--card-spacing:--spacing(6)] bg-transparent bg-linear-to-r from-blue-50 to-indigo-50 ring-1 ring-blue-200 dark:from-blue-900/30 dark:to-indigo-900/30 dark:ring-blue-800/30">
+        <CardContent>
+          <h1 className="text-2xl font-bold text-foreground">Global Tariff Rates</h1>
+          <p className="mt-1 text-muted-foreground">
+            Comprehensive database of current international trade tariffs and recent changes
+          </p>
+        </CardContent>
+      </Card>
+      <Card className="[--card-spacing:--spacing(6)]">
+        <CardContent>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1 relative text-foreground">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <SearchIcon className="h-5 w-5 text-gray-400" />
+                  <SearchIcon className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <input
-                  type="text"
-                  className="block w-full pl-10 pr-3 py-2 rounded-md bg-transparent border border-input placeholder:text-muted-foreground dark:bg-input/30 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                  type="search"
+                  className={`${FIELD} pl-10`}
                   placeholder="Search by commodity, country..."
+                  aria-label="Search tariffs by commodity or country"
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
@@ -124,83 +154,85 @@ export const TariffRates = () => {
                 />
               </div>
               <div className="flex flex-wrap gap-2">
-                <button
+                <Button
+                  variant="outline"
+                  size="lg"
                   onClick={() => {
                     setTempFilterField("status");
                     setTempFilterValueInput("");
                     setShowFilterModal(true);
                   }}
-                  className="px-4 py-2 rounded-md flex items-center bg-muted hover:bg-accent text-foreground"
                 >
-                  <FilterIcon className="h-5 w-5 mr-2" />
+                  <FilterIcon />
                   Add Filter
-                </button>
-                <div className="relative">
-                  <label htmlFor="tariffSort" className="sr-only">
-                    Sort tariffs by
-                  </label>
-                  <select
-                    id="tariffSort"
-                    value={`${sortField}-${sortDirection}`}
-                    onChange={handleSortChange}
-                    className="appearance-none px-4 py-2 pl-10 rounded-md bg-transparent border border-input text-foreground dark:bg-input/30"
-                  >
+                </Button>
+                <Select value={`${sortField}-${sortDirection}`} onValueChange={handleSortChange}>
+                  <SelectTrigger id="tariffSort" className="h-9" aria-label="Sort tariffs by">
+                    <SlidersIcon className="text-muted-foreground" aria-hidden="true" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
                     {sortOptionsFor(sortField, sortDirection).map((option) => (
-                      <option key={option.value} value={option.value}>
+                      <SelectItem key={option.value} value={option.value}>
                         {option.label}
-                      </option>
+                      </SelectItem>
                     ))}
-                  </select>
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <SlidersIcon className="h-4 w-4 text-gray-400" aria-hidden="true" />
-                  </div>
-                </div>
-                <div className="relative">
-                  <select
-                    value={itemsPerPage}
-                    onChange={(e) => {
-                      setItemsPerPage(parseInt(e.target.value));
-                      setCurrentPage(1);
-                    }}
-                    className="appearance-none px-4 py-2 rounded-md bg-transparent border border-input text-foreground dark:bg-input/30"
-                  >
-                    <option value="5">5 per page</option>
-                    <option value="10">10 per page</option>
-                    <option value="20">20 per page</option>
-                    <option value="50">50 per page</option>
-                  </select>
-                </div>
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={String(itemsPerPage)}
+                  onValueChange={(value) => {
+                    setItemsPerPage(parseInt(value, 10));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger className="h-9" aria-label="Rows per page">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[5, 10, 20, 50].map((n) => (
+                      <SelectItem key={n} value={String(n)}>
+                        {n} per page
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             {filters.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {filters.map((filter, index) => (
-                  <div
+                  <Badge
                     key={index}
-                    className="flex items-center px-3 py-1 rounded-full text-sm transition-shadow duration-300 ease-in-out bg-purple-200 text-purple-800 border border-purple-400 shadow-[0_0_8px_1px_rgba(192,132,252,0.3)] hover:shadow-[0_0_12px_2px_rgba(192,132,252,0.4)] dark:bg-purple-800/50 dark:text-purple-200 dark:border-purple-700/50 dark:shadow-[0_0_8px_1px_rgba(192,132,252,0.4)] dark:hover:shadow-[0_0_12px_2px_rgba(192,132,252,0.6)]"
+                    className="h-7 gap-1 border-purple-400 bg-purple-100 pr-1 pl-3 text-sm text-purple-900 dark:border-purple-700/50 dark:bg-purple-800/50 dark:text-purple-100"
                   >
                     <span className="capitalize">
                       {filterableFields.find((ff) => ff.value === filter.field)?.label ||
                         filter.field}
                       :{filter.value}
                     </span>
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
                       onClick={() => handleRemoveFilter(index)}
-                      className="ml-2 p-1 rounded-full hover:bg-purple-300 dark:hover:bg-purple-700/70"
+                      aria-label={`Remove filter ${filter.field}: ${filter.value}`}
+                      className="rounded-full hover:bg-purple-300 dark:hover:bg-purple-700/70"
                     >
-                      <XIcon className="h-3 w-3" />
-                    </button>
-                  </div>
+                      <XIcon />
+                    </Button>
+                  </Badge>
                 ))}
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => {
                     setFilters([]);
                     setCurrentPage(1);
                   }}
-                  className="flex items-center px-3 py-1 rounded-full text-sm bg-muted text-muted-foreground hover:bg-accent"
+                  className="rounded-full text-muted-foreground"
                 >
                   Clear All
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -214,7 +246,6 @@ export const TariffRates = () => {
               itemsPerPage={itemsPerPage}
               onPageChange={setCurrentPage}
               onTotalPagesChange={setTotalPages}
-              handleSortChange={handleSortChange}
               // Column-header sorting used to write only to the table's own
               // state, leaving the dropdown above announcing the previous order.
               onSortChange={(field, direction) => {
@@ -224,8 +255,8 @@ export const TariffRates = () => {
               }}
             />
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* This was the last hand-rolled overlay in the app: a bare div with no
           dialog role, no Escape, no focus trap and nothing returning focus to
@@ -238,88 +269,85 @@ export const TariffRates = () => {
         }}
         title="Add Filter"
       >
-        <div className="p-6">
-          <h3 className="text-lg font-bold mb-4 text-foreground">Add Filter</h3>
-          <div className="space-y-4">
-              <div>
-                <label
-                  htmlFor="filterField"
-                  className="block mb-1 text-sm font-medium text-muted-foreground"
-                >
-                  Filter By
-                </label>
-                <select
-                  id="filterField"
-                  value={tempFilterField}
-                  onChange={handleFieldChange}
-                  className="w-full p-2 rounded-md border border-input bg-transparent text-foreground dark:bg-input/30"
-                >
-                  {filterableFields.map((field) => (
-                    <option key={field.value} value={field.value}>
-                      {field.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+        <div className="space-y-4">
+          <div>
+            <label
+              htmlFor="filterField"
+              className="block mb-1 text-sm font-medium text-muted-foreground"
+            >
+              Filter By
+            </label>
+            <Select value={tempFilterField} onValueChange={handleFieldChange}>
+              <SelectTrigger id="filterField" className="h-9 w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {filterableFields.map((field) => (
+                  <SelectItem key={field.value} value={field.value}>
+                    {field.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-              <div>
-                <label
-                  htmlFor="filterValue"
-                  className="block mb-1 text-sm font-medium text-muted-foreground"
-                >
-                  Value
-                </label>
-                {/* The className below was a plain double-quoted string holding a
-                    literal ${...}, so those characters reached the DOM as class
-                    tokens and the border never rendered. */}
-                {selectedFilterFieldData?.predefinedValues ? (
-                  <div className="mt-1 space-y-2 max-h-48 overflow-y-auto p-2 border border-border rounded-md">
-                    {selectedFilterFieldData.predefinedValues.map((value) => (
-                      <button
-                        key={value}
-                        onClick={() => handleAddFilter(tempFilterField, value)}
-                        className="w-full text-left p-2 rounded-md text-sm hover:bg-accent text-muted-foreground"
-                      >
-                        {value}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <input
-                    type="text"
-                    id="filterValue"
-                    value={tempFilterValueInput}
-                    onChange={(e) => setTempFilterValueInput(e.target.value)}
-                    className="mt-1 w-full p-2 rounded-md border border-input bg-transparent text-foreground placeholder:text-muted-foreground dark:bg-input/30"
-                    placeholder={`Enter ${selectedFilterFieldData?.label || "value"}...`}
-                  />
-                )}
+          <div>
+            <label
+              htmlFor="filterValue"
+              className="block mb-1 text-sm font-medium text-muted-foreground"
+            >
+              Value
+            </label>
+            {/* The className below was a plain double-quoted string holding a
+                literal ${...}, so those characters reached the DOM as class
+                tokens and the border never rendered. */}
+            {selectedFilterFieldData?.predefinedValues ? (
+              <div className="mt-1 max-h-48 space-y-1 overflow-y-auto rounded-md border border-border p-2">
+                {selectedFilterFieldData.predefinedValues.map((value) => (
+                  <Button
+                    key={value}
+                    variant="ghost"
+                    onClick={() => handleAddFilter(tempFilterField, value)}
+                    className="w-full justify-start text-muted-foreground"
+                  >
+                    {value}
+                  </Button>
+                ))}
               </div>
-            </div>
-
-            <div className="mt-6 flex justify-end space-x-3">
-              <button
-                onClick={() => {
-                  setShowFilterModal(false);
-                  setTempFilterValueInput("");
-                }}
-                className="px-4 py-2 rounded-md bg-muted hover:bg-accent text-foreground"
-              >
-                Cancel
-              </button>
-              {!selectedFilterFieldData?.predefinedValues && (
-                <button
-                  onClick={() => handleAddFilter(tempFilterField, tempFilterValueInput)}
-                  disabled={!tempFilterValueInput.trim()}
-                  className={`px-4 py-2 rounded-md flex items-center bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700 ${
-                    !tempFilterValueInput.trim() ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
-                >
-                  Apply Filter
-                </button>
-              )}
+            ) : (
+              <input
+                type="text"
+                id="filterValue"
+                value={tempFilterValueInput}
+                onChange={(e) => setTempFilterValueInput(e.target.value)}
+                className={`${FIELD} mt-1`}
+                placeholder={`Enter ${selectedFilterFieldData?.label || "value"}...`}
+              />
+            )}
           </div>
         </div>
+
+        <DialogFooter>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => {
+              setShowFilterModal(false);
+              setTempFilterValueInput("");
+            }}
+          >
+            Cancel
+          </Button>
+          {!selectedFilterFieldData?.predefinedValues && (
+            <Button
+              size="lg"
+              onClick={() => handleAddFilter(tempFilterField, tempFilterValueInput)}
+              disabled={!tempFilterValueInput.trim()}
+            >
+              Apply Filter
+            </Button>
+          )}
+        </DialogFooter>
       </Modal>
     </div>
   );

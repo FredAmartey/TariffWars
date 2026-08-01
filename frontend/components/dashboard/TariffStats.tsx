@@ -9,6 +9,9 @@ import {
 } from "lucide-react";
 import { marketAnalysisApi } from "../../services/marketAnalysisApi";
 import type { KeyMetrics } from "../../services/marketAnalysisApi";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * Colour follows the subject, not the ticker.
@@ -102,7 +105,9 @@ const MetricCard: React.FC<MetricCardProps> = ({
 }) => {
   const styles = TONE_STYLES[tone];
   return (
-    <div className={`relative overflow-hidden rounded-xl ${styles.card}`}>
+    // `ring-0` because these cards carry a tone-coloured border of their own;
+    // Card's neutral `ring-foreground/10` would sit on top of it.
+    <Card className={`relative gap-0 py-0 ring-0 ${styles.card}`}>
       <div className="absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8" aria-hidden="true">
         <div className="w-full h-full rounded-full bg-gray-900/4 dark:bg-white/4"></div>
       </div>
@@ -126,14 +131,12 @@ const MetricCard: React.FC<MetricCardProps> = ({
           // runs past one line. The four cards sit in a grid, whose items
           // stretch to the tallest in the row, so a taller pill keeps them all
           // the same height rather than making one card ragged.
-          <div
-            className={`mt-4 inline-flex max-w-full items-center px-2 py-1 rounded-lg text-xs ${styles.pill}`}
-          >
+          <Badge className={`mt-4 h-auto max-w-full rounded-lg py-1 whitespace-normal ${styles.pill}`}>
             {footnote}
-          </div>
+          </Badge>
         )}
       </div>
-    </div>
+    </Card>
   );
 };
 
@@ -164,15 +167,15 @@ export const TariffStats = () => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-muted-foreground">
         {[...Array(4)].map((_, i) => (
-          <div
-            key={i}
-            className="relative overflow-hidden rounded-xl p-6 animate-pulse bg-muted border border-border dark:bg-muted/50"
-          >
-            <div className="h-4 bg-gray-600 rounded-sm w-1/2 mb-2"></div>
-            <div className="h-8 bg-gray-500 rounded-sm w-1/3 mb-2"></div>
-            <div className="h-3 bg-gray-600 rounded-sm w-3/4 mb-3"></div>
-            <div className="h-5 bg-gray-500 rounded-sm w-1/4"></div>
-          </div>
+          <Card key={i} className="relative gap-0 bg-muted p-6 py-0 dark:bg-muted/50">
+            {/* Skeleton ships `bg-muted`, which is this card's own background.
+                A translucent tint of the text colour reads as a placeholder on
+                either theme without needing a second value. */}
+            <Skeleton className="mb-2 h-4 w-1/2 bg-foreground/10" />
+            <Skeleton className="mb-2 h-8 w-1/3 bg-foreground/15" />
+            <Skeleton className="mb-3 h-3 w-3/4 bg-foreground/10" />
+            <Skeleton className="h-5 w-1/4 bg-foreground/15" />
+          </Card>
         ))}
         <span className="sr-only" role="status">
           Loading key metrics
@@ -233,8 +236,12 @@ export const TariffStats = () => {
         footnote={
           yoy !== null && yoyBaseline ? (
             <span
+              // -800 rather than -700 in light: this span overrides the pill's
+              // own text colour but keeps the pill's background, and the card
+              // it lands on is the neutral one, whose indigo-50 fill is darker
+              // than the green-50 these shades were picked against (4.42:1).
               className={`inline-flex items-center ${
-                yoyRose ? "text-red-700 dark:text-red-300" : "text-green-700 dark:text-green-300"
+                yoyRose ? "text-red-800 dark:text-red-300" : "text-green-800 dark:text-green-300"
               }`}
             >
               <YoyIcon className="h-3 w-3 mr-1" aria-hidden="true" />

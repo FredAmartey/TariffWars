@@ -1,5 +1,6 @@
 import { HomeIcon, BarChart2Icon, NewspaperIcon, XIcon } from "lucide-react";
 import tariffWarsLogo from "../assets/tariffwars-logo.png";
+import { Button } from "@/components/ui/button";
 
 const NAV_ITEMS = [
   { tab: "dashboard", label: "Dashboard", icon: HomeIcon },
@@ -47,13 +48,15 @@ export const Sidebar = ({
             isMobileSidebarOpen ? "opacity-100" : "md:opacity-0 lg:opacity-100 lg:h-56"
           }`}
         />
-        <button
+        <Button
+          variant="ghost"
+          size="icon-sm"
           onClick={toggleMobileSidebar}
-          className="p-1 rounded-md md:hidden shrink-0 text-muted-foreground hover:bg-accent"
+          className="shrink-0 text-muted-foreground md:hidden"
           aria-label="Close menu"
         >
-          <XIcon className="h-6 w-6" />
-        </button>
+          <XIcon />
+        </Button>
       </div>
       <nav className="flex-1 p-4" aria-label="Main">
         <ul className="space-y-2">
@@ -61,15 +64,17 @@ export const Sidebar = ({
             const active = activeTab === tab;
             return (
               <li key={tab}>
-                <button
+                <Button
+                  variant="ghost"
+                  size="lg"
                   onClick={() => handleNavigate(tab)}
                   // The active tab was conveyed by background colour alone.
                   aria-current={active ? "page" : undefined}
                   title={label}
-                  className={`flex items-center justify-center md:justify-start w-full p-2 rounded-md ${
+                  className={`w-full justify-center p-2 md:justify-start ${
                     active
-                      ? "bg-accent text-blue-600 dark:text-white"
-                      : "text-muted-foreground hover:bg-accent"
+                      ? "bg-accent text-blue-700 dark:text-white"
+                      : "text-muted-foreground"
                   }`}
                 >
                   <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
@@ -82,7 +87,7 @@ export const Sidebar = ({
                   >
                     {label}
                   </span>
-                </button>
+                </Button>
               </li>
             );
           })}

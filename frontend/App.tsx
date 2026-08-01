@@ -19,6 +19,8 @@ import { Notifications } from "./components/Notifications";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Footer } from "./components/Footer";
 import { MenuIcon, XIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Re-exported so the existing `import { ThemeContext } from "../App"` /
 // `"../../App"` lines across 12 components keep working unchanged.
@@ -82,17 +84,15 @@ const AppContent: React.FC = () => {
               />
               <div className="flex-1 flex flex-col min-w-0">
                 <header className="md:hidden flex items-center justify-between p-4 sticky top-0 z-30 bg-background/80 backdrop-blur-xs border-b border-border">
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon-lg"
                     onClick={toggleMobileSidebar}
-                    className="p-2 rounded-md text-muted-foreground hover:bg-accent"
+                    className="text-muted-foreground"
                     aria-label="Toggle menu"
                   >
-                    {isMobileSidebarOpen ? (
-                      <XIcon className="h-6 w-6" />
-                    ) : (
-                      <MenuIcon className="h-6 w-6" />
-                    )}
-                  </button>
+                    {isMobileSidebarOpen ? <XIcon /> : <MenuIcon />}
+                  </Button>
                   <span className="font-bold text-lg text-foreground">TariffWars</span>
                 </header>
                 <main className="flex-1 p-6 overflow-y-auto overflow-x-hidden">
@@ -152,9 +152,11 @@ const App: React.FC = () => {
 
   return (
     <ThemeProvider>
-      <Router basename={getBasename()}>
-        <AppContent />
-      </Router>
+      <TooltipProvider delayDuration={300}>
+        <Router basename={getBasename()}>
+          <AppContent />
+        </Router>
+      </TooltipProvider>
     </ThemeProvider>
   );
 };

@@ -12,7 +12,18 @@ import {
 import { apiService } from "../../services/api";
 import type { TariffEntry } from "../../types/index";
 import debounce from "lodash/debounce";
-import type { ChangeEvent } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface TariffTableProps {
   searchTerm?: string;
@@ -25,7 +36,6 @@ interface TariffTableProps {
   /** Optional: the dashboard renders no pager of its own, so it has no
       count to receive and used to pass an empty function to satisfy this. */
   onTotalPagesChange?: (totalPages: number) => void;
-  handleSortChange?: (e: ChangeEvent<HTMLSelectElement>) => void;
   /**
    * Lets an owner that renders its own sort control stay in step with the
    * column headers. Without it the two disagree: clicking a header re-sorted
@@ -56,7 +66,10 @@ const INACTIVE_STATUSES = new Set(["Withdrawn", "Ended", "Suspended", "Paused", 
 
 export const isInactive = (status: string | undefined) => INACTIVE_STATUSES.has(status ?? "");
 
-const MUTED_BADGE = "bg-muted text-muted-foreground";
+// Carries a border because `--muted` is within 1.09:1 of the card it sits on,
+// so without one the chip has no visible edge and an inactive status reads as
+// bare text next to the coloured badges around it.
+const MUTED_BADGE = "bg-muted text-muted-foreground border border-border";
 
 // Same blue pairing STATUS_COLOURS uses for "Legacy Tariff", but this badge
 // reports a different fact (the country's own tariff rate on the US, not a US
@@ -64,7 +77,25 @@ const MUTED_BADGE = "bg-muted text-muted-foreground";
 // token's name.
 const COUNTRY_TARIFF_BADGE = "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300";
 
-const BADGE_BASE = "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium";
+/**
+ * What this app's badges override on the Badge primitive.
+ *
+ * Badge ships `h-5 rounded-4xl whitespace-nowrap overflow-hidden`, which suits
+ * a one-word chip. These carry prose: "Under Investigation" in a 10%-wide
+ * column, and market impact sentences in a 22% one. Left alone, the fixed
+ * height and nowrap would clip them to a single clipped line. Everything else
+ * the primitive brings (layout, focus ring, icon sizing, data-slot) is kept.
+ */
+const BADGE_BASE = "h-auto rounded-md whitespace-normal px-2 py-1 text-left font-medium";
+
+/**
+ * TableCell ships `p-2 whitespace-nowrap align-middle`. This table's cells are
+ * roomier and its prose columns must wrap inside their fixed widths, so both
+ * are replaced; `align-top` keeps a one-line cell level with the first line of
+ * a wrapped neighbour rather than floating to its centre.
+ */
+const CELL = "px-4 py-4 align-top text-sm whitespace-normal";
+const TEXT_CELL = `${CELL} text-foreground`;
 
 /**
  * Rate colour is severity, so it only applies while the rate is being charged.
@@ -215,19 +246,32 @@ const ColGroup: React.FC<{ columns: ReadonlyArray<{ key: string; width: number }
 const RateBadge: React.FC<{ entry: TariffEntry }> = ({ entry }) => {
   const inactive = isInactive(entry.status);
   return (
-    <span
+    <Badge
       className={`${BADGE_BASE} ${rateBadgeClass(entry)} ${
         inactive ? "line-through decoration-1" : ""
       }`}
       title={inactive ? `Not currently charged (${entry.status})` : undefined}
     >
       {entry.rateDisplay || `${entry.rate}%`}
-    </span>
+    </Badge>
   );
 };
 
 const StatusBadge: React.FC<{ status: string | undefined }> = ({ status }) => (
-  <span className={`${BADGE_BASE} ${statusBadgeClass(status)}`}>{status || "N/A"}</span>
+  <Badge className={`${BADGE_BASE} ${statusBadgeClass(status)}`}>{status || "N/A"}</Badge>
+);
+
+/** The country's own tariff rate on the US, or a muted chip when unreported. */
+const CountryTariffBadge: React.FC<{ value: string | undefined }> = ({ value }) => (
+  <Badge
+    className={`${BADGE_BASE} ${!value || value === "N/A" ? MUTED_BADGE : COUNTRY_TARIFF_BADGE}`}
+  >
+    {value}
+  </Badge>
+);
+
+const MarketImpactBadge: React.FC<{ entry: TariffEntry }> = ({ entry }) => (
+  <Badge className={`${BADGE_BASE} ${marketImpactClass(entry)}`}>{entry.marketImpact}</Badge>
 );
 
 /**
@@ -285,6 +329,27 @@ const SortableHeader = ({
   tooltip?: string;
 }) => {
   const active = activeField === field;
+  // The one control in the app that is deliberately not <Button>. Its whole job
+  // is to fill the cell (`w-full h-full`, see the h-px note below), and Button
+  // is `inline-flex` with a fixed height per size, its own radius and its own
+  // ring: adopting it here would mean overriding all four and reintroducing the
+  // dead border around the hitbox that this markup exists to remove.
+  const headerButton = (
+    <button
+      type="button"
+      onClick={() => onSort(field)}
+      className="flex items-center w-full h-full px-4 py-3 text-left font-semibold"
+    >
+      {label}
+      {active ? (
+        direction === "asc" ? (
+          <ChevronUpIcon className="h-4 w-4 ml-1 shrink-0" aria-hidden="true" />
+        ) : (
+          <ChevronDownIcon className="h-4 w-4 ml-1 shrink-0" aria-hidden="true" />
+        )
+      ) : null}
+    </button>
+  );
   return (
     // The padding lives on the button, not the th, so the click target is the
     // whole cell. With it on the th, the button sat inside a 16px horizontal
@@ -297,27 +362,35 @@ const SortableHeader = ({
     // the th a nominal height that content immediately overrides is what lets
     // `h-full` resolve. `display:flex` on the th also works but can strip its
     // implicit columnheader role, and these carry scope and aria-sort.
-    <th
+    //
+    // The hover is `bg-accent` rather than a literal grey. It was
+    // `hover:bg-gray-700/50`, which has no light value, so hovering a header in
+    // light mode painted a dark slab behind grey text at roughly 2.5:1. The
+    // token flips with the theme, so one class covers both.
+    <TableHead
       scope="col"
       aria-sort={active ? (direction === "asc" ? "ascending" : "descending") : "none"}
-      className="h-px p-0 text-left text-sm font-semibold text-muted-foreground hover:bg-gray-700/50"
-      title={tooltip}
+      // TableHead ships `h-10 px-2 whitespace-nowrap`; all three are replaced.
+      // The labels wrap ("RATE IMPOSED BY USA" in a 11% column), and the height
+      // and padding belong to the button, per the note above.
+      className="h-px p-0 text-sm font-semibold whitespace-normal text-muted-foreground hover:bg-accent"
     >
-      <button
-        type="button"
-        onClick={() => onSort(field)}
-        className="flex items-center w-full h-full px-4 py-3 text-left font-semibold"
-      >
-        {label}
-        {active ? (
-          direction === "asc" ? (
-            <ChevronUpIcon className="h-4 w-4 ml-1" aria-hidden="true" />
-          ) : (
-            <ChevronDownIcon className="h-4 w-4 ml-1" aria-hidden="true" />
-          )
-        ) : null}
-      </button>
-    </th>
+      {/*
+        A `title` attribute on the th only ever reached a mouse: it is not
+        announced on keyboard focus and cannot be read on touch. The header
+        already contains a real button, so it can trigger a Radix tooltip that
+        opens on focus as well as hover, and the text stays available to
+        assistive tech through aria-describedby.
+      */}
+      {tooltip ? (
+        <Tooltip>
+          <TooltipTrigger asChild>{headerButton}</TooltipTrigger>
+          <TooltipContent className="max-w-sm">{tooltip}</TooltipContent>
+        </Tooltip>
+      ) : (
+        headerButton
+      )}
+    </TableHead>
   );
 };
 
@@ -365,7 +438,6 @@ export const TariffTable: React.FC<TariffTableProps> = ({
   itemsPerPage = 5,
   onPageChange,
   onTotalPagesChange,
-  handleSortChange,
   onSortChange,
   onDatasetChange,
   variant = "full",
@@ -563,7 +635,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
     activeTab: TabType;
   }> = ({ entry, activeTab }) => {
     const cardBg = "bg-card border-border";
-    const labelColor = "text-gray-500";
+    const labelColor = "text-muted-foreground";
     const valueColor = "text-foreground";
     return (
       <div className={`border rounded-lg p-4 ${cardBg}`}>
@@ -625,15 +697,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
               </div>
               <div>
                 <span className={`block text-xs ${labelColor}`}>Rate (on USA)</span>
-                <span
-                  className={`${BADGE_BASE} ${
-                    !entry.countrysTariffOnUS || entry.countrysTariffOnUS === "N/A"
-                      ? MUTED_BADGE
-                      : COUNTRY_TARIFF_BADGE
-                  }`}
-                >
-                  {entry.countrysTariffOnUS}
-                </span>
+                <CountryTariffBadge value={entry.countrysTariffOnUS} />
               </div>
               <div>
                 <span className={`block text-xs ${labelColor}`}>Key Sectors</span>
@@ -643,9 +707,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
               {entry.marketImpact && (
                 <div className="col-span-2">
                   <span className={`block text-xs ${labelColor}`}>Market Impact</span>
-                  <span className={`${BADGE_BASE} ${marketImpactClass(entry)}`}>
-                    {entry.marketImpact}
-                  </span>
+                  <MarketImpactBadge entry={entry} />
                 </div>
               )}
             </div>
@@ -670,12 +732,9 @@ export const TariffTable: React.FC<TariffTableProps> = ({
     return (
       <div className="p-4 text-center text-red-500" role="alert">
         <p>{error}</p>
-        <button
-          onClick={() => fetchData()}
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-sm hover:bg-blue-600"
-        >
+        <Button onClick={() => fetchData()} size="lg" className="mt-4">
           Try again
-        </button>
+        </Button>
       </div>
     );
   }
@@ -686,7 +745,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
         <p className="text-lg font-medium text-muted-foreground">
           No tariff data found{searchTerm ? ` for "${searchTerm}"` : ""}.
         </p>
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-sm text-muted-foreground">
           Try adjusting your search criteria or check back later.
         </p>
       </div>
@@ -694,99 +753,72 @@ export const TariffTable: React.FC<TariffTableProps> = ({
   }
 
   const renderProductCell = (entry: TariffEntry, key: ColumnKey) => {
-    const textCell = "px-4 py-4 text-sm text-foreground";
     switch (key) {
       case "commodity":
-        return <td className={textCell}>{entry.commodity}</td>;
+        return <TableCell className={TEXT_CELL}>{entry.commodity}</TableCell>;
       case "tariffOrigin":
-        return <td className={textCell}>{entry.tariffOrigin || "N/A"}</td>;
+        return <TableCell className={TEXT_CELL}>{entry.tariffOrigin || "N/A"}</TableCell>;
       case "to":
-        return <td className={textCell}>{entry.to}</td>;
+        return <TableCell className={TEXT_CELL}>{entry.to}</TableCell>;
       case "rate":
         return (
-          <td className="px-4 py-4 text-sm">
+          <TableCell className={CELL}>
             <RateBadge entry={entry} />
-          </td>
+          </TableCell>
         );
       case "changeDisplay":
         return (
-          <td className={textCell}>
+          <TableCell className={TEXT_CELL}>
             <ChangeCell display={entry.changeDisplay} />
-          </td>
+          </TableCell>
         );
       case "status":
         return (
-          <td className="px-4 py-4 text-sm">
+          <TableCell className={CELL}>
             <StatusBadge status={entry.status} />
-          </td>
+          </TableCell>
         );
       case "nature":
         return (
-          <td className={textCell} title={TARIFF_TYPE_TOOLTIP}>
+          <TableCell className={TEXT_CELL} title={TARIFF_TYPE_TOOLTIP}>
             {entry.nature || "N/A"}
-          </td>
+          </TableCell>
         );
       case "effectiveDate":
-        return <td className={`${textCell} whitespace-nowrap`}>{entry.effectiveDate || "N/A"}</td>;
+        return (
+          <TableCell className={`${TEXT_CELL} whitespace-nowrap`}>
+            {entry.effectiveDate || "N/A"}
+          </TableCell>
+        );
     }
   };
 
   return (
     <div>
-      <div className="mb-4 flex space-x-4" role="group" aria-label="Dataset">
-        <button
-          onClick={() => {
-            setActiveTab("products");
-            onDatasetChange?.("product");
-            onPageChange(1);
-          }}
-          aria-pressed={activeTab === "products"}
-          className={`px-4 py-2 rounded-md flex items-center ${
-            activeTab === "products"
-              ? "bg-blue-500 text-white dark:bg-blue-600"
-              : "bg-muted text-muted-foreground hover:bg-accent"
-          }`}
-        >
-          <PackageIcon className="w-4 h-4 mr-2" aria-hidden="true" />
-          Products
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab("countries");
-            onDatasetChange?.("country");
-            onPageChange(1);
-          }}
-          aria-pressed={activeTab === "countries"}
-          className={`px-4 py-2 rounded-md flex items-center ${
-            activeTab === "countries"
-              ? "bg-blue-500 text-white dark:bg-blue-600"
-              : "bg-muted text-muted-foreground hover:bg-accent"
-          }`}
-        >
-          <GlobeIcon className="w-4 h-4 mr-2" aria-hidden="true" />
-          Countries
-        </button>
-      </div>
-
-      {isMobile && handleSortChange && localSortField && localSortDirection && (
-        <div className="mb-4">
-          <label htmlFor="mobileSort" className="sr-only text-muted-foreground">
-            Sort by
-          </label>
-          <select
-            id="mobileSort"
-            value={`${localSortField}-${localSortDirection}`}
-            onChange={handleSortChange}
-            className="w-full appearance-none px-4 py-2 rounded-md border border-input bg-transparent text-foreground dark:bg-input/30"
-          >
-            {sortOptionsFor(localSortField, localSortDirection).map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+      {/* Two aria-pressed toggle buttons became a real tablist. They switch
+          which dataset the panel below shows, which is a tab relationship, and
+          it now carries the roles and arrow-key movement to match. */}
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => {
+          const next = value as TabType;
+          setActiveTab(next);
+          onDatasetChange?.(next === "products" ? "product" : "country");
+          onPageChange(1);
+        }}
+        className="mb-4"
+      >
+        <TabsList className="h-9 gap-1">
+          <TabsTrigger value="products" className="px-4 data-active:bg-primary data-active:text-primary-foreground dark:data-active:bg-primary dark:data-active:text-primary-foreground">
+            <PackageIcon aria-hidden="true" />
+            Products
+          </TabsTrigger>
+          <TabsTrigger value="countries" className="px-4 data-active:bg-primary data-active:text-primary-foreground dark:data-active:bg-primary dark:data-active:text-primary-foreground">
+            <GlobeIcon aria-hidden="true" />
+            Countries
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {isMobile ? (
         <div className="mt-4 space-y-4">
@@ -795,118 +827,87 @@ export const TariffTable: React.FC<TariffTableProps> = ({
           ))}
         </div>
       ) : (
-        <div className="relative overflow-x-auto">
-          {/* table-fixed is what makes the widths above authoritative; with
-              the default `auto` the browser re-derives them from content on
-              every sort. */}
-          <table className="w-full table-fixed text-left">
-            <ColGroup columns={activeTab === "products" ? productColumns : COUNTRY_COLUMNS} />
-            <thead>
-              {activeTab === "products" ? (
-                <tr className="border-b border-border">
+        // Table renders its own `relative w-full overflow-x-auto` wrapper.
+        // table-fixed is what makes the widths above authoritative; with the
+        // default `auto` the browser re-derives them from content on every sort.
+        <Table className="table-fixed text-left">
+          <ColGroup columns={activeTab === "products" ? productColumns : COUNTRY_COLUMNS} />
+          <TableHeader>
+            <TableRow>
+              {(activeTab === "products" ? productColumns : COUNTRY_COLUMNS).map((column) => (
+                <SortableHeader
+                  key={column.key}
+                  field={column.key}
+                  label={column.label}
+                  activeField={localSortField}
+                  direction={localSortDirection}
+                  onSort={handleSort}
+                  tooltip={"tooltip" in column ? column.tooltip : undefined}
+                />
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.map((entry) =>
+              activeTab === "products" ? (
+                <TableRow key={entry.id}>
                   {productColumns.map((column) => (
-                    <SortableHeader
-                      key={column.key}
-                      field={column.key}
-                      label={column.label}
-                      activeField={localSortField}
-                      direction={localSortDirection}
-                      onSort={handleSort}
-                      tooltip={column.tooltip}
-                    />
+                    <React.Fragment key={column.key}>
+                      {renderProductCell(entry, column.key)}
+                    </React.Fragment>
                   ))}
-                </tr>
+                </TableRow>
               ) : (
-                <tr className="border-b border-border">
-                  {COUNTRY_COLUMNS.map((column) => (
-                    <SortableHeader
-                      key={column.key}
-                      field={column.key}
-                      label={column.label}
-                      activeField={localSortField}
-                      direction={localSortDirection}
-                      onSort={handleSort}
-                    />
-                  ))}
-                </tr>
-              )}
-            </thead>
-            <tbody className="divide-y divide-border">
-              {data.map((entry) =>
-                activeTab === "products" ? (
-                  <tr key={entry.id} className="border-t border-border hover:bg-accent/50">
-                    {productColumns.map((column) => (
-                      <React.Fragment key={column.key}>
-                        {renderProductCell(entry, column.key)}
-                      </React.Fragment>
-                    ))}
-                  </tr>
-                ) : (
-                  <tr key={entry.id} className="border-t border-border hover:bg-accent/50">
-                    <td className="px-4 py-4 text-sm text-foreground">{entry.country}</td>
-                    <td className="px-4 py-4 text-sm">
-                      <RateBadge entry={entry} />
-                    </td>
-                    <td className="px-4 py-4 text-sm">
-                      <StatusBadge status={entry.status} />
-                    </td>
-                    <td className="px-4 py-4 text-sm">
-                      <span
-                        className={`${BADGE_BASE} ${
-                          !entry.countrysTariffOnUS || entry.countrysTariffOnUS === "N/A"
-                            ? MUTED_BADGE
-                            : COUNTRY_TARIFF_BADGE
-                        }`}
-                      >
-                        {entry.countrysTariffOnUS}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-foreground">
-                      {entry.keyAffectedSectors}
-                    </td>
-                    <td className="px-4 py-4 text-sm">
-                      <span className={`${BADGE_BASE} ${marketImpactClass(entry)}`}>
-                        {entry.marketImpact}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-foreground">{entry.responseType}</td>
-                  </tr>
-                )
-              )}
-            </tbody>
-          </table>
-        </div>
+                <TableRow key={entry.id}>
+                  <TableCell className={TEXT_CELL}>{entry.country}</TableCell>
+                  <TableCell className={CELL}>
+                    <RateBadge entry={entry} />
+                  </TableCell>
+                  <TableCell className={CELL}>
+                    <StatusBadge status={entry.status} />
+                  </TableCell>
+                  <TableCell className={CELL}>
+                    <CountryTariffBadge value={entry.countrysTariffOnUS} />
+                  </TableCell>
+                  <TableCell className={TEXT_CELL}>{entry.keyAffectedSectors}</TableCell>
+                  <TableCell className={CELL}>
+                    <MarketImpactBadge entry={entry} />
+                  </TableCell>
+                  <TableCell className={TEXT_CELL}>{entry.responseType}</TableCell>
+                </TableRow>
+              )
+            )}
+          </TableBody>
+        </Table>
       )}
 
       <div className="px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div className="text-sm text-gray-500" role="status">
+        <div className="text-sm text-muted-foreground" role="status">
           Showing {Math.min((page - 1) * itemsPerPage + 1, totalItems)} to{" "}
           {Math.min(page * itemsPerPage, totalItems)} of {totalItems} entries
         </div>
         <div className="flex items-center space-x-2">
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => onPageChange(page - 1)}
             disabled={page === 1}
             aria-label="Previous page of tariffs"
-            className={`p-2 rounded-lg ${
-              page === 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-accent"
-            }`}
           >
-            <ArrowLeftIcon aria-hidden="true" className="h-5 w-5 text-foreground" />
-          </button>
+            <ArrowLeftIcon aria-hidden="true" />
+          </Button>
           <span className="text-sm text-foreground">
             Page {page} of {totalPages}
           </span>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => onPageChange(page + 1)}
             disabled={page === totalPages}
             aria-label="Next page of tariffs"
-            className={`p-2 rounded-lg ${
-              page === totalPages ? "opacity-50 cursor-not-allowed" : "hover:bg-accent"
-            }`}
           >
-            <ArrowRightIcon aria-hidden="true" className="h-5 w-5 text-foreground" />
-          </button>
+            <ArrowRightIcon aria-hidden="true" />
+          </Button>
         </div>
       </div>
     </div>

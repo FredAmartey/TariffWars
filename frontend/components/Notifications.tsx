@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNotifications } from '../context/NotificationsContext';
 import { CheckCircleIcon, XCircleIcon, AlertCircleIcon, InfoIcon, XIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 export const Notifications: React.FC = () => {
   const {
     notifications,
@@ -22,9 +23,9 @@ export const Notifications: React.FC = () => {
               {notification.message}
             </p>
           </div>
-          <button onClick={() => removeNotification(notification.id)} aria-label="Dismiss notification" className="ml-3 text-muted-foreground hover:text-foreground">
-            <XIcon className="h-4 w-4" aria-hidden="true" />
-          </button>
+          <Button variant="ghost" size="icon-xs" onClick={() => removeNotification(notification.id)} aria-label="Dismiss notification" className="ml-3 text-muted-foreground">
+            <XIcon aria-hidden="true" />
+          </Button>
         </div>)}
     </div>;
 };

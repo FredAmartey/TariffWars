@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { marketAnalysisApi } from "../../services/marketAnalysisApi";
 import type { AIInsight } from "../../services/marketAnalysisApi";
+import { Button } from "@/components/ui/button";
 
 interface AIInsightsProps {
   showDetailedAnalysis?: () => void;
@@ -100,19 +101,19 @@ export const AIInsights = ({ showDetailedAnalysis }: AIInsightsProps) => {
             AI-powered insights
           </span>
         </div>
-        <button
+        <Button
+          variant="secondary"
+          size="icon-sm"
           onClick={refreshAnalysis}
           disabled={isLoading}
           aria-label={isLoading ? "Refreshing AI insights" : "Refresh AI insights"}
-          className={`p-1 rounded-full bg-muted hover:bg-accent ${
-            isLoading ? "opacity-50 cursor-not-allowed" : ""
-          }`}
+          className="rounded-full"
         >
           <RefreshCwIcon
             aria-hidden="true"
-            className={`h-4 w-4 text-muted-foreground ${isLoading ? "animate-spin" : ""}`}
+            className={`text-muted-foreground ${isLoading ? "animate-spin" : ""}`}
           />
-        </button>
+        </Button>
       </div>
 
       {isLoading && (
@@ -149,13 +150,15 @@ export const AIInsights = ({ showDetailedAnalysis }: AIInsightsProps) => {
         </div>
       )}
 
-      <button
+      <Button
+        variant="outline"
+        size="lg"
         onClick={showDetailedAnalysis}
-        className="w-full py-2 rounded-md text-sm flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 dark:bg-blue-600/30 dark:hover:bg-blue-600/50 dark:text-blue-300 dark:border-blue-700/50"
+        className="w-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 dark:border-blue-700/50 dark:bg-blue-600/30 dark:text-blue-300 dark:hover:bg-blue-600/50 dark:hover:text-blue-200"
       >
-        <span>View Detailed Market Analysis</span>
-        <ExternalLinkIcon className="h-4 w-4 ml-2" />
-      </button>
+        View Detailed Market Analysis
+        <ExternalLinkIcon />
+      </Button>
     </div>
   );
 };

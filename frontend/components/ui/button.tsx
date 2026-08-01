@@ -9,7 +9,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/80",
+        // `hover:bg-primary-hover`, not the shipped `hover:bg-primary/80`:
+        // fading the fill toward the surface lightens it in light mode, and
+        // white-on-blue-600 drops from 5.25:1 to 3.5:1 exactly while hovered.
+        // The token darkens instead, in both themes.
+        default: "bg-primary text-primary-foreground hover:bg-primary-hover",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:

@@ -14,12 +14,23 @@ import {
 import { useNotifications } from "../context/NotificationsContext";
 import { NewsArticle } from "../types/index";
 import { apiService } from "../services/api";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface NewsFeedProps {
   preview?: boolean;
 }
 
 const BOOKMARK_KEY = "tariffNewsBookmarks";
+
+/**
+ * The active tab takes the brand fill rather than TabsList's own light chip.
+ * These two sit on `bg-background`, where the primitive's `data-active:bg-background`
+ * would make the selected tab indistinguishable from the page behind it.
+ */
+const NEWS_TAB =
+  "px-3 data-active:bg-primary data-active:text-primary-foreground " +
+  "dark:data-active:bg-primary dark:data-active:text-primary-foreground";
 
 /**
  * Bookmarks are rendered as click targets, and storage predates the scheme
@@ -169,22 +180,25 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
       {!compact && (
         <div className="relative w-full h-48 shrink-0">
           <ArticleImage article={article} />
-          <button
-            type="button"
+          {/* A light chip with a border rather than `bg-black/50` + a white
+              icon. The black disc was designed against a photo, but roughly a
+              third of articles carry no image and fall back to a pale
+              placeholder, where it landed as a dark blot. This reads the same
+              over either, and the border keeps it legible on a light photo. */}
+          <Button
+            variant="outline"
+            size="icon-sm"
             onClick={() => onToggleBookmark(article)}
-            className={`absolute top-2 right-2 z-10 p-1.5 rounded-full bg-black/50 hover:bg-black/75 ${
-              isBookmarked ? "text-yellow-400" : "text-white"
+            className={`absolute top-2 right-2 z-10 rounded-full bg-background/90 shadow-xs ${
+              isBookmarked ? "text-amber-600 dark:text-amber-400" : "text-foreground"
             }`}
             aria-label={
               isBookmarked ? `Remove bookmark: ${article.title}` : `Bookmark: ${article.title}`
             }
             aria-pressed={isBookmarked}
           >
-            <BookmarkIcon
-              className={`h-4 w-4 ${isBookmarked ? "fill-current" : ""}`}
-              aria-hidden="true"
-            />
-          </button>
+            <BookmarkIcon className={isBookmarked ? "fill-current" : ""} aria-hidden="true" />
+          </Button>
         </div>
       )}
 
@@ -207,24 +221,22 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
             )}
           </h3>
           {compact && (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={() => onToggleBookmark(article)}
-              className={`relative z-10 shrink-0 p-1.5 rounded-full ${
+              className={`relative z-10 shrink-0 rounded-full ${
                 isBookmarked
-                  ? "text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/30"
-                  : "text-muted-foreground hover:bg-accent"
+                  ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                  : "text-muted-foreground"
               }`}
               aria-label={
                 isBookmarked ? `Remove bookmark: ${article.title}` : `Bookmark: ${article.title}`
               }
               aria-pressed={isBookmarked}
             >
-              <BookmarkIcon
-                className={`h-5 w-5 ${isBookmarked ? "fill-current" : ""}`}
-                aria-hidden="true"
-              />
-            </button>
+              <BookmarkIcon className={isBookmarked ? "fill-current" : ""} aria-hidden="true" />
+            </Button>
           )}
         </div>
 
@@ -246,14 +258,15 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
         </div>
 
         <div className="relative z-10 flex items-center space-x-2 mt-2">
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => onShare(article)}
             aria-label={`Share: ${article.title}`}
-            className="p-2 rounded-full hover:bg-accent text-muted-foreground"
+            className="rounded-full text-muted-foreground"
           >
-            <Share2Icon className="h-4 w-4" aria-hidden="true" />
-          </button>
+            <Share2Icon aria-hidden="true" />
+          </Button>
           {article.url && (
             <a
               href={article.url}
@@ -447,7 +460,7 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
           <div className="mt-4 flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <SearchIcon
-                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
                 aria-hidden="true"
               />
               <input
@@ -459,28 +472,25 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
                 }}
                 placeholder="Search headlines, summaries and sources"
                 aria-label="Search news"
-                className="w-full pl-9 pr-3 py-2 rounded-lg border border-input bg-transparent text-sm text-foreground placeholder:text-muted-foreground dark:bg-input/30"
+                className="h-9 w-full rounded-lg border border-input bg-transparent pr-3 pl-9 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
               />
             </div>
-            <div className="flex gap-2" role="group" aria-label="Filter news">
-              {(["all", "bookmarked"] as const).map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => {
-                    setActiveFilter(filter);
-                    setCurrentPage(0);
-                  }}
-                  aria-pressed={activeFilter === filter}
-                  className={`px-3 py-2 rounded-lg text-sm ${
-                    activeFilter === filter
-                      ? "bg-indigo-600 text-white"
-                      : "bg-card text-muted-foreground border border-border"
-                  }`}
-                >
-                  {filter === "all" ? "All news" : `Bookmarked (${bookmarkedArticles.length})`}
-                </button>
-              ))}
-            </div>
+            <Tabs
+              value={activeFilter}
+              onValueChange={(value) => {
+                setActiveFilter(value as "all" | "bookmarked");
+                setCurrentPage(0);
+              }}
+            >
+              <TabsList className="h-9 gap-1">
+                <TabsTrigger value="all" className={NEWS_TAB}>
+                  All news
+                </TabsTrigger>
+                <TabsTrigger value="bookmarked" className={NEWS_TAB}>
+                  Bookmarked ({bookmarkedArticles.length})
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
           {/* Search and filtering change the list without moving focus, so the
               count has to be announced for it to be perceivable. */}
@@ -512,7 +522,7 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
                   ? "No news articles match your search."
                   : "No news articles available at this time."}
               </p>
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="mt-2 text-sm text-muted-foreground">
                 {activeFilter === "bookmarked"
                   ? "Bookmark an article to keep it here."
                   : "Please check back later for updates."}
@@ -523,25 +533,29 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
 
         {preview && !isMobile && totalPages > 1 && (
           <div className="flex justify-center items-center mt-6 space-x-4">
-            <button
+            <Button
+              variant="secondary"
+              size="icon"
               onClick={handlePrevious}
               disabled={safePage === 0}
               aria-label="Previous page of news"
-              className="p-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed bg-muted hover:bg-accent"
+              className="rounded-full"
             >
-              <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
-            </button>
+              <ChevronLeftIcon aria-hidden="true" />
+            </Button>
             <span className="text-sm text-muted-foreground">
               Page {safePage + 1} of {totalPages}
             </span>
-            <button
+            <Button
+              variant="secondary"
+              size="icon"
               onClick={handleNext}
               disabled={safePage >= totalPages - 1}
               aria-label="Next page of news"
-              className="p-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed bg-muted hover:bg-accent"
+              className="rounded-full"
             >
-              <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
-            </button>
+              <ChevronRightIcon aria-hidden="true" />
+            </Button>
           </div>
         )}
       </div>

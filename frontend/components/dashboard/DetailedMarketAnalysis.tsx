@@ -12,6 +12,16 @@ import {
   LineChartIcon,
 } from "lucide-react";
 import { marketAnalysisApi } from "../../services/marketAnalysisApi";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import type {
   MarketOverview,
   CommodityAnalysis,
@@ -73,96 +83,74 @@ export const DetailedMarketAnalysis = () => {
     fetchData();
   }, []);
 
-  const renderContent = () => {
-    if (isLoading) {
-      return (
-        <div className="p-4 text-center text-muted-foreground">
-          Loading market analysis data...
-        </div>
-      );
-    }
-
-    // A partial failure still has sections worth showing, so the banner sits
-    // above the content rather than replacing it.
-    const banner = error ? (
-      <div className="p-3 mb-4 rounded-lg text-sm text-red-500 bg-red-500/10" role="status">
-        {error}
-      </div>
-    ) : null;
-
-    // Only a total failure replaces the modal. Judging this by "no overview and
-    // no commodities" hid working Regional and Predictions tabs whenever the
-    // commodity call legitimately returned an empty array.
-    if (allFailed) {
-      return <div className={`p-4 text-center text-red-500`}>{error}</div>;
-    }
-
+  if (isLoading) {
     return (
-      <>
-        {banner}
-        {renderTab()}
-      </>
+      <div className="p-4 text-center text-muted-foreground" role="status">
+        Loading market analysis data...
+      </div>
     );
-  };
+  }
 
-  const renderTab = () => {
-    switch (activeTab) {
-      case "overview":
-        return <OverviewTab data={marketOverview} />;
-      case "commodities":
-        return <CommoditiesTab data={commodityAnalysis} />;
-      case "regions":
-        return <RegionsTab data={regionalAnalysis} />;
-      case "predictions":
-        return <PredictionsTab data={marketPredictions} />;
-      default:
-        return <OverviewTab data={marketOverview} />;
-    }
-  };
+  // Only a total failure replaces the modal. Judging this by "no overview and
+  // no commodities" hid working Regional and Predictions tabs whenever the
+  // commodity call legitimately returned an empty array.
+  if (allFailed) {
+    return <div className="p-4 text-center text-red-600 dark:text-red-400">{error}</div>;
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap border-b overflow-x-auto whitespace-nowrap">
-        {[
-          {
-            id: "overview",
-            label: "Overview",
-            icon: <LineChartIcon className="h-4 w-4 mr-2" />,
-          },
-          {
-            id: "commodities",
-            label: "Commodities",
-            icon: <ShoppingBagIcon className="h-4 w-4 mr-2" />,
-          },
-          {
-            id: "regions",
-            label: "Regional Analysis",
-            icon: <Globe2Icon className="h-4 w-4 mr-2" />,
-          },
-          {
-            id: "predictions",
-            label: "Market Predictions",
-            icon: <BarChart2Icon className="h-4 w-4 mr-2" />,
-          },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center px-4 py-2 border-b-2 -mb-px ${
-              activeTab === tab.id
-                ? "border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-400"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {tab.icon}
-            {tab.label}
-          </button>
-        ))}
-      </div>
-      {renderContent()}
+      {/* A partial failure still has sections worth showing, so the banner sits
+          above the tabs rather than replacing them. */}
+      {error && (
+        <div
+          className="p-3 rounded-lg text-sm text-red-700 bg-red-500/10 dark:text-red-300"
+          role="status"
+        >
+          {error}
+        </div>
+      )}
+      {/*
+        Radix Tabs rather than four buttons over a switch statement. The old
+        strip was `flex flex-wrap border-b overflow-x-auto` with no tablist,
+        tab or tabpanel roles and no arrow-key movement, and its wrap plus
+        scroll combination is what turned into three stacked rows with a
+        visible scrollbar once the dialog rendered narrow. `w-full` on the
+        list plus `flex-wrap` lets it reflow to two rows on a phone instead of
+        scrolling sideways.
+      */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList variant="line" className="h-auto w-full flex-wrap justify-start gap-x-1 gap-y-0">
+          {TAB_DEFS.map(({ id, label, icon: Icon }) => (
+            <TabsTrigger key={id} value={id} className="flex-none px-3 py-1.5">
+              <Icon aria-hidden="true" />
+              {label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        <TabsContent value="overview">
+          <OverviewTab data={marketOverview} />
+        </TabsContent>
+        <TabsContent value="commodities">
+          <CommoditiesTab data={commodityAnalysis} />
+        </TabsContent>
+        <TabsContent value="regions">
+          <RegionsTab data={regionalAnalysis} />
+        </TabsContent>
+        <TabsContent value="predictions">
+          <PredictionsTab data={marketPredictions} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
+
+const TAB_DEFS = [
+  { id: "overview", label: "Overview", icon: LineChartIcon },
+  { id: "commodities", label: "Commodities", icon: ShoppingBagIcon },
+  { id: "regions", label: "Regional Analysis", icon: Globe2Icon },
+  { id: "predictions", label: "Market Predictions", icon: BarChart2Icon },
+] as const;
 
 const OverviewTab = ({ data }: { data: MarketOverview | null }) => {
   if (!data) return null;
@@ -264,6 +252,29 @@ const OverviewTab = ({ data }: { data: MarketOverview | null }) => {
   );
 };
 
+/**
+ * -700/-300 rather than -500/-600: these read on `bg-card`, where green-500 is
+ * 2.3:1 and red-500 3.8:1. The pairs below clear AA in both themes.
+ */
+const changeToneClass = (change: string): string => {
+  if (change.startsWith("+")) return "text-green-700 dark:text-green-400";
+  if (change.startsWith("-")) return "text-red-700 dark:text-red-400";
+  return "text-muted-foreground";
+};
+
+const outlookToneClass = (outlook: string): string => {
+  if (outlook === "positive") return "text-green-700 dark:text-green-400 capitalize";
+  if (outlook === "negative") return "text-red-700 dark:text-red-400 capitalize";
+  return "text-muted-foreground capitalize";
+};
+
+/** Shares the severity tokens the tariff table's rate bands use. */
+const severityClass = (impact: string): string => {
+  if (impact === "high") return "bg-severity-high text-severity-high-foreground";
+  if (impact === "medium") return "bg-severity-medium text-severity-medium-foreground";
+  return "bg-severity-low text-severity-low-foreground";
+};
+
 const CommoditiesTab = ({ data }: { data: CommodityAnalysis[] }) => {
   return (
     <div className="space-y-6">
@@ -271,92 +282,57 @@ const CommoditiesTab = ({ data }: { data: CommodityAnalysis[] }) => {
         Detailed analysis of tariff impacts across major global commodities, highlighting rate
         changes, market reactions, and future projections.
       </p>
-      <div className="rounded-lg overflow-hidden bg-white border border-gray-200 dark:bg-gray-700/50 dark:border-0">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50 dark:bg-gray-800">
-              <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
-                >
-                  Commodity
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
-                >
-                  Current Rate
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
-                >
-                  YoY Change
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
-                >
-                  Market Impact
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
-                >
-                  Outlook
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {data.map((item, index) => (
-                <tr key={index} className="bg-white dark:bg-gray-800/50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{item.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">{item.rate}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span
-                      className={
-                        item.change.startsWith("+")
-                          ? "text-green-500"
-                          : item.change.startsWith("-")
-                          ? "text-red-500"
-                          : "text-gray-500"
-                      }
-                    >
-                      {item.change}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        item.impact === "high"
-                          ? "bg-severity-high text-severity-high-foreground"
-                          : item.impact === "medium"
-                          ? "bg-severity-medium text-severity-medium-foreground"
-                          : "bg-severity-low text-severity-low-foreground"
-                      }`}
-                    >
-                      {item.impact}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span
-                      className={
-                        item.outlook === "positive"
-                          ? "text-green-600 dark:text-green-400"
-                          : item.outlook === "negative"
-                          ? "text-red-600 dark:text-red-400"
-                          : "text-muted-foreground"
-                      }
-                    >
-                      {item.outlook}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {/*
+        Every surface and rule in this table used to be a literal: `bg-white`,
+        `border-gray-200`, `bg-gray-50` and `divide-gray-200` with no dark
+        counterpart, so in dark mode the header and rules stayed light. It sits
+        inside a dialog, which is why the light-mode audit never reached it.
+        The Table primitive supplies the rules and the row hover from tokens.
+      */}
+      <div className="rounded-lg overflow-hidden ring-1 ring-foreground/10">
+        <Table>
+          <TableHeader className="bg-muted">
+            <TableRow>
+              {["Commodity", "Current Rate", "YoY Change", "Market Impact", "Outlook"].map(
+                (heading) => (
+                  <TableHead
+                    key={heading}
+                    scope="col"
+                    className="h-auto px-3 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase"
+                  >
+                    {heading}
+                  </TableHead>
+                )
+              )}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.map((item, index) => (
+              <TableRow key={index}>
+                {/* px-3, not the px-6 this carried while it lived in a
+                    full-width page: five columns at 48px of horizontal padding
+                    each overflowed the dialog and clipped the Outlook column
+                    behind a scrollbar. The commodity name wraps for the same
+                    reason, since one of them is 49 characters. */}
+                <TableCell className="px-3 py-3 font-medium whitespace-normal">
+                  {item.name}
+                </TableCell>
+                <TableCell className="px-3 py-3">{item.rate}</TableCell>
+                <TableCell className="px-3 py-3">
+                  <span className={changeToneClass(item.change)}>{item.change}</span>
+                </TableCell>
+                <TableCell className="px-3 py-3">
+                  <Badge className={`rounded-md capitalize ${severityClass(item.impact)}`}>
+                    {item.impact}
+                  </Badge>
+                </TableCell>
+                <TableCell className="px-3 py-3">
+                  <span className={outlookToneClass(item.outlook)}>{item.outlook}</span>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
@@ -391,9 +367,9 @@ const RegionsTab = ({ data }: { data: RegionalAnalysis[] }) => {
               <h4 className="text-sm font-medium mb-2 text-muted-foreground">Key Sectors:</h4>
               <div className="flex flex-wrap gap-2">
                 {region.keySectors.map((sector, sectorIndex) => (
-                  <span key={sectorIndex} className={`px-2 py-1 text-xs rounded-full ${theme.tag}`}>
+                  <Badge key={sectorIndex} className={theme.tag}>
                     {sector}
-                  </span>
+                  </Badge>
                 ))}
               </div>
             </div>

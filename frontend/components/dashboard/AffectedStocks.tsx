@@ -3,6 +3,9 @@ import { TrendingUpIcon, TrendingDownIcon, MinusIcon, PauseIcon, PlayIcon } from
 import styles from "./AffectedStocks.module.css";
 import { StockData, StockDirection } from "../../types/stock";
 import { apiService } from "../../services/api";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // The tracked symbol list lives on the backend (services/stockService.ts),
 // which is also what bounds the symbols it will ask the provider about. These
@@ -175,7 +178,7 @@ const CardContent: React.FC<{ stock: StockData }> = ({ stock }) => {
         ) : stock.impact === "negative" ? (
           <TrendingDownIcon className="h-6 w-6 text-red-400" aria-hidden="true" />
         ) : (
-          <MinusIcon className="h-6 w-6 text-gray-400" aria-hidden="true" />
+          <MinusIcon className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
         )}
       </div>
 
@@ -208,9 +211,9 @@ const CardContent: React.FC<{ stock: StockData }> = ({ stock }) => {
         </div>
 
         <div className="mt-4">
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-400/10 dark:text-indigo-400">
+          <Badge className="bg-indigo-100 text-indigo-800 dark:bg-indigo-400/10 dark:text-indigo-300">
             {stock.sector}
-          </span>
+          </Badge>
         </div>
       </div>
     </div>
@@ -220,30 +223,34 @@ const CardContent: React.FC<{ stock: StockData }> = ({ stock }) => {
 // Add SkeletonCard component for loading state
 const SkeletonCard: React.FC = () => {
   return (
+    // The card itself already switched with the theme; every bar inside it was
+    // a fixed gray-700 and the inner panel a fixed gray-800/50, so the light
+    // theme rendered a pale card filled with near-black slabs. A translucent
+    // tint of `--foreground` inverts with the theme on its own.
     <div className="h-96 rounded-xl overflow-hidden animate-pulse bg-linear-to-r from-gray-200 to-gray-300 dark:from-gray-700/50 dark:to-gray-800/50">
       <div className="p-6 h-full flex flex-col">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <div className="h-8 w-16 bg-gray-700 rounded-sm mb-2"></div>
-            <div className="h-4 w-32 bg-gray-700 rounded-sm"></div>
+            <Skeleton className="h-8 w-16 rounded-sm bg-foreground/15 mb-2" />
+            <Skeleton className="h-4 w-32 rounded-sm bg-foreground/10" />
           </div>
-          <div className="h-6 w-6 bg-gray-700 rounded-sm"></div>
+          <Skeleton className="h-6 w-6 rounded-sm bg-foreground/10" />
         </div>
 
         <div className="mt-6">
-          <div className="h-10 w-24 bg-gray-700 rounded-sm mb-2"></div>
-          <div className="h-4 w-40 bg-gray-700 rounded-sm"></div>
+          <Skeleton className="h-10 w-24 rounded-sm bg-foreground/15 mb-2" />
+          <Skeleton className="h-4 w-40 rounded-sm bg-foreground/10" />
         </div>
 
         <div className="mt-auto">
-          <div className="bg-gray-800/50 rounded-lg p-4">
-            <div className="h-4 w-24 bg-gray-700 rounded-sm mb-3"></div>
-            <div className="h-4 w-full bg-gray-700 rounded-sm mb-2"></div>
-            <div className="h-4 w-3/4 bg-gray-700 rounded-sm"></div>
+          <div className="bg-foreground/5 rounded-lg p-4">
+            <Skeleton className="h-4 w-24 rounded-sm bg-foreground/10 mb-3" />
+            <Skeleton className="h-4 w-full rounded-sm bg-foreground/10 mb-2" />
+            <Skeleton className="h-4 w-3/4 rounded-sm bg-foreground/10" />
           </div>
 
           <div className="mt-4">
-            <div className="h-5 w-24 bg-gray-700 rounded-full"></div>
+            <Skeleton className="h-5 w-24 rounded-full bg-foreground/10" />
           </div>
         </div>
       </div>
@@ -423,19 +430,20 @@ export const AffectedStocks: React.FC = () => {
         // helps a touch user or anyone who simply wants it to stop, so the
         // control is explicit as well.
         <div className="flex justify-end mb-2">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="xs"
             onClick={() => setIsPaused((paused) => !paused)}
             aria-pressed={isPaused}
-            className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-md bg-muted text-muted-foreground hover:bg-accent dark:bg-muted/70"
+            className="text-muted-foreground"
           >
             {isPaused ? (
-              <PlayIcon className="h-3 w-3" aria-hidden="true" />
+              <PlayIcon aria-hidden="true" />
             ) : (
-              <PauseIcon className="h-3 w-3" aria-hidden="true" />
+              <PauseIcon aria-hidden="true" />
             )}
             {isPaused ? "Resume scrolling" : "Pause scrolling"}
-          </button>
+          </Button>
         </div>
       )}
 

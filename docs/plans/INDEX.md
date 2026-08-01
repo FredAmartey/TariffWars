@@ -76,7 +76,29 @@ No automated gate in any of the three plans could have caught any of them.
 - **Swap `TariffTable` to shadcn DataTable (TanStack Table)**: it is 925 lines
   hand-rolling sorting, pagination and column config, so the payoff is real.
   Deferred: a structural rewrite stacked on a 371-site restyle is two risky
-  changes in one diff. Revisit after 002 is stable.
+  changes in one diff. Revisit after 002 is stable. Still open — the follow-up
+  below adopted the `Table` *primitives* (markup and tokens), not TanStack's
+  state model, so the hand-rolled sorting and pagination logic is unchanged.
+
+## Follow-up after 002 (2026-08-01, not a planned item)
+
+A light-mode audit found nine sub-AA text nodes and six controls carrying
+dark-only literals, all tracing to the same cause: 002 migrated the tokens but
+left the controls hand-rolled, and a hand-rolled control hardcodes one theme's
+value. Fixed, then the cause was removed by adopting all ten installed
+primitives (previously nine were imported by nothing). Two decisions worth
+keeping:
+
+- `--primary` now points at the app's blue rather than shadcn's monochrome
+  default. That is what makes `<Button>` adoptable without turning every action
+  black, and it is why the app looks unchanged across a 17-file diff.
+- Two defects were found that no automated gate would have caught, and both
+  lived where the earlier audits could not see: `Modal` passed an unprefixed
+  `max-w-4xl` against DialogContent's `sm:max-w-sm`, so the market analysis
+  dialog rendered at 384px instead of 896px; and the commodity table inside it
+  still used `bg-white`/`divide-gray-200` with no dark values. A closed dialog
+  is invisible to both a screenshot pass and a DOM contrast crawl. Open every
+  overlay explicitly when auditing.
 
 ## Completed
 
