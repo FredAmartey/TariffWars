@@ -22,17 +22,23 @@ type Tone = "neutral" | "escalation" | "relief";
 
 const TONE_STYLES: Record<Tone, { card: string; pill: string; icon: string }> = {
   neutral: {
-    card: "bg-white border border-indigo-100 shadow-xs dark:bg-linear-to-br dark:from-indigo-900/50 dark:to-indigo-800/30 dark:border-indigo-700/50 dark:shadow-none",
+    // A flat colour is expressed as a gradient with identical stops rather
+    // than bg-white + a dark:bg-linear-to-br override: background-color and
+    // background-image are different properties, so the dark gradient (itself
+    // semi-transparent, /50 and /30) would otherwise only ever composite over
+    // the light bg-white, never replace it, leaving the card washed-out pale
+    // in dark mode instead of the intended indigo tint.
+    card: "bg-linear-to-br from-white to-white border border-indigo-100 shadow-xs dark:from-indigo-900/50 dark:to-indigo-800/30 dark:border-indigo-700/50 dark:shadow-none",
     pill: "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300",
     icon: "text-indigo-400",
   },
   escalation: {
-    card: "bg-white border border-red-100 shadow-xs dark:bg-linear-to-br dark:from-red-900/50 dark:to-red-800/30 dark:border-red-700/50 dark:shadow-none",
+    card: "bg-linear-to-br from-white to-white border border-red-100 shadow-xs dark:from-red-900/50 dark:to-red-800/30 dark:border-red-700/50 dark:shadow-none",
     pill: "bg-red-50 text-red-700 dark:bg-red-900/50 dark:text-red-300",
     icon: "text-red-400",
   },
   relief: {
-    card: "bg-white border border-green-100 shadow-xs dark:bg-linear-to-br dark:from-green-900/50 dark:to-green-800/30 dark:border-green-700/50 dark:shadow-none",
+    card: "bg-linear-to-br from-white to-white border border-green-100 shadow-xs dark:from-green-900/50 dark:to-green-800/30 dark:border-green-700/50 dark:shadow-none",
     pill: "bg-green-50 text-green-700 dark:bg-green-900/50 dark:text-green-300",
     icon: "text-green-400",
   },

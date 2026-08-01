@@ -61,7 +61,13 @@ export const AIInsights = ({ showDetailedAnalysis }: AIInsightsProps) => {
   const getStyle = (type: AIInsight["type"]) => {
     switch (type) {
       case "alert":
-        return "bg-red-50 border border-red-100 dark:bg-linear-to-br dark:from-red-900/20 dark:to-red-800/10 dark:border-red-800/30";
+        // A flat colour expressed as a gradient with identical stops, not
+        // bg-red-50 + a dark:bg-linear-to-br override: background-color and
+        // background-image are different properties, so the semi-transparent
+        // dark gradient would otherwise only ever composite over the light
+        // bg-red-50 instead of replacing it, leaving this panel washed-out
+        // pale in dark mode.
+        return "bg-linear-to-br from-red-50 to-red-50 border border-red-100 dark:from-red-900/20 dark:to-red-800/10 dark:border-red-800/30";
       case "positive":
       case "negative":
         return "bg-card border border-border dark:bg-card/50";
