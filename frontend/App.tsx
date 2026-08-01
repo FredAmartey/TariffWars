@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Route,
@@ -38,7 +38,6 @@ const AppContent: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(() => getTabFromPathname(location.pathname));
-  const { isDarkMode } = useContext(ThemeContext);
   const isAuthenticated = true;
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -102,7 +101,7 @@ const AppContent: React.FC = () => {
                       path="/dashboard"
                       element={
                         isAuthenticated ? (
-                          <Dashboard isDarkMode={isDarkMode} setActiveTab={handleTabChange} />
+                          <Dashboard setActiveTab={handleTabChange} />
                         ) : (
                           <Navigate to="/login" />
                         )
