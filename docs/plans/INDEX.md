@@ -93,7 +93,24 @@ keeping:
   is invisible to both a screenshot pass and a DOM contrast crawl. Open every
   overlay explicitly when auditing.
 
+## Second light-mode pass (2026-08-01, `e1b2619`)
+
+The follow-up above cleared the WCAG floor and still shipped a theme that was
+tiring to look at, because it measured contrast and never measured *weight*. Two
+value-level causes: `--background` and `--card` were both pure white, so nothing
+had elevation; and every surface encoding meaning through colour had been ported
+as `from-white to-white`, leaving the three Key Metrics cards at exactly 0.000
+chroma where dark renders 0.055-0.080.
+
+What generalises is in
+[architecture/frontend-design-system.md](architecture/frontend-design-system.md):
+the ground/card ordering, the floor `text-foreground/60` puts under
+`--foreground`, and the rule that a theme is fixed by measuring the working one
+and matching its chroma rather than by restructuring. Three attempts were spent
+redesigning components before that rule was arrived at; all three were reverted.
+
 ## Completed
 
 - self-updating-tariff-data (2026-07-10): all 7 tasks shipped in PR #2; plan file deleted per lifecycle, insights folded into the architecture doc and docs/lessons.md.
 - shadcn/ui adoption 001-003 (2026-08-01): merged, plus the light-mode and primitive-adoption follow-up above. Plan files deleted per lifecycle, insights folded into architecture/frontend-design-system.md.
+- light-mode weight pass (2026-08-01): shipped in `e1b2619`, no plan file (a fix, not a planned build). Insights folded into the architecture doc.

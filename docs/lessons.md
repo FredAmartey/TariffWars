@@ -26,3 +26,9 @@ returns `oklab()` from `getComputedStyle` verbatim, so regexes and probe
 elements both fail), run **both** themes, and open every dialog explicitly. A
 closed overlay is invisible to a screenshot pass and a DOM crawl alike, which is
 where the two most recent defects were hiding.
+
+Corollary: a crawl only sees the states that happen to be mounted.
+`AffectedStocks` rendered its stale-price warning as `text-amber-500`, 2.13:1 on
+a light card, and survived a full contrast audit because that branch only mounts
+once the market data provider stops responding. Enumerate conditional branches
+(error, empty, stale, loading) the same way overlays are enumerated.
