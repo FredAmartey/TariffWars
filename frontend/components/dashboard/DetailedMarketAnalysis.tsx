@@ -178,7 +178,7 @@ const OverviewTab = ({ data }: { data: MarketOverview | null }) => {
 
   return (
     <div className="space-y-6">
-      <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+      <div className="p-4 rounded-lg bg-muted">
         <h3 className="text-lg font-semibold mb-3 text-foreground">Current Market Outlook</h3>
         <p className="text-sm mb-4 text-muted-foreground">
           {/* This previously reported the average rate *level* as the amount rates had
@@ -189,7 +189,7 @@ const OverviewTab = ({ data }: { data: MarketOverview | null }) => {
           tensions.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <div className="p-4 rounded-lg bg-white dark:bg-gray-800/70">
+          <div className="p-4 rounded-lg bg-card">
             <div className="flex items-start">
               <div className="p-2 rounded-full bg-red-100 dark:bg-red-900/50 mr-3">
                 <AlertCircleIcon className="h-5 w-5 text-red-600 dark:text-red-300" />
@@ -212,7 +212,7 @@ const OverviewTab = ({ data }: { data: MarketOverview | null }) => {
               </div>
             </div>
           </div>
-          <div className="p-4 rounded-lg bg-white dark:bg-gray-800/70">
+          <div className="p-4 rounded-lg bg-card">
             <div className="flex items-start">
               <div className="p-2 rounded-full bg-green-100 dark:bg-green-900/50 mr-3">
                 <TrendingUpIcon className="h-5 w-5 text-green-600 dark:text-green-300" />
@@ -238,21 +238,21 @@ const OverviewTab = ({ data }: { data: MarketOverview | null }) => {
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+        <div className="p-4 rounded-lg bg-muted">
           <div className="flex items-center mb-3">
             <Factory className="h-5 w-5 mr-2 text-muted-foreground" />
             <h3 className="text-base font-medium text-foreground">Manufacturing Impact</h3>
           </div>
           <p className="text-sm text-muted-foreground">{manufacturingImpact}</p>
         </div>
-        <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+        <div className="p-4 rounded-lg bg-muted">
           <div className="flex items-center mb-3">
             <TruckIcon className="h-5 w-5 mr-2 text-muted-foreground" />
             <h3 className="text-base font-medium text-foreground">Supply Chain Shifts</h3>
           </div>
           <p className="text-sm text-muted-foreground">{supplyChainShifts}</p>
         </div>
-        <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+        <div className="p-4 rounded-lg bg-muted">
           <div className="flex items-center mb-3">
             <DollarSignIcon className="h-5 w-5 mr-2 text-muted-foreground" />
             <h3 className="text-base font-medium text-foreground">Economic Outlook</h3>
