@@ -172,15 +172,41 @@ export function sortOptionsFor(
  */
 const NO_FILTERS: Array<{ field: string; value: string }> = [];
 
+/**
+ * Relative column widths, normalised at render time (see ColGroup).
+ *
+ * The table used to size itself from its content, so every sort reflowed it:
+ * measured shifts of up to 41px, which moved the header out from under the
+ * cursor that had just clicked it. Weights are chosen for the kind of value a
+ * column holds, not for whichever row happens to be longest.
+ */
 const COUNTRY_COLUMNS = [
-  { key: "country", label: "COUNTRY" },
-  { key: "rateDisplay", label: "RATE IMPOSED BY USA" },
-  { key: "status", label: "STATUS" },
-  { key: "countrysTariffOnUS", label: "RATE IMPOSED ON USA" },
-  { key: "keyAffectedSectors", label: "KEY SECTORS" },
-  { key: "marketImpact", label: "MARKET IMPACT" },
-  { key: "responseType", label: "RESPONSE TYPE" },
+  { key: "country", label: "COUNTRY", width: 16 },
+  { key: "rateDisplay", label: "RATE IMPOSED BY USA", width: 13 },
+  { key: "status", label: "STATUS", width: 11 },
+  { key: "countrysTariffOnUS", label: "RATE IMPOSED ON USA", width: 13 },
+  { key: "keyAffectedSectors", label: "KEY SECTORS", width: 20 },
+  { key: "marketImpact", label: "MARKET IMPACT", width: 14 },
+  { key: "responseType", label: "RESPONSE TYPE", width: 13 },
 ] as const;
+
+/**
+ * Widths are weights, not percentages, because the dashboard renders a
+ * six-column subset of the same eight. Normalising against the visible set
+ * keeps both layouts full-width without a second table of numbers to maintain.
+ */
+const ColGroup: React.FC<{ columns: ReadonlyArray<{ key: string; width: number }> }> = ({
+  columns,
+}) => {
+  const total = columns.reduce((sum, c) => sum + c.width, 0);
+  return (
+    <colgroup>
+      {columns.map((c) => (
+        <col key={c.key} style={{ width: `${((c.width / total) * 100).toFixed(3)}%` }} />
+      ))}
+    </colgroup>
+  );
+};
 
 const RateBadge: React.FC<{ entry: TariffEntry }> = ({ entry }) => {
   const inactive = isInactive(entry.status);
@@ -308,16 +334,22 @@ type ColumnKey =
   | "nature"
   | "effectiveDate";
 
-const PRODUCT_COLUMNS: Array<{ key: ColumnKey; label: string; tooltip?: string; compact: boolean }> =
+const PRODUCT_COLUMNS: Array<{
+  key: ColumnKey;
+  label: string;
+  tooltip?: string;
+  compact: boolean;
+  width: number;
+}> =
   [
-    { key: "commodity", label: "COMMODITY", compact: true },
-    { key: "tariffOrigin", label: "TARIFF FROM", compact: false },
-    { key: "to", label: "TO", compact: true },
-    { key: "rate", label: "RATE", compact: true },
-    { key: "changeDisplay", label: "CHANGE", compact: true },
-    { key: "status", label: "STATUS", compact: true },
-    { key: "nature", label: "TYPE", tooltip: TARIFF_TYPE_TOOLTIP, compact: false },
-    { key: "effectiveDate", label: "EFFECTIVE DATE", compact: true },
+    { key: "commodity", label: "COMMODITY", compact: true, width: 30 },
+    { key: "tariffOrigin", label: "TARIFF FROM", compact: false, width: 9 },
+    { key: "to", label: "TO", compact: true, width: 13 },
+    { key: "rate", label: "RATE", compact: true, width: 8 },
+    { key: "changeDisplay", label: "CHANGE", compact: true, width: 9 },
+    { key: "status", label: "STATUS", compact: true, width: 11 },
+    { key: "nature", label: "TYPE", tooltip: TARIFF_TYPE_TOOLTIP, compact: false, width: 8 },
+    { key: "effectiveDate", label: "EFFECTIVE DATE", compact: true, width: 12 },
   ];
 
 export const TariffTable: React.FC<TariffTableProps> = ({
@@ -760,7 +792,11 @@ export const TariffTable: React.FC<TariffTableProps> = ({
         </div>
       ) : (
         <div className="relative overflow-x-auto">
-          <table className="w-full text-left">
+          {/* table-fixed is what makes the widths above authoritative; with
+              the default `auto` the browser re-derives them from content on
+              every sort. */}
+          <table className="w-full table-fixed text-left">
+            <ColGroup columns={activeTab === "products" ? productColumns : COUNTRY_COLUMNS} />
             <thead>
               {activeTab === "products" ? (
                 <tr className="border-b border-border">
