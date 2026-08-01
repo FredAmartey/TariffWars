@@ -1,5 +1,4 @@
-import React, { useEffect, useState, useContext, useCallback, useMemo, useRef } from "react";
-import { ThemeContext } from "../../App";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import {
   ArrowUpIcon,
   ArrowDownIcon,
@@ -57,62 +56,58 @@ const INACTIVE_STATUSES = new Set(["Withdrawn", "Ended", "Suspended", "Paused", 
 
 export const isInactive = (status: string | undefined) => INACTIVE_STATUSES.has(status ?? "");
 
-const MUTED_BADGE = (isDarkMode: boolean) =>
-  isDarkMode ? "bg-gray-700 text-gray-400" : "bg-gray-100 text-gray-500";
+const MUTED_BADGE = "bg-muted text-muted-foreground";
+
+// Same blue pairing STATUS_COLOURS uses for "Legacy Tariff", but this badge
+// reports a different fact (the country's own tariff rate on the US, not a US
+// tariff's status), so it stays a literal colour rather than borrowing that
+// token's name.
+const COUNTRY_TARIFF_BADGE = "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300";
 
 const BADGE_BASE = "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium";
 
 /**
  * Rate colour is severity, so it only applies while the rate is being charged.
  */
-const rateBadgeClass = (entry: TariffEntry, isDarkMode: boolean): string => {
-  if (isInactive(entry.status)) return MUTED_BADGE(isDarkMode);
+const rateBadgeClass = (entry: TariffEntry): string => {
+  if (isInactive(entry.status)) return MUTED_BADGE;
   if (entry.rateDisplay === "N/A" || entry.rateDisplay === "Paused") {
-    return MUTED_BADGE(isDarkMode);
+    return MUTED_BADGE;
   }
   if (entry.rateDisplay === "Restricted" || entry.rate >= 25) {
-    return isDarkMode ? "bg-red-900/50 text-red-300" : "bg-red-100 text-red-800";
+    return "bg-severity-high text-severity-high-foreground";
   }
   if (entry.rate >= 15) {
-    return isDarkMode ? "bg-yellow-900/50 text-yellow-300" : "bg-yellow-100 text-yellow-800";
+    return "bg-severity-medium text-severity-medium-foreground";
   }
-  return isDarkMode ? "bg-green-900/50 text-green-300" : "bg-green-100 text-green-800";
+  return "bg-severity-low text-severity-low-foreground";
 };
 
-const STATUS_COLOURS: Record<string, { dark: string; light: string }> = {
-  Active: { dark: "bg-green-900/50 text-green-300", light: "bg-green-100 text-green-800" },
-  Threatened: { dark: "bg-yellow-900/50 text-yellow-300", light: "bg-yellow-100 text-yellow-800" },
-  Proposed: { dark: "bg-sky-900/50 text-sky-300", light: "bg-sky-100 text-sky-800" },
-  Restricted: { dark: "bg-red-900/50 text-red-300", light: "bg-red-100 text-red-800" },
-  "Legacy Tariff": { dark: "bg-blue-900/50 text-blue-300", light: "bg-blue-100 text-blue-800" },
-  "Reciprocal Tariff": {
-    dark: "bg-purple-900/50 text-purple-300",
-    light: "bg-purple-100 text-purple-800",
-  },
-  "Under Investigation": {
-    dark: "bg-orange-900/50 text-orange-300",
-    light: "bg-orange-100 text-orange-800",
-  },
+const STATUS_COLOURS: Record<string, string> = {
+  Active: "bg-status-active text-status-active-foreground",
+  Threatened: "bg-status-threatened text-status-threatened-foreground",
+  Proposed: "bg-status-proposed text-status-proposed-foreground",
+  Restricted: "bg-status-restricted text-status-restricted-foreground",
+  "Legacy Tariff": "bg-status-legacy text-status-legacy-foreground",
+  "Reciprocal Tariff": "bg-status-reciprocal text-status-reciprocal-foreground",
+  "Under Investigation": "bg-status-investigating text-status-investigating-foreground",
 };
 
-const statusBadgeClass = (status: string | undefined, isDarkMode: boolean): string => {
-  const colours = STATUS_COLOURS[status ?? ""];
-  if (!colours) return MUTED_BADGE(isDarkMode);
-  return isDarkMode ? colours.dark : colours.light;
-};
+const statusBadgeClass = (status: string | undefined): string =>
+  STATUS_COLOURS[status ?? ""] ?? MUTED_BADGE;
 
-const marketImpactClass = (entry: TariffEntry, isDarkMode: boolean): string => {
+const marketImpactClass = (entry: TariffEntry): string => {
   const impact = entry.marketImpact?.toLowerCase() ?? "";
   if (impact.includes("severe") || impact.includes("significant")) {
-    return isDarkMode ? "bg-red-900/50 text-red-300" : "bg-red-100 text-red-800";
+    return "bg-severity-high text-severity-high-foreground";
   }
   if (impact.includes("moderate")) {
-    return isDarkMode ? "bg-yellow-900/50 text-yellow-300" : "bg-yellow-100 text-yellow-800";
+    return "bg-severity-medium text-severity-medium-foreground";
   }
   if (impact.includes("mild") || impact.includes("minimal") || impact.includes("mixed")) {
-    return isDarkMode ? "bg-green-900/50 text-green-300" : "bg-green-100 text-green-800";
+    return "bg-severity-low text-severity-low-foreground";
   }
-  return MUTED_BADGE(isDarkMode);
+  return MUTED_BADGE;
 };
 
 /** Human labels for every sortable field, shared by the table and its owners. */
@@ -173,14 +168,11 @@ const COUNTRY_COLUMNS = [
   { key: "responseType", label: "RESPONSE TYPE" },
 ] as const;
 
-const RateBadge: React.FC<{ entry: TariffEntry; isDarkMode: boolean }> = ({
-  entry,
-  isDarkMode,
-}) => {
+const RateBadge: React.FC<{ entry: TariffEntry }> = ({ entry }) => {
   const inactive = isInactive(entry.status);
   return (
     <span
-      className={`${BADGE_BASE} ${rateBadgeClass(entry, isDarkMode)} ${
+      className={`${BADGE_BASE} ${rateBadgeClass(entry)} ${
         inactive ? "line-through decoration-1" : ""
       }`}
       title={inactive ? `Not currently charged (${entry.status})` : undefined}
@@ -190,11 +182,8 @@ const RateBadge: React.FC<{ entry: TariffEntry; isDarkMode: boolean }> = ({
   );
 };
 
-const StatusBadge: React.FC<{ status: string | undefined; isDarkMode: boolean }> = ({
-  status,
-  isDarkMode,
-}) => (
-  <span className={`${BADGE_BASE} ${statusBadgeClass(status, isDarkMode)}`}>{status || "N/A"}</span>
+const StatusBadge: React.FC<{ status: string | undefined }> = ({ status }) => (
+  <span className={`${BADGE_BASE} ${statusBadgeClass(status)}`}>{status || "N/A"}</span>
 );
 
 /**
@@ -205,25 +194,16 @@ const StatusBadge: React.FC<{ status: string | undefined; isDarkMode: boolean }>
  * markets convention where "up" is good news. On a tariff tracker the opposite
  * holds: an increase is the cost and a reduction is the relief.
  */
-const ChangeCell: React.FC<{ display: string | undefined; isDarkMode: boolean }> = ({
-  display,
-  isDarkMode,
-}) => {
+const ChangeCell: React.FC<{ display: string | undefined }> = ({ display }) => {
   const numeric = display ? Number(display.replace("%", "")) : NaN;
-  const neutral = isDarkMode ? "text-gray-400" : "text-gray-600";
+  const neutral = "text-muted-foreground";
 
   if (!display || display === "–" || Number.isNaN(numeric) || numeric === 0) {
     return <span className={neutral}>{display || "–"}</span>;
   }
 
   const rose = numeric > 0;
-  const tone = rose
-    ? isDarkMode
-      ? "text-red-400"
-      : "text-red-600"
-    : isDarkMode
-    ? "text-green-400"
-    : "text-green-600";
+  const tone = rose ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400";
   const Icon = rose ? ArrowUpIcon : ArrowDownIcon;
 
   return (
@@ -251,7 +231,6 @@ const SortableHeader = ({
   activeField,
   direction,
   onSort,
-  isDarkMode,
   tooltip,
 }: {
   field: string;
@@ -259,7 +238,6 @@ const SortableHeader = ({
   activeField: string;
   direction: "asc" | "desc";
   onSort: (field: string) => void;
-  isDarkMode: boolean;
   tooltip?: string;
 }) => {
   const active = activeField === field;
@@ -267,9 +245,7 @@ const SortableHeader = ({
     <th
       scope="col"
       aria-sort={active ? (direction === "asc" ? "ascending" : "descending") : "none"}
-      className={`px-4 py-3 text-left text-sm font-semibold ${
-        isDarkMode ? "text-gray-400" : "text-gray-600"
-      } hover:bg-gray-700/50`}
+      className="px-4 py-3 text-left text-sm font-semibold text-muted-foreground hover:bg-accent/50"
       title={tooltip}
     >
       <button
@@ -333,7 +309,6 @@ export const TariffTable: React.FC<TariffTableProps> = ({
   onDatasetChange,
   variant = "full",
 }) => {
-  const { isDarkMode } = useContext(ThemeContext);
   const [data, setData] = useState<TariffEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -503,12 +478,11 @@ export const TariffTable: React.FC<TariffTableProps> = ({
 
   const MobileTariffCard: React.FC<{
     entry: TariffEntry;
-    isDarkMode: boolean;
     activeTab: TabType;
-  }> = ({ entry, isDarkMode, activeTab }) => {
-    const cardBg = isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
+  }> = ({ entry, activeTab }) => {
+    const cardBg = "bg-card border-border";
     const labelColor = "text-gray-500";
-    const valueColor = isDarkMode ? "text-gray-100" : "text-gray-900";
+    const valueColor = "text-foreground";
     return (
       <div className={`border rounded-lg p-4 ${cardBg}`}>
         {activeTab === "products" ? (
@@ -520,11 +494,11 @@ export const TariffTable: React.FC<TariffTableProps> = ({
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
               <div>
                 <span className={`block text-xs ${labelColor}`}>Rate</span>
-                <RateBadge entry={entry} isDarkMode={isDarkMode} />
+                <RateBadge entry={entry} />
               </div>
               <div>
                 <span className={`block text-xs ${labelColor}`}>Status</span>
-                <StatusBadge status={entry.status} isDarkMode={isDarkMode} />
+                <StatusBadge status={entry.status} />
               </div>
               <div>
                 <span className={`block text-xs ${labelColor}`}>Effective Date</span>
@@ -547,7 +521,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
               {entry.changeDisplay && entry.changeDisplay !== "–" && (
                 <div>
                   <span className={`block text-xs ${labelColor}`}>Change</span>
-                  <ChangeCell display={entry.changeDisplay} isDarkMode={isDarkMode} />
+                  <ChangeCell display={entry.changeDisplay} />
                 </div>
               )}
             </div>
@@ -561,21 +535,19 @@ export const TariffTable: React.FC<TariffTableProps> = ({
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
               <div>
                 <span className={`block text-xs ${labelColor}`}>Rate (by USA)</span>
-                <RateBadge entry={entry} isDarkMode={isDarkMode} />
+                <RateBadge entry={entry} />
               </div>
               <div>
                 <span className={`block text-xs ${labelColor}`}>Status</span>
-                <StatusBadge status={entry.status} isDarkMode={isDarkMode} />
+                <StatusBadge status={entry.status} />
               </div>
               <div>
                 <span className={`block text-xs ${labelColor}`}>Rate (on USA)</span>
                 <span
                   className={`${BADGE_BASE} ${
                     !entry.countrysTariffOnUS || entry.countrysTariffOnUS === "N/A"
-                      ? MUTED_BADGE(isDarkMode)
-                      : isDarkMode
-                      ? "bg-blue-900/50 text-blue-300"
-                      : "bg-blue-100 text-blue-800"
+                      ? MUTED_BADGE
+                      : COUNTRY_TARIFF_BADGE
                   }`}
                 >
                   {entry.countrysTariffOnUS}
@@ -589,7 +561,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
               {entry.marketImpact && (
                 <div className="col-span-2">
                   <span className={`block text-xs ${labelColor}`}>Market Impact</span>
-                  <span className={`${BADGE_BASE} ${marketImpactClass(entry, isDarkMode)}`}>
+                  <span className={`${BADGE_BASE} ${marketImpactClass(entry)}`}>
                     {entry.marketImpact}
                   </span>
                 </div>
@@ -603,7 +575,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
 
   if (isLoading && !data.length) {
     return (
-      <div className={`p-4 text-center ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+      <div className="p-4 text-center text-muted-foreground">
         <div className="flex justify-center items-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
         </div>
@@ -628,8 +600,8 @@ export const TariffTable: React.FC<TariffTableProps> = ({
 
   if (!data.length) {
     return (
-      <div className={`p-8 text-center rounded-lg ${isDarkMode ? "bg-gray-800" : "bg-gray-50"}`}>
-        <p className={`text-lg font-medium ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
+      <div className="p-8 text-center rounded-lg bg-muted">
+        <p className="text-lg font-medium text-muted-foreground">
           No tariff data found{searchTerm ? ` for "${searchTerm}"` : ""}.
         </p>
         <p className="mt-2 text-sm text-gray-500">
@@ -640,7 +612,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
   }
 
   const renderProductCell = (entry: TariffEntry, key: ColumnKey) => {
-    const textCell = `px-4 py-4 text-sm ${isDarkMode ? "text-gray-200" : "text-gray-700"}`;
+    const textCell = "px-4 py-4 text-sm text-foreground";
     switch (key) {
       case "commodity":
         return <td className={textCell}>{entry.commodity}</td>;
@@ -651,19 +623,19 @@ export const TariffTable: React.FC<TariffTableProps> = ({
       case "rate":
         return (
           <td className="px-4 py-4 text-sm">
-            <RateBadge entry={entry} isDarkMode={isDarkMode} />
+            <RateBadge entry={entry} />
           </td>
         );
       case "changeDisplay":
         return (
           <td className={textCell}>
-            <ChangeCell display={entry.changeDisplay} isDarkMode={isDarkMode} />
+            <ChangeCell display={entry.changeDisplay} />
           </td>
         );
       case "status":
         return (
           <td className="px-4 py-4 text-sm">
-            <StatusBadge status={entry.status} isDarkMode={isDarkMode} />
+            <StatusBadge status={entry.status} />
           </td>
         );
       case "nature":
@@ -689,12 +661,8 @@ export const TariffTable: React.FC<TariffTableProps> = ({
           aria-pressed={activeTab === "products"}
           className={`px-4 py-2 rounded-md flex items-center ${
             activeTab === "products"
-              ? isDarkMode
-                ? "bg-blue-600 text-white"
-                : "bg-blue-500 text-white"
-              : isDarkMode
-              ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              ? "bg-blue-500 text-white dark:bg-blue-600"
+              : "bg-muted text-muted-foreground hover:bg-accent"
           }`}
         >
           <PackageIcon className="w-4 h-4 mr-2" aria-hidden="true" />
@@ -709,12 +677,8 @@ export const TariffTable: React.FC<TariffTableProps> = ({
           aria-pressed={activeTab === "countries"}
           className={`px-4 py-2 rounded-md flex items-center ${
             activeTab === "countries"
-              ? isDarkMode
-                ? "bg-blue-600 text-white"
-                : "bg-blue-500 text-white"
-              : isDarkMode
-              ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              ? "bg-blue-500 text-white dark:bg-blue-600"
+              : "bg-muted text-muted-foreground hover:bg-accent"
           }`}
         >
           <GlobeIcon className="w-4 h-4 mr-2" aria-hidden="true" />
@@ -724,21 +688,14 @@ export const TariffTable: React.FC<TariffTableProps> = ({
 
       {isMobile && handleSortChange && localSortField && localSortDirection && (
         <div className="mb-4">
-          <label
-            htmlFor="mobileSort"
-            className={`sr-only ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}
-          >
+          <label htmlFor="mobileSort" className="sr-only text-muted-foreground">
             Sort by
           </label>
           <select
             id="mobileSort"
             value={`${localSortField}-${localSortDirection}`}
             onChange={handleSortChange}
-            className={`w-full appearance-none px-4 py-2 rounded-md border ${
-              isDarkMode
-                ? "bg-gray-700 border-gray-600 text-white"
-                : "bg-white border-gray-300 text-gray-900"
-            }`}
+            className="w-full appearance-none px-4 py-2 rounded-md border border-input bg-transparent text-foreground dark:bg-input/30"
           >
             {sortOptionsFor(localSortField, localSortDirection).map((option) => (
               <option key={option.value} value={option.value}>
@@ -752,12 +709,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
       {isMobile ? (
         <div className="mt-4 space-y-4">
           {data.map((entry) => (
-            <MobileTariffCard
-              key={entry.id}
-              entry={entry}
-              isDarkMode={isDarkMode}
-              activeTab={activeTab}
-            />
+            <MobileTariffCard key={entry.id} entry={entry} activeTab={activeTab} />
           ))}
         </div>
       ) : (
@@ -765,7 +717,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
           <table className="w-full text-left">
             <thead>
               {activeTab === "products" ? (
-                <tr className={`border-b ${isDarkMode ? "border-gray-700" : "border-gray-300"}`}>
+                <tr className="border-b border-border">
                   {productColumns.map((column) => (
                     <SortableHeader
                       key={column.key}
@@ -774,13 +726,12 @@ export const TariffTable: React.FC<TariffTableProps> = ({
                       activeField={localSortField}
                       direction={localSortDirection}
                       onSort={handleSort}
-                      isDarkMode={isDarkMode}
                       tooltip={column.tooltip}
                     />
                   ))}
                 </tr>
               ) : (
-                <tr className={`border-b ${isDarkMode ? "border-gray-700" : "border-gray-300"}`}>
+                <tr className="border-b border-border">
                   {COUNTRY_COLUMNS.map((column) => (
                     <SortableHeader
                       key={column.key}
@@ -789,23 +740,15 @@ export const TariffTable: React.FC<TariffTableProps> = ({
                       activeField={localSortField}
                       direction={localSortDirection}
                       onSort={handleSort}
-                      isDarkMode={isDarkMode}
                     />
                   ))}
                 </tr>
               )}
             </thead>
-            <tbody className={`divide-y ${isDarkMode ? "divide-gray-700" : "divide-gray-200"}`}>
+            <tbody className="divide-y divide-border">
               {data.map((entry) =>
                 activeTab === "products" ? (
-                  <tr
-                    key={entry.id}
-                    className={`border-t ${
-                      isDarkMode
-                        ? "border-gray-700 hover:bg-gray-800/50"
-                        : "border-gray-200 hover:bg-gray-100"
-                    }`}
-                  >
+                  <tr key={entry.id} className="border-t border-border hover:bg-accent/50">
                     {productColumns.map((column) => (
                       <React.Fragment key={column.key}>
                         {renderProductCell(entry, column.key)}
@@ -813,59 +756,34 @@ export const TariffTable: React.FC<TariffTableProps> = ({
                     ))}
                   </tr>
                 ) : (
-                  <tr
-                    key={entry.id}
-                    className={`border-t ${
-                      isDarkMode
-                        ? "border-gray-700 hover:bg-gray-800/50"
-                        : "border-gray-200 hover:bg-gray-100"
-                    }`}
-                  >
-                    <td
-                      className={`px-4 py-4 text-sm ${
-                        isDarkMode ? "text-gray-200" : "text-gray-700"
-                      }`}
-                    >
-                      {entry.country}
+                  <tr key={entry.id} className="border-t border-border hover:bg-accent/50">
+                    <td className="px-4 py-4 text-sm text-foreground">{entry.country}</td>
+                    <td className="px-4 py-4 text-sm">
+                      <RateBadge entry={entry} />
                     </td>
                     <td className="px-4 py-4 text-sm">
-                      <RateBadge entry={entry} isDarkMode={isDarkMode} />
-                    </td>
-                    <td className="px-4 py-4 text-sm">
-                      <StatusBadge status={entry.status} isDarkMode={isDarkMode} />
+                      <StatusBadge status={entry.status} />
                     </td>
                     <td className="px-4 py-4 text-sm">
                       <span
                         className={`${BADGE_BASE} ${
                           !entry.countrysTariffOnUS || entry.countrysTariffOnUS === "N/A"
-                            ? MUTED_BADGE(isDarkMode)
-                            : isDarkMode
-                            ? "bg-blue-900/50 text-blue-300"
-                            : "bg-blue-100 text-blue-800"
+                            ? MUTED_BADGE
+                            : COUNTRY_TARIFF_BADGE
                         }`}
                       >
                         {entry.countrysTariffOnUS}
                       </span>
                     </td>
-                    <td
-                      className={`px-4 py-4 text-sm ${
-                        isDarkMode ? "text-gray-200" : "text-gray-700"
-                      }`}
-                    >
+                    <td className="px-4 py-4 text-sm text-foreground">
                       {entry.keyAffectedSectors}
                     </td>
                     <td className="px-4 py-4 text-sm">
-                      <span className={`${BADGE_BASE} ${marketImpactClass(entry, isDarkMode)}`}>
+                      <span className={`${BADGE_BASE} ${marketImpactClass(entry)}`}>
                         {entry.marketImpact}
                       </span>
                     </td>
-                    <td
-                      className={`px-4 py-4 text-sm ${
-                        isDarkMode ? "text-gray-200" : "text-gray-700"
-                      }`}
-                    >
-                      {entry.responseType}
-                    </td>
+                    <td className="px-4 py-4 text-sm text-foreground">{entry.responseType}</td>
                   </tr>
                 )
               )}
@@ -885,19 +803,12 @@ export const TariffTable: React.FC<TariffTableProps> = ({
             disabled={page === 1}
             aria-label="Previous page of tariffs"
             className={`p-2 rounded-lg ${
-              page === 1
-                ? "opacity-50 cursor-not-allowed"
-                : isDarkMode
-                ? "hover:bg-gray-700"
-                : "hover:bg-gray-200"
+              page === 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-accent"
             }`}
           >
-            <ArrowLeftIcon
-              aria-hidden="true"
-              className={`h-5 w-5 ${isDarkMode ? "text-gray-200" : "text-gray-700"}`}
-            />
+            <ArrowLeftIcon aria-hidden="true" className="h-5 w-5 text-foreground" />
           </button>
-          <span className={`text-sm ${isDarkMode ? "text-gray-200" : "text-gray-700"}`}>
+          <span className="text-sm text-foreground">
             Page {page} of {totalPages}
           </span>
           <button
@@ -905,17 +816,10 @@ export const TariffTable: React.FC<TariffTableProps> = ({
             disabled={page === totalPages}
             aria-label="Next page of tariffs"
             className={`p-2 rounded-lg ${
-              page === totalPages
-                ? "opacity-50 cursor-not-allowed"
-                : isDarkMode
-                ? "hover:bg-gray-700"
-                : "hover:bg-gray-200"
+              page === totalPages ? "opacity-50 cursor-not-allowed" : "hover:bg-accent"
             }`}
           >
-            <ArrowRightIcon
-              aria-hidden="true"
-              className={`h-5 w-5 ${isDarkMode ? "text-gray-200" : "text-gray-700"}`}
-            />
+            <ArrowRightIcon aria-hidden="true" className="h-5 w-5 text-foreground" />
           </button>
         </div>
       </div>

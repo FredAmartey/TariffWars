@@ -145,6 +145,30 @@ html {
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
+  /* Tariff domain colours (Plan 002 Step 5): status by category and severity
+     by rate band. Not decoration, so they get their own tokens rather than
+     reusing accent/destructive: see the STATUS_COLOURS and rateBadgeClass
+     comments in TariffTable.tsx for the product rule these encode. */
+  --color-status-active: var(--status-active);
+  --color-status-active-foreground: var(--status-active-foreground);
+  --color-status-threatened: var(--status-threatened);
+  --color-status-threatened-foreground: var(--status-threatened-foreground);
+  --color-status-proposed: var(--status-proposed);
+  --color-status-proposed-foreground: var(--status-proposed-foreground);
+  --color-status-restricted: var(--status-restricted);
+  --color-status-restricted-foreground: var(--status-restricted-foreground);
+  --color-status-legacy: var(--status-legacy);
+  --color-status-legacy-foreground: var(--status-legacy-foreground);
+  --color-status-reciprocal: var(--status-reciprocal);
+  --color-status-reciprocal-foreground: var(--status-reciprocal-foreground);
+  --color-status-investigating: var(--status-investigating);
+  --color-status-investigating-foreground: var(--status-investigating-foreground);
+  --color-severity-high: var(--severity-high);
+  --color-severity-high-foreground: var(--severity-high-foreground);
+  --color-severity-medium: var(--severity-medium);
+  --color-severity-medium-foreground: var(--severity-medium-foreground);
+  --color-severity-low: var(--severity-low);
+  --color-severity-low-foreground: var(--severity-low-foreground);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -197,6 +221,31 @@ html {
     rgba(224, 231, 255, 0.9),
     rgba(237, 233, 254, 0.9)
   );
+
+  /* Tariff status/severity domain colours, light values. Derived from the
+     Tailwind palette shades STATUS_COLOURS and rateBadgeClass used to pick
+     between (TariffTable.tsx), so the badges render the same colour as
+     before the ternary was removed. */
+  --status-active: oklch(96.2% 0.044 156.743); /* green-100 */
+  --status-active-foreground: oklch(44.8% 0.119 151.328); /* green-800 */
+  --status-threatened: oklch(97.3% 0.071 103.193); /* yellow-100 */
+  --status-threatened-foreground: oklch(47.6% 0.114 61.907); /* yellow-800 */
+  --status-proposed: oklch(95.1% 0.026 236.824); /* sky-100 */
+  --status-proposed-foreground: oklch(44.3% 0.11 240.79); /* sky-800 */
+  --status-restricted: oklch(93.6% 0.032 17.717); /* red-100 */
+  --status-restricted-foreground: oklch(44.4% 0.177 26.899); /* red-800 */
+  --status-legacy: oklch(93.2% 0.032 255.585); /* blue-100 */
+  --status-legacy-foreground: oklch(42.4% 0.199 265.638); /* blue-800 */
+  --status-reciprocal: oklch(94.6% 0.033 307.174); /* purple-100 */
+  --status-reciprocal-foreground: oklch(43.8% 0.218 303.724); /* purple-800 */
+  --status-investigating: oklch(95.4% 0.038 75.164); /* orange-100 */
+  --status-investigating-foreground: oklch(47% 0.157 37.304); /* orange-800 */
+  --severity-high: oklch(93.6% 0.032 17.717); /* red-100 */
+  --severity-high-foreground: oklch(44.4% 0.177 26.899); /* red-800 */
+  --severity-medium: oklch(97.3% 0.071 103.193); /* yellow-100 */
+  --severity-medium-foreground: oklch(47.6% 0.114 61.907); /* yellow-800 */
+  --severity-low: oklch(96.2% 0.044 156.743); /* green-100 */
+  --severity-low-foreground: oklch(44.8% 0.119 151.328); /* green-800 */
 }
 
 .dark {
@@ -237,4 +286,28 @@ html {
     rgba(17, 24, 39, 0.95),
     rgba(88, 28, 135, 0.8)
   );
+
+  /* Tariff status/severity domain colours, dark values. The /50 alpha
+     matches the old bg-{colour}-900/50 utilities exactly: both composite
+     the same translucent colour over whatever sits behind the badge. */
+  --status-active: oklch(39.3% 0.095 152.535 / 50%); /* green-900/50 */
+  --status-active-foreground: oklch(87.1% 0.15 154.449); /* green-300 */
+  --status-threatened: oklch(42.1% 0.095 57.708 / 50%); /* yellow-900/50 */
+  --status-threatened-foreground: oklch(90.5% 0.182 98.111); /* yellow-300 */
+  --status-proposed: oklch(39.1% 0.09 240.876 / 50%); /* sky-900/50 */
+  --status-proposed-foreground: oklch(82.8% 0.111 230.318); /* sky-300 */
+  --status-restricted: oklch(39.6% 0.141 25.723 / 50%); /* red-900/50 */
+  --status-restricted-foreground: oklch(80.8% 0.114 19.571); /* red-300 */
+  --status-legacy: oklch(37.9% 0.146 265.522 / 50%); /* blue-900/50 */
+  --status-legacy-foreground: oklch(80.9% 0.105 251.813); /* blue-300 */
+  --status-reciprocal: oklch(38.1% 0.176 304.987 / 50%); /* purple-900/50 */
+  --status-reciprocal-foreground: oklch(82.7% 0.119 306.383); /* purple-300 */
+  --status-investigating: oklch(40.8% 0.123 38.172 / 50%); /* orange-900/50 */
+  --status-investigating-foreground: oklch(83.7% 0.128 66.29); /* orange-300 */
+  --severity-high: oklch(39.6% 0.141 25.723 / 50%); /* red-900/50 */
+  --severity-high-foreground: oklch(80.8% 0.114 19.571); /* red-300 */
+  --severity-medium: oklch(42.1% 0.095 57.708 / 50%); /* yellow-900/50 */
+  --severity-medium-foreground: oklch(90.5% 0.182 98.111); /* yellow-300 */
+  --severity-low: oklch(39.3% 0.095 152.535 / 50%); /* green-900/50 */
+  --severity-low-foreground: oklch(87.1% 0.15 154.449); /* green-300 */
 }
