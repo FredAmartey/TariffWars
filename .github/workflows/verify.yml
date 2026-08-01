@@ -28,8 +28,22 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
       - run: npm ci --no-audit --no-fund
+      # The frontend typecheck reads backend source, so it needs backend's
+      # dependencies installed. `marketAnalysisApi.ts` and
+      # `DetailedMarketAnalysis.tsx` import their response types straight from
+      # `backend/src/services/marketAnalysisService`, which pulls `openai` and
+      # `csv-stringify` into the root program. This passes on a dev machine
+      # only because backend/node_modules happens to be there; the first CI run
+      # failed on exactly this, which is the coupling working as an unnoticed
+      # local-only assumption. Installing them here makes CI honest about it.
+      # The real fix is a shared types package rather than reaching across the
+      # boundary, but that is an API-contract change, not a CI change.
+      - run: npm ci --no-audit --no-fund
+        working-directory: backend
       # Kept as four separate steps so a failure names itself in the checks
       # list, rather than reporting one opaque "verify" job.
       - name: Typecheck
