@@ -1,5 +1,6 @@
 ---
-status: active
+status: completed
+completed_date: 2026-08-01
 ---
 
 # Plan 001: Upgrade to Tailwind v4 and install shadcn/ui with real theme tokens

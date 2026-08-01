@@ -1,5 +1,6 @@
 ---
-status: active
+status: completed
+completed_date: 2026-08-01
 ---
 
 # Plan 002: Retire the 371 isDarkMode ternaries for shadcn semantic tokens

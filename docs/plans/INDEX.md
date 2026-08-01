@@ -6,15 +6,15 @@ Single source of truth for all plans in this repo.
 
 - [self-updating-tariff-data.md](architecture/self-updating-tariff-data.md): weekly autonomous tariff data refresh via scheduled Claude cloud agent, deterministic validator, CI backstop, frontend freshness stamp.
 
-## Active implementation plans
+## Completed implementation plans
 
-shadcn/ui adoption, generated 2026-07-31 against commit `7d2fba2`.
+shadcn/ui adoption, planned 2026-07-31 against `7d2fba2`, all three merged 2026-08-01.
 
 | Plan | Title | Priority | Effort | Risk | Depends on | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| [001](implementations/001-tailwind-v4-and-shadcn-foundation.md) | Upgrade to Tailwind v4 and install shadcn/ui with real theme tokens | P1 | M | MED | — | DONE — approved after 1 revision, awaiting merge (branch `advisor/001-tailwind-v4-shadcn`) |
-| [002](implementations/002-retire-isdarkmode-ternaries.md) | Retire the 371 isDarkMode ternaries for shadcn semantic tokens | P2 | L | MED | 001 | TODO |
-| [003](implementations/003-frontend-logic-tests.md) | Test the frontend logic that screenshots cannot see | P2 | S | LOW | — | DONE — approved, awaiting merge (branch `advisor/003-frontend-logic-tests`) |
+| [001](implementations/001-tailwind-v4-and-shadcn-foundation.md) | Upgrade to Tailwind v4 and install shadcn/ui with real theme tokens | P1 | M | MED | — | DONE — merged |
+| [002](implementations/002-retire-isdarkmode-ternaries.md) | Retire the isDarkMode ternaries for shadcn semantic tokens | P2 | L | MED | 001 | DONE — merged |
+| [003](implementations/003-frontend-logic-tests.md) | Test the frontend logic that screenshots cannot see | P2 | S | LOW | — | DONE — merged |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (one-line reason) | REJECTED (one-line rationale)
 
@@ -28,14 +28,31 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (one-line reason) | REJECTED 
   criteria assert the count is unchanged, so a scope leak into 002's territory
   fails the gate rather than passing silently.
 
-### How these are verified
+### How these were verified, and what it caught
 
-001 and 002 are visual changes, so their oracle is a before/after screenshot
+001 and 002 are visual changes, so their oracle was a before/after screenshot
 pair plus `tsc`, `lint` and `build` — not an automated suite. jsdom does no
 layout and computes no styles, so a component test would pass while a Tailwind
 v4 default turned every border the wrong colour. The two behaviours screenshots
-cannot check (dialog accessibility, status-badge precedence) get explicit manual
-gates inside 002.
+cannot check (dialog accessibility, status-badge precedence) got explicit
+manual gates inside 002.
+
+That choice paid for itself. **Three defects shipped past `tsc`, `lint`, `build`
+and all 28 tests, and were caught only in a browser:**
+
+1. 001: the Tailwind upgrade tool moved the font `@import` into
+   `layer(utilities)`, making it the first layer declared. Layer precedence
+   follows first declaration, so utilities fell below `base` and preflight's
+   `*{margin:0;padding:0}` beat every spacing utility. The app rendered with no
+   padding, margins or gaps anywhere.
+2. 002: `bg-white` with a `dark:bg-linear-to-br` override left the metric cards
+   and risk alert rendering white in dark mode — `background-color` and
+   `background-image` are different properties, so the dark variant never
+   replaced the light one.
+3. 002: closing a dialog stopped returning focus to its trigger, because Radix
+   only restores focus for a trigger it rendered itself.
+
+No automated gate in any of the three plans could have caught any of them.
 
 ### Findings considered and rejected
 

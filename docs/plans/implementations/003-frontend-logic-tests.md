@@ -1,5 +1,6 @@
 ---
-status: active
+status: completed
+completed_date: 2026-08-01
 ---
 
 # Plan 003: Test the frontend logic that screenshots cannot see
