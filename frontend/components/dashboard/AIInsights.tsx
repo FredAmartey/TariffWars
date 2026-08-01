@@ -1,5 +1,4 @@
-import { useState, useContext, useEffect } from "react";
-import { ThemeContext } from "../../App";
+import { useState, useEffect } from "react";
 import {
   BrainIcon,
   TrendingUpIcon,
@@ -16,7 +15,6 @@ interface AIInsightsProps {
 }
 
 export const AIInsights = ({ showDetailedAnalysis }: AIInsightsProps) => {
-  const { isDarkMode } = useContext(ThemeContext);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [aiInsights, setAiInsights] = useState<AIInsight[]>([]);
@@ -50,19 +48,11 @@ export const AIInsights = ({ showDetailedAnalysis }: AIInsightsProps) => {
   const getIcon = (type: AIInsight["type"]) => {
     switch (type) {
       case "alert":
-        return (
-          <AlertCircleIcon className={`h-4 w-4 ${isDarkMode ? "text-red-300" : "text-red-600"}`} />
-        );
+        return <AlertCircleIcon className="h-4 w-4 text-red-600 dark:text-red-300" />;
       case "positive":
-        return (
-          <TrendingUpIcon
-            className={`h-4 w-4 ${isDarkMode ? "text-green-300" : "text-green-600"}`}
-          />
-        );
+        return <TrendingUpIcon className="h-4 w-4 text-green-600 dark:text-green-300" />;
       case "negative":
-        return (
-          <TrendingDownIcon className={`h-4 w-4 ${isDarkMode ? "text-red-300" : "text-red-600"}`} />
-        );
+        return <TrendingDownIcon className="h-4 w-4 text-red-600 dark:text-red-300" />;
       default:
         return null;
     }
@@ -71,34 +61,31 @@ export const AIInsights = ({ showDetailedAnalysis }: AIInsightsProps) => {
   const getStyle = (type: AIInsight["type"]) => {
     switch (type) {
       case "alert":
-        return isDarkMode
-          ? "bg-linear-to-br from-red-900/20 to-red-800/10 border border-red-800/30"
-          : "bg-red-50 border border-red-100";
+        // A flat colour expressed as a gradient with identical stops, not
+        // bg-red-50 + a dark:bg-linear-to-br override: background-color and
+        // background-image are different properties, so the semi-transparent
+        // dark gradient would otherwise only ever composite over the light
+        // bg-red-50 instead of replacing it, leaving this panel washed-out
+        // pale in dark mode.
+        return "bg-linear-to-br from-red-50 to-red-50 border border-red-100 dark:from-red-900/20 dark:to-red-800/10 dark:border-red-800/30";
       case "positive":
-        return isDarkMode
-          ? "bg-gray-800/50 border border-gray-700"
-          : "bg-white border border-gray-200";
       case "negative":
-        return isDarkMode
-          ? "bg-gray-800/50 border border-gray-700"
-          : "bg-white border border-gray-200";
+        return "bg-card border border-border dark:bg-card/50";
       default:
-        return isDarkMode
-          ? "bg-gray-800 border border-gray-700"
-          : "bg-white border border-gray-200";
+        return "bg-card border border-border";
     }
   };
 
   const getIconBgStyle = (type: AIInsight["type"]) => {
     switch (type) {
       case "alert":
-        return isDarkMode ? "bg-red-900/50" : "bg-red-100";
+        return "bg-red-100 dark:bg-red-900/50";
       case "positive":
-        return isDarkMode ? "bg-green-900/50" : "bg-green-100";
+        return "bg-green-100 dark:bg-green-900/50";
       case "negative":
-        return isDarkMode ? "bg-red-900/50" : "bg-red-100";
+        return "bg-red-100 dark:bg-red-900/50";
       default:
-        return isDarkMode ? "bg-gray-700" : "bg-gray-100";
+        return "bg-muted";
     }
   };
 
@@ -106,12 +93,10 @@ export const AIInsights = ({ showDetailedAnalysis }: AIInsightsProps) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center">
-          <div className={`p-2 rounded-full ${isDarkMode ? "bg-blue-900/50" : "bg-blue-100"}`}>
-            <BrainIcon className={`h-5 w-5 ${isDarkMode ? "text-blue-300" : "text-blue-600"}`} />
+          <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/50">
+            <BrainIcon className="h-5 w-5 text-blue-600 dark:text-blue-300" />
           </div>
-          <span
-            className={`ml-2 text-sm font-medium ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}
-          >
+          <span className="ml-2 text-sm font-medium text-muted-foreground">
             AI-powered insights
           </span>
         </div>
@@ -119,15 +104,13 @@ export const AIInsights = ({ showDetailedAnalysis }: AIInsightsProps) => {
           onClick={refreshAnalysis}
           disabled={isLoading}
           aria-label={isLoading ? "Refreshing AI insights" : "Refresh AI insights"}
-          className={`p-1 rounded-full ${
-            isDarkMode ? "bg-gray-700 hover:bg-gray-600" : "bg-gray-200 hover:bg-gray-300"
-          } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+          className={`p-1 rounded-full bg-muted hover:bg-accent ${
+            isLoading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         >
           <RefreshCwIcon
             aria-hidden="true"
-            className={`h-4 w-4 ${isDarkMode ? "text-gray-300" : "text-gray-600"} ${
-              isLoading ? "animate-spin" : ""
-            }`}
+            className={`h-4 w-4 text-muted-foreground ${isLoading ? "animate-spin" : ""}`}
           />
         </button>
       </div>
@@ -139,11 +122,7 @@ export const AIInsights = ({ showDetailedAnalysis }: AIInsightsProps) => {
       )}
 
       {!isLoading && error && (
-        <div
-          className={`p-4 rounded-lg text-center ${
-            isDarkMode ? "bg-red-900/30 text-red-300" : "bg-red-100 text-red-700"
-          }`}
-        >
+        <div className="p-4 rounded-lg text-center bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
           Error: {error}
         </div>
       )}
@@ -158,17 +137,11 @@ export const AIInsights = ({ showDetailedAnalysis }: AIInsightsProps) => {
                 </div>
                 <div>
                   {insight.type === "alert" && (
-                    <h4
-                      className={`font-medium text-sm ${
-                        isDarkMode ? "text-red-300" : "text-red-700"
-                      }`}
-                    >
+                    <h4 className="font-medium text-sm text-red-700 dark:text-red-300">
                       High Risk Alert
                     </h4>
                   )}
-                  <p className={`mt-1 text-sm ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
-                    {insight.text}
-                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">{insight.text}</p>
                 </div>
               </div>
             </div>
@@ -178,11 +151,7 @@ export const AIInsights = ({ showDetailedAnalysis }: AIInsightsProps) => {
 
       <button
         onClick={showDetailedAnalysis}
-        className={`w-full py-2 rounded-md text-sm flex items-center justify-center ${
-          isDarkMode
-            ? "bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 border border-blue-700/50"
-            : "bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200"
-        }`}
+        className="w-full py-2 rounded-md text-sm flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 dark:bg-blue-600/30 dark:hover:bg-blue-600/50 dark:text-blue-300 dark:border-blue-700/50"
       >
         <span>View Detailed Market Analysis</span>
         <ExternalLinkIcon className="h-4 w-4 ml-2" />

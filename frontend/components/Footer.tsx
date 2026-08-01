@@ -1,5 +1,3 @@
-import { useContext } from "react";
-import { ThemeContext } from "../App";
 import fredAmarteyLogo from "../assets/fred-logo-complete-grey.png";
 
 /**
@@ -7,15 +5,10 @@ import fredAmarteyLogo from "../assets/fred-logo-complete-grey.png";
  * saying where any of the figures came from or what they are not.
  */
 export const Footer = () => {
-  const { isDarkMode } = useContext(ThemeContext);
-  const linkClass = `underline hover:no-underline ${
-    isDarkMode ? "hover:text-gray-200" : "hover:text-gray-900"
-  }`;
+  const linkClass = "underline hover:no-underline hover:text-foreground";
 
   return (
-    <footer
-      className={`px-6 py-8 ${isDarkMode ? "bg-gray-800 text-gray-400" : "bg-gray-100 text-gray-600"}`}
-    >
+    <footer className="px-6 py-8 bg-muted text-muted-foreground">
       <div className="max-w-4xl mx-auto flex flex-col items-center text-center gap-4">
         <p className="text-xs max-w-2xl">
           Tariff rates are compiled from published government notices and reputable trade

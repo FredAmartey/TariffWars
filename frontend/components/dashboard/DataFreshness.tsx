@@ -1,5 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
-import { ThemeContext } from "../../App";
+import React, { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { apiService } from "../../services/api";
 
@@ -9,7 +8,6 @@ interface TariffMeta {
 }
 
 export const DataFreshness: React.FC = () => {
-  const { isDarkMode } = useContext(ThemeContext);
   const [meta, setMeta] = useState<TariffMeta | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -34,7 +32,7 @@ export const DataFreshness: React.FC = () => {
   // simply never claimed a date. Say that it is unavailable instead.
   if (failed) {
     return (
-      <div className={`mt-3 text-xs ${isDarkMode ? "text-gray-500" : "text-gray-400"}`}>
+      <div className="mt-3 text-xs text-muted-foreground">
         Data freshness information is unavailable right now.
       </div>
     );
@@ -48,12 +46,8 @@ export const DataFreshness: React.FC = () => {
     : format(parsed, "MMMM d, yyyy");
 
   return (
-    <div className={`mt-3 text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full font-medium ${
-          isDarkMode ? "bg-green-900/50 text-green-300" : "bg-green-100 text-green-800"
-        }`}
-      >
+    <div className="mt-3 text-xs text-muted-foreground">
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
         Data updated {formatted}
       </span>
       {meta.sources.length > 0 && (

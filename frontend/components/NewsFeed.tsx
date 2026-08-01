@@ -1,5 +1,4 @@
-import React, { useState, useContext, useEffect } from "react";
-import { ThemeContext } from "../App";
+import React, { useState, useEffect } from "react";
 import { format, parseISO, isValid } from "date-fns";
 import {
   Calendar,
@@ -108,23 +107,16 @@ const formatDate = (dateString: string | undefined) => {
  * fixed-height well behind it empty, so those cards rendered ~190px of blank
  * background above the headline.
  */
-const ArticleImage: React.FC<{ article: NewsArticle; isDarkMode: boolean }> = ({
-  article,
-  isDarkMode,
-}) => {
+const ArticleImage: React.FC<{ article: NewsArticle }> = ({ article }) => {
   const [failed, setFailed] = useState(false);
 
   if (!article.imageUrl || failed) {
     return (
       <div
-        className={`w-full h-full flex items-center justify-center ${
-          isDarkMode
-            ? "bg-linear-to-br from-gray-700 to-gray-800"
-            : "bg-linear-to-br from-gray-100 to-gray-200"
-        }`}
+        className="w-full h-full flex items-center justify-center bg-linear-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800"
         aria-hidden="true"
       >
-        <NewspaperIcon className={`h-10 w-10 ${isDarkMode ? "text-gray-500" : "text-gray-400"}`} />
+        <NewspaperIcon className="h-10 w-10 text-muted-foreground" />
       </div>
     );
   }
@@ -145,7 +137,6 @@ const ArticleImage: React.FC<{ article: NewsArticle; isDarkMode: boolean }> = ({
 
 interface ArticleCardProps {
   article: NewsArticle;
-  isDarkMode: boolean;
   isBookmarked: boolean;
   onToggleBookmark: (article: NewsArticle) => void;
   onShare: (article: NewsArticle) => void;
@@ -166,7 +157,6 @@ interface ArticleCardProps {
  */
 const ArticleCard: React.FC<ArticleCardProps> = ({
   article,
-  isDarkMode,
   isBookmarked,
   onToggleBookmark,
   onShare,
@@ -175,16 +165,10 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
   const summary = cleanSummary(article.summary);
 
   return (
-    <article
-      className={`group relative rounded-lg flex flex-col overflow-hidden transition-shadow ${
-        isDarkMode
-          ? "bg-gray-800 border border-gray-700 hover:shadow-lg hover:shadow-blue-900/20"
-          : "bg-gray-50 border border-gray-200 hover:shadow-md"
-      } focus-within:ring-2 focus-within:ring-blue-500`}
-    >
+    <article className="group relative rounded-lg flex flex-col overflow-hidden transition-shadow bg-card border border-border hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-blue-900/20 focus-within:ring-2 focus-within:ring-blue-500">
       {!compact && (
         <div className="relative w-full h-48 shrink-0">
-          <ArticleImage article={article} isDarkMode={isDarkMode} />
+          <ArticleImage article={article} />
           <button
             type="button"
             onClick={() => onToggleBookmark(article)}
@@ -206,9 +190,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
 
       <div className="p-4 flex flex-col grow">
         <div className="flex items-start justify-between gap-2">
-          <h3
-            className={`text-lg font-semibold mb-2 ${isDarkMode ? "text-white" : "text-gray-900"}`}
-          >
+          <h3 className="text-lg font-semibold mb-2 text-foreground">
             {article.url ? (
               <a
                 href={article.url}
@@ -230,12 +212,8 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
               onClick={() => onToggleBookmark(article)}
               className={`relative z-10 shrink-0 p-1.5 rounded-full ${
                 isBookmarked
-                  ? isDarkMode
-                    ? "text-yellow-400 bg-yellow-900/30"
-                    : "text-yellow-600 bg-yellow-100"
-                  : isDarkMode
-                  ? "text-gray-400 hover:bg-gray-700"
-                  : "text-gray-500 hover:bg-gray-100"
+                  ? "text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/30"
+                  : "text-muted-foreground hover:bg-accent"
               }`}
               aria-label={
                 isBookmarked ? `Remove bookmark: ${article.title}` : `Bookmark: ${article.title}`
@@ -251,20 +229,12 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
         </div>
 
         {summary && (
-          <p
-            className={`mb-4 text-sm grow ${isDarkMode ? "text-gray-300" : "text-gray-700"} ${
-              compact ? "line-clamp-2" : ""
-            }`}
-          >
+          <p className={`mb-4 text-sm grow text-muted-foreground ${compact ? "line-clamp-2" : ""}`}>
             {summary}
           </p>
         )}
 
-        <div
-          className={`flex justify-between items-center text-xs mt-auto ${
-            isDarkMode ? "text-gray-400" : "text-gray-500"
-          }`}
-        >
+        <div className="flex justify-between items-center text-xs mt-auto text-muted-foreground">
           <span className="flex items-center min-w-0">
             <Globe className="h-3 w-3 mr-1 shrink-0" aria-hidden="true" />
             <span className="truncate">{article.source.name}</span>
@@ -280,9 +250,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
             type="button"
             onClick={() => onShare(article)}
             aria-label={`Share: ${article.title}`}
-            className={`p-2 rounded-full ${
-              isDarkMode ? "hover:bg-gray-600 text-gray-300" : "hover:bg-gray-200 text-gray-500"
-            }`}
+            className="p-2 rounded-full hover:bg-accent text-muted-foreground"
           >
             <Share2Icon className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -292,9 +260,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`Open in a new tab: ${article.title}`}
-              className={`p-2 rounded-full ${
-                isDarkMode ? "hover:bg-gray-600 text-blue-400" : "hover:bg-gray-200 text-blue-500"
-              }`}
+              className="p-2 rounded-full hover:bg-accent text-blue-500 dark:text-blue-400"
             >
               <ExternalLink className="h-4 w-4" aria-hidden="true" />
             </a>
@@ -306,7 +272,6 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
 };
 
 export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
-  const { isDarkMode } = useContext(ThemeContext);
   const { addNotification } = useNotifications();
   // Whole articles, not just URLs. Storing URLs alone meant a bookmark became
   // unreachable as soon as the article rotated out of the live feed. Reading is
@@ -467,23 +432,15 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
   }
 
   return (
-    <div className={`news-feed ${isDarkMode ? "dark" : ""}`}>
+    <div className="news-feed">
       {/* Embedded in the dashboard the surrounding card already carries a
           "Recent Tariff News" heading and a description, so repeating the
           banner here stacked two titles on one section. */}
       {!preview && (
         <>
-          <header
-            className={`p-6 rounded-xl ${
-              isDarkMode
-                ? "bg-linear-to-r from-blue-900/30 to-indigo-900/30 border border-blue-800/30"
-                : "bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-100"
-            }`}
-          >
-            <h1 className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-gray-800"}`}>
-              Global Tariff News
-            </h1>
-            <p className={`mt-1 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
+          <header className="p-6 rounded-xl bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-100 dark:from-blue-900/30 dark:to-indigo-900/30 dark:border-blue-800/30">
+            <h1 className="text-2xl font-bold text-foreground">Global Tariff News</h1>
+            <p className="mt-1 text-muted-foreground">
               Stay updated with the latest international trade tariff news and developments.
             </p>
           </header>
@@ -502,11 +459,7 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
                 }}
                 placeholder="Search headlines, summaries and sources"
                 aria-label="Search news"
-                className={`w-full pl-9 pr-3 py-2 rounded-lg border text-sm ${
-                  isDarkMode
-                    ? "bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-500"
-                    : "bg-white border-gray-300 text-gray-800 placeholder-gray-400"
-                }`}
+                className="w-full pl-9 pr-3 py-2 rounded-lg border border-input bg-transparent text-sm text-foreground placeholder:text-muted-foreground dark:bg-input/30"
               />
             </div>
             <div className="flex gap-2" role="group" aria-label="Filter news">
@@ -521,9 +474,7 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
                   className={`px-3 py-2 rounded-lg text-sm ${
                     activeFilter === filter
                       ? "bg-indigo-600 text-white"
-                      : isDarkMode
-                      ? "bg-gray-800 text-gray-300 border border-gray-700"
-                      : "bg-white text-gray-700 border border-gray-300"
+                      : "bg-card text-muted-foreground border border-border"
                   }`}
                 >
                   {filter === "all" ? "All news" : `Bookmarked (${bookmarkedArticles.length})`}
@@ -539,14 +490,13 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
           </p>
         </>
       )}
-      <div className={`p-4 ${isDarkMode ? "bg-gray-900" : "bg-white"}`}>
+      <div className="p-4 bg-background">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {displayedNews.length > 0 ? (
             displayedNews.map((article) => (
               <ArticleCard
                 key={article.url || article.title}
                 article={article}
-                isDarkMode={isDarkMode}
                 isBookmarked={bookmarkedUrls.has(article.url)}
                 onToggleBookmark={toggleBookmark}
                 onShare={shareArticle}
@@ -554,14 +504,8 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
               />
             ))
           ) : (
-            <div
-              className={`col-span-full p-8 text-center rounded-lg ${
-                isDarkMode ? "bg-gray-800" : "bg-gray-50"
-              }`}
-            >
-              <p
-                className={`text-lg font-medium ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}
-              >
+            <div className="col-span-full p-8 text-center rounded-lg bg-muted">
+              <p className="text-lg font-medium text-muted-foreground">
                 {activeFilter === "bookmarked"
                   ? "No bookmarked articles yet."
                   : searchTerm
@@ -583,26 +527,18 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
               onClick={handlePrevious}
               disabled={safePage === 0}
               aria-label="Previous page of news"
-              className={`p-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed ${
-                isDarkMode
-                  ? "bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800"
-                  : "bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100"
-              }`}
+              className="p-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed bg-muted hover:bg-accent"
             >
               <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
             </button>
-            <span className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
+            <span className="text-sm text-muted-foreground">
               Page {safePage + 1} of {totalPages}
             </span>
             <button
               onClick={handleNext}
               disabled={safePage >= totalPages - 1}
               aria-label="Next page of news"
-              className={`p-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed ${
-                isDarkMode
-                  ? "bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800"
-                  : "bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100"
-              }`}
+              className="p-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed bg-muted hover:bg-accent"
             >
               <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
             </button>

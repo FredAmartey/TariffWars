@@ -1,5 +1,4 @@
-import React, { useState, useContext } from "react";
-import { ThemeContext } from "../App";
+import React, { useState } from "react";
 import { TariffTable, sortOptionsFor } from "./dashboard/TariffTable";
 import { Modal } from "./Modal";
 import { SearchIcon, FilterIcon, XIcon, SlidersIcon } from "lucide-react";
@@ -18,7 +17,6 @@ type FilterableField = {
 };
 
 export const TariffRates = () => {
-  const { isDarkMode } = useContext(ThemeContext);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<string>("rate");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
@@ -100,41 +98,23 @@ export const TariffRates = () => {
 
   return (
     <div className="space-y-6">
-      <div
-        className={`p-6 rounded-xl ${
-          isDarkMode
-            ? "bg-linear-to-r from-blue-900/30 to-indigo-900/30 border border-blue-800/30"
-            : "bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-100"
-        }`}
-      >
-        <h1 className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-gray-800"}`}>
-          Global Tariff Rates
-        </h1>
-        <p className={`mt-1 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
+      <div className="p-6 rounded-xl bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-100 dark:from-blue-900/30 dark:to-indigo-900/30 dark:border-blue-800/30">
+        <h1 className="text-2xl font-bold text-foreground">Global Tariff Rates</h1>
+        <p className="mt-1 text-muted-foreground">
           Comprehensive database of current international trade tariffs and recent changes
         </p>
       </div>
-      <div
-        className={`rounded-xl overflow-hidden ${
-          isDarkMode
-            ? "bg-gray-800/80 border border-gray-700"
-            : "bg-white border border-gray-200 shadow-xs"
-        }`}
-      >
+      <div className="rounded-xl overflow-hidden bg-card border border-border shadow-xs dark:shadow-none">
         <div className="p-6">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col md:flex-row gap-4">
-              <div className={`flex-1 relative ${isDarkMode ? "text-white" : "text-gray-900"}`}>
+              <div className="flex-1 relative text-foreground">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <SearchIcon className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
                   type="text"
-                  className={`block w-full pl-10 pr-3 py-2 rounded-md ${
-                    isDarkMode
-                      ? "bg-gray-700 border-gray-600 placeholder-gray-400"
-                      : "bg-white border-gray-300 placeholder-gray-500"
-                  } border focus:outline-hidden focus:ring-2 focus:ring-blue-500`}
+                  className="block w-full pl-10 pr-3 py-2 rounded-md bg-transparent border border-input placeholder:text-muted-foreground dark:bg-input/30 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                   placeholder="Search by commodity, country..."
                   value={searchTerm}
                   onChange={(e) => {
@@ -150,11 +130,7 @@ export const TariffRates = () => {
                     setTempFilterValueInput("");
                     setShowFilterModal(true);
                   }}
-                  className={`px-4 py-2 rounded-md flex items-center ${
-                    isDarkMode
-                      ? "bg-gray-700 hover:bg-gray-600 text-white"
-                      : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                  }`}
+                  className="px-4 py-2 rounded-md flex items-center bg-muted hover:bg-accent text-foreground"
                 >
                   <FilterIcon className="h-5 w-5 mr-2" />
                   Add Filter
@@ -167,11 +143,7 @@ export const TariffRates = () => {
                     id="tariffSort"
                     value={`${sortField}-${sortDirection}`}
                     onChange={handleSortChange}
-                    className={`appearance-none px-4 py-2 pl-10 rounded-md ${
-                      isDarkMode
-                        ? "bg-gray-700 border-gray-600 text-white"
-                        : "bg-white border-gray-300 text-gray-900"
-                    } border`}
+                    className="appearance-none px-4 py-2 pl-10 rounded-md bg-transparent border border-input text-foreground dark:bg-input/30"
                   >
                     {sortOptionsFor(sortField, sortDirection).map((option) => (
                       <option key={option.value} value={option.value}>
@@ -190,11 +162,7 @@ export const TariffRates = () => {
                       setItemsPerPage(parseInt(e.target.value));
                       setCurrentPage(1);
                     }}
-                    className={`appearance-none px-4 py-2 rounded-md ${
-                      isDarkMode
-                        ? "bg-gray-700 border-gray-600 text-white"
-                        : "bg-white border-gray-300 text-gray-900"
-                    } border`}
+                    className="appearance-none px-4 py-2 rounded-md bg-transparent border border-input text-foreground dark:bg-input/30"
                   >
                     <option value="5">5 per page</option>
                     <option value="10">10 per page</option>
@@ -209,11 +177,7 @@ export const TariffRates = () => {
                 {filters.map((filter, index) => (
                   <div
                     key={index}
-                    className={`flex items-center px-3 py-1 rounded-full text-sm transition-shadow duration-300 ease-in-out ${
-                      isDarkMode
-                        ? "bg-purple-800/50 text-purple-200 border border-purple-700/50 shadow-[0_0_8px_1px_rgba(192,132,252,0.4)] hover:shadow-[0_0_12px_2px_rgba(192,132,252,0.6)]"
-                        : "bg-purple-200 text-purple-800 border border-purple-400 shadow-[0_0_8px_1px_rgba(192,132,252,0.3)] hover:shadow-[0_0_12px_2px_rgba(192,132,252,0.4)]"
-                    }`}
+                    className="flex items-center px-3 py-1 rounded-full text-sm transition-shadow duration-300 ease-in-out bg-purple-200 text-purple-800 border border-purple-400 shadow-[0_0_8px_1px_rgba(192,132,252,0.3)] hover:shadow-[0_0_12px_2px_rgba(192,132,252,0.4)] dark:bg-purple-800/50 dark:text-purple-200 dark:border-purple-700/50 dark:shadow-[0_0_8px_1px_rgba(192,132,252,0.4)] dark:hover:shadow-[0_0_12px_2px_rgba(192,132,252,0.6)]"
                   >
                     <span className="capitalize">
                       {filterableFields.find((ff) => ff.value === filter.field)?.label ||
@@ -222,9 +186,7 @@ export const TariffRates = () => {
                     </span>
                     <button
                       onClick={() => handleRemoveFilter(index)}
-                      className={`ml-2 p-1 rounded-full ${
-                        isDarkMode ? "hover:bg-purple-700/70" : "hover:bg-purple-300"
-                      }`}
+                      className="ml-2 p-1 rounded-full hover:bg-purple-300 dark:hover:bg-purple-700/70"
                     >
                       <XIcon className="h-3 w-3" />
                     </button>
@@ -235,11 +197,7 @@ export const TariffRates = () => {
                     setFilters([]);
                     setCurrentPage(1);
                   }}
-                  className={`flex items-center px-3 py-1 rounded-full text-sm ${
-                    isDarkMode
-                      ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
+                  className="flex items-center px-3 py-1 rounded-full text-sm bg-muted text-muted-foreground hover:bg-accent"
                 >
                   Clear All
                 </button>
@@ -279,19 +237,14 @@ export const TariffRates = () => {
           setTempFilterValueInput("");
         }}
         title="Add Filter"
-        isDarkMode={isDarkMode}
       >
         <div className="p-6">
-          <h3 className={`text-lg font-bold mb-4 ${isDarkMode ? "text-white" : "text-gray-800"}`}>
-            Add Filter
-          </h3>
+          <h3 className="text-lg font-bold mb-4 text-foreground">Add Filter</h3>
           <div className="space-y-4">
               <div>
                 <label
                   htmlFor="filterField"
-                  className={`block mb-1 text-sm font-medium ${
-                    isDarkMode ? "text-gray-300" : "text-gray-600"
-                  }`}
+                  className="block mb-1 text-sm font-medium text-muted-foreground"
                 >
                   Filter By
                 </label>
@@ -299,11 +252,7 @@ export const TariffRates = () => {
                   id="filterField"
                   value={tempFilterField}
                   onChange={handleFieldChange}
-                  className={`w-full p-2 rounded-md border ${
-                    isDarkMode
-                      ? "bg-gray-700 border-gray-600 text-white"
-                      : "bg-white border-gray-300 text-gray-900"
-                  }`}
+                  className="w-full p-2 rounded-md border border-input bg-transparent text-foreground dark:bg-input/30"
                 >
                   {filterableFields.map((field) => (
                     <option key={field.value} value={field.value}>
@@ -316,9 +265,7 @@ export const TariffRates = () => {
               <div>
                 <label
                   htmlFor="filterValue"
-                  className={`block mb-1 text-sm font-medium ${
-                    isDarkMode ? "text-gray-300" : "text-gray-600"
-                  }`}
+                  className="block mb-1 text-sm font-medium text-muted-foreground"
                 >
                   Value
                 </label>
@@ -326,20 +273,12 @@ export const TariffRates = () => {
                     literal ${...}, so those characters reached the DOM as class
                     tokens and the border never rendered. */}
                 {selectedFilterFieldData?.predefinedValues ? (
-                  <div
-                    className={`mt-1 space-y-2 max-h-48 overflow-y-auto p-2 border rounded-md ${
-                      isDarkMode ? "border-gray-600" : "border-gray-300"
-                    }`}
-                  >
+                  <div className="mt-1 space-y-2 max-h-48 overflow-y-auto p-2 border border-border rounded-md">
                     {selectedFilterFieldData.predefinedValues.map((value) => (
                       <button
                         key={value}
                         onClick={() => handleAddFilter(tempFilterField, value)}
-                        className={`w-full text-left p-2 rounded-md text-sm ${
-                          isDarkMode
-                            ? "hover:bg-gray-700 text-gray-300"
-                            : "hover:bg-gray-100 text-gray-700"
-                        }`}
+                        className="w-full text-left p-2 rounded-md text-sm hover:bg-accent text-muted-foreground"
                       >
                         {value}
                       </button>
@@ -351,11 +290,7 @@ export const TariffRates = () => {
                     id="filterValue"
                     value={tempFilterValueInput}
                     onChange={(e) => setTempFilterValueInput(e.target.value)}
-                    className={`mt-1 w-full p-2 rounded-md border ${
-                      isDarkMode
-                        ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-                        : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-                    }`}
+                    className="mt-1 w-full p-2 rounded-md border border-input bg-transparent text-foreground placeholder:text-muted-foreground dark:bg-input/30"
                     placeholder={`Enter ${selectedFilterFieldData?.label || "value"}...`}
                   />
                 )}
@@ -368,11 +303,7 @@ export const TariffRates = () => {
                   setShowFilterModal(false);
                   setTempFilterValueInput("");
                 }}
-                className={`px-4 py-2 rounded-md ${
-                  isDarkMode
-                    ? "bg-gray-600 hover:bg-gray-500 text-white"
-                    : "bg-gray-200 hover:bg-gray-300 text-gray-700"
-                }`}
+                className="px-4 py-2 rounded-md bg-muted hover:bg-accent text-foreground"
               >
                 Cancel
               </button>
@@ -380,11 +311,9 @@ export const TariffRates = () => {
                 <button
                   onClick={() => handleAddFilter(tempFilterField, tempFilterValueInput)}
                   disabled={!tempFilterValueInput.trim()}
-                  className={`px-4 py-2 rounded-md flex items-center ${
-                    isDarkMode
-                      ? "bg-blue-600 hover:bg-blue-700 text-white"
-                      : "bg-blue-500 hover:bg-blue-600 text-white"
-                  } ${!tempFilterValueInput.trim() ? "opacity-50 cursor-not-allowed" : ""}`}
+                  className={`px-4 py-2 rounded-md flex items-center bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700 ${
+                    !tempFilterValueInput.trim() ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
                 >
                   Apply Filter
                 </button>
