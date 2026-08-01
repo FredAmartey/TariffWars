@@ -125,7 +125,7 @@ export const TariffRates = () => {
           is a background-COLOR and the gradient a background-IMAGE, so without
           it the dark theme's translucent stops composite over an opaque card
           instead of the page. */}
-      <Card className="[--card-spacing:--spacing(6)] bg-transparent bg-linear-to-r from-blue-50 to-indigo-50 ring-1 ring-blue-200 dark:from-blue-900/30 dark:to-indigo-900/30 dark:ring-blue-800/30">
+      <Card className="[--card-spacing:--spacing(6)] bg-transparent bg-linear-to-r from-blue-100 to-indigo-50 ring-1 ring-blue-300 dark:from-blue-900/30 dark:to-indigo-900/30 dark:ring-blue-800/30">
         <CardContent>
           <h1 className="text-2xl font-bold text-foreground">Global Tariff Rates</h1>
           <p className="mt-1 text-muted-foreground">

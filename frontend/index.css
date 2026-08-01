@@ -212,12 +212,32 @@ html {
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /*
+   * Off-white, not #fff. The page and the cards were both `oklch(1 0 0)`, so
+   * the brightest possible surface covered the entire viewport and there was
+   * nothing for a card to be raised off. Backing the page off to 0.972 leaves
+   * `--card` at pure white, which both cuts the glare and gives white cards
+   * something to sit on. Dark mode already works this way, with its cards
+   * (0.205) lighter than its page (0.145); this is the same relationship
+   * inverted rather than a new idea.
+   */
+  --background: oklch(0.972 0.003 250);
+  /*
+   * Not pure black either. `oklch(0.145)` on white measures 18.5:1, about four
+   * times what AA asks of body text, and past a point more contrast is just
+   * glare. 0.195 holds 16.9:1.
+   *
+   * The floor on this value comes from an unobvious direction: the Tabs
+   * primitive renders its inactive trigger as `text-foreground/60`, so anything
+   * expressed as an alpha of this token moves when it moves. At 0.21 that
+   * control measures 4.45:1 and fails AA; 0.195 keeps it at 4.57:1. Re-measure
+   * the tab strip before touching this.
+   */
+  --foreground: oklch(0.195 0.012 264);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.195 0.012 264);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.195 0.012 264);
   /*
    * The app's brand action colour, not shadcn's neutral default.
    *
@@ -239,24 +259,29 @@ html {
      over white and lands at 3.5:1, i.e. a control that fails AA precisely
      while the pointer is on it. blue-700 goes the other way, to 7.0:1. */
   --primary-hover: oklch(48.8% 0.243 264.376); /* blue-700 */
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
+  --secondary: oklch(0.955 0.004 250);
+  --secondary-foreground: oklch(0.195 0.012 264);
+  /* Below the page, not above it: 0.955 against the page's 0.972 and the
+     card's 1.0. `bg-muted` is the footer, the tab strips and the inactive
+     chips, which should read as recessed wells rather than as another card. */
+  --muted: oklch(0.955 0.004 250);
   /* Darker than the shadcn default of 0.556. That value is 4.74:1 on the page
      background, which passes, but these tokens are paired: muted text most
      often sits on a `bg-muted` surface (the footer, the inactive status chips,
      the struck-through rates), where the same colour measures 4.35:1 and fails
-     AA. 0.52 holds 5.49:1 on the background and 5.04:1 on muted. */
-  --muted-foreground: oklch(0.52 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+     AA. 0.50 holds 5.75:1 on the background and 5.49:1 on muted. */
+  --muted-foreground: oklch(0.5 0.014 258);
+  --accent: oklch(0.955 0.004 250);
+  --accent-foreground: oklch(0.195 0.012 264);
   --destructive: oklch(0.577 0.245 27.325);
-  /* 1.48:1 against both the page and the cards, up from the shadcn default's
-     1.26:1. Card and table edges were close enough to the surface to read as
-     absent, so the light theme had no visible structure and leaned entirely on
-     shadow. Dark mode is unaffected: `.dark` sets its own value below. */
-  --border: oklch(0.87 0 0);
-  --input: oklch(0.87 0 0);
+  /* Card and table edges used to sit at the shadcn default's 1.26:1 against
+     their surface, close enough to read as absent. 0.90 holds 1.34:1 against a
+     white card and stays lighter than the 0.87 this briefly used, because the
+     page is no longer the same colour as the card: the surface difference now
+     carries the card's edge, so the border only has to divide content inside
+     it. Dark mode is unaffected: `.dark` sets its own value below. */
+  --border: oklch(0.9 0.006 250);
+  --input: oklch(0.9 0.006 250);
   --ring: oklch(0.708 0 0);
   --focus-ring: oklch(54.6% 0.245 262.881); /* blue-600 */
   --chart-1: oklch(0.87 0 0);
@@ -265,23 +290,28 @@ html {
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar: oklch(0.99 0.002 250);
+  --sidebar-foreground: oklch(0.195 0.012 264);
+  --sidebar-primary: oklch(0.195 0.012 264);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-accent: oklch(0.955 0.004 250);
+  --sidebar-accent-foreground: oklch(0.195 0.012 264);
+  --sidebar-border: oklch(0.9 0.006 250);
   --sidebar-ring: oklch(0.708 0 0);
 
   /* AffectedStocks marquee card background. Not expressible as a flat
      semantic token (bg-card etc.) because it is a two-stop gradient, so it
      gets its own custom property instead, carrying the exact rgba stops the
      old isDarkMode ternary used to pick between. */
+  /* One step up from the indigo-100/violet-100 pair this used, and at full
+     opacity rather than 0.9. Those two stops measured 0.018 chroma against the
+     card once the alpha had faded them into white, where the dark value below
+     lands at roughly 0.06: the same gradient read as a solid pale wash on one
+     theme and as real colour on the other. */
   --stock-card-gradient: linear-gradient(
     145deg,
-    rgba(224, 231, 255, 0.9),
-    rgba(237, 233, 254, 0.9)
+    oklch(0.9 0.05 272),
+    oklch(0.91 0.05 305)
   );
 
   /* Tariff status/severity domain colours, light values. Derived from the

@@ -68,7 +68,7 @@ export const AIInsights = ({ showDetailedAnalysis }: AIInsightsProps) => {
         // dark gradient would otherwise only ever composite over the light
         // bg-red-50 instead of replacing it, leaving this panel washed-out
         // pale in dark mode.
-        return "bg-linear-to-br from-red-50 to-red-50 border border-red-100 dark:from-red-900/20 dark:to-red-800/10 dark:border-red-800/30";
+        return "bg-linear-to-br from-red-100 to-red-50 border border-red-200 dark:from-red-900/20 dark:to-red-800/10 dark:border-red-800/30";
       case "positive":
       case "negative":
         return "bg-card border border-border dark:bg-card/50";

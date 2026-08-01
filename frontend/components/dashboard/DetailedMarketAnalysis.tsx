@@ -408,7 +408,7 @@ const TIMEFRAME_STYLES: Record<
 const PredictionsTab = ({ data }: { data: MarketPrediction[] }) => {
   return (
     <div className="space-y-6">
-      <div className="p-5 rounded-lg bg-linear-to-br from-blue-50 to-purple-50 border border-blue-100 dark:from-blue-900/20 dark:to-purple-900/20 dark:border-blue-900/20">
+      <div className="p-5 rounded-lg bg-linear-to-br from-blue-100 to-purple-50 border border-blue-200 dark:from-blue-900/20 dark:to-purple-900/20 dark:border-blue-900/20">
         <h3 className="text-lg font-medium mb-3 text-foreground">AI-Generated Market Predictions</h3>
         <p className="text-sm mb-4 text-muted-foreground">
           Based on historical patterns, current geopolitical trends, and economic indicators, our AI
@@ -467,42 +467,42 @@ interface RegionTheme {
 
 const REGION_THEMES: Record<string, RegionTheme> = {
   "North America": {
-    card: "bg-linear-to-br from-blue-50 to-blue-50 border border-blue-100 dark:from-blue-900/20 dark:to-blue-900/20 dark:border-blue-900/20",
+    card: "bg-linear-to-br from-blue-100 to-blue-50 border border-blue-200 dark:from-blue-900/20 dark:to-blue-900/20 dark:border-blue-900/20",
     chip: "bg-blue-100 dark:bg-blue-900/50",
     icon: "text-blue-600 dark:text-blue-300",
     title: "text-blue-700 dark:text-blue-300",
     tag: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
   },
   "Asia-Pacific": {
-    card: "bg-linear-to-br from-red-50 to-red-50 border border-red-100 dark:from-red-900/20 dark:to-red-900/20 dark:border-red-900/20",
+    card: "bg-linear-to-br from-red-100 to-red-50 border border-red-200 dark:from-red-900/20 dark:to-red-900/20 dark:border-red-900/20",
     chip: "bg-red-100 dark:bg-red-900/50",
     icon: "text-red-600 dark:text-red-300",
     title: "text-red-700 dark:text-red-300",
     tag: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
   },
   Europe: {
-    card: "bg-linear-to-br from-indigo-50 to-indigo-50 border border-indigo-100 dark:from-indigo-900/20 dark:to-indigo-900/20 dark:border-indigo-900/20",
+    card: "bg-linear-to-br from-indigo-100 to-indigo-50 border border-indigo-200 dark:from-indigo-900/20 dark:to-indigo-900/20 dark:border-indigo-900/20",
     chip: "bg-indigo-100 dark:bg-indigo-900/50",
     icon: "text-indigo-600 dark:text-indigo-300",
     title: "text-indigo-700 dark:text-indigo-300",
     tag: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
   },
   "Latin America": {
-    card: "bg-linear-to-br from-amber-50 to-amber-50 border border-amber-100 dark:from-amber-900/20 dark:to-amber-900/20 dark:border-amber-900/20",
+    card: "bg-linear-to-br from-amber-100 to-amber-50 border border-amber-200 dark:from-amber-900/20 dark:to-amber-900/20 dark:border-amber-900/20",
     chip: "bg-amber-100 dark:bg-amber-900/50",
     icon: "text-amber-600 dark:text-amber-300",
     title: "text-amber-700 dark:text-amber-300",
     tag: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
   },
   Other: {
-    card: "bg-linear-to-br from-teal-50 to-teal-50 border border-teal-100 dark:from-teal-900/20 dark:to-teal-900/20 dark:border-teal-900/20",
+    card: "bg-linear-to-br from-teal-100 to-teal-50 border border-teal-200 dark:from-teal-900/20 dark:to-teal-900/20 dark:border-teal-900/20",
     chip: "bg-teal-100 dark:bg-teal-900/50",
     icon: "text-teal-600 dark:text-teal-300",
     title: "text-teal-700 dark:text-teal-300",
     tag: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300",
   },
   Global: {
-    card: "bg-linear-to-br from-slate-50 to-slate-50 border border-slate-100 dark:from-slate-900/20 dark:to-slate-900/20 dark:border-slate-900/20",
+    card: "bg-linear-to-br from-slate-100 to-slate-50 border border-slate-200 dark:from-slate-900/20 dark:to-slate-900/20 dark:border-slate-900/20",
     chip: "bg-slate-100 dark:bg-slate-900/50",
     icon: "text-slate-600 dark:text-slate-300",
     title: "text-slate-700 dark:text-slate-300",

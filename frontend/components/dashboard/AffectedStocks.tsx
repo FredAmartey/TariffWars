@@ -336,7 +336,12 @@ export const AffectedStocks: React.FC = () => {
   return (
     <div className="relative">
       {staleMinutes !== null && (
-        <p className="mb-2 text-xs text-amber-500" role="status">
+        // amber-500 measures 2.13:1 on a light card, so the one message that
+        // reports the data is broken was the least readable text on the page.
+        // It renders only once quotes go stale, which is why a contrast crawl
+        // of a healthy page had never had it on screen. amber-700 holds 4.66:1
+        // in light; dark keeps the amber-500 it renders today.
+        <p className="mb-2 text-xs text-amber-700 dark:text-amber-500" role="status">
           Prices as of {staleMinutes} minute{staleMinutes === 1 ? "" : "s"} ago; the market data
           provider is not responding.
         </p>

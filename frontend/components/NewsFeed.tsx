@@ -451,7 +451,7 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
           banner here stacked two titles on one section. */}
       {!preview && (
         <>
-          <header className="p-6 rounded-xl bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-100 dark:from-blue-900/30 dark:to-indigo-900/30 dark:border-blue-800/30">
+          <header className="p-6 rounded-xl bg-linear-to-r from-blue-100 to-indigo-50 border border-blue-200 dark:from-blue-900/30 dark:to-indigo-900/30 dark:border-blue-800/30">
             <h1 className="text-2xl font-bold text-foreground">Global Tariff News</h1>
             <p className="mt-1 text-muted-foreground">
               Stay updated with the latest international trade tariff news and developments.

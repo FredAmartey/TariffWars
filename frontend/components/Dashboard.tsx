@@ -147,7 +147,11 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
           taking Card's `bg-card` + `ring-foreground/10`, but still use Card for
           the radius, overflow and `--card-spacing` padding system, so every
           panel on the page shares one spacing scale. */}
-      <Card className={`${GRADIENT_PANEL} from-indigo-50 to-purple-50 ring-indigo-200 dark:from-indigo-900/40 dark:to-purple-900/40 dark:ring-indigo-800/50`}>
+      {/* Light stops go to -100, one step below the -200 the metric cards
+          inside now use, so the container stays quieter than its contents.
+          That is the same ordering dark has: its wrapper renders at 0.064
+          chroma against cards at 0.080. */}
+      <Card className={`${GRADIENT_PANEL} from-indigo-100 to-purple-100 ring-indigo-300 dark:from-indigo-900/40 dark:to-purple-900/40 dark:ring-indigo-800/50`}>
         <CardContent>
           <div className="flex items-center mb-4">
             <TrendingUpIcon className="h-5 w-5 mr-2 text-indigo-500 dark:text-indigo-400" />
@@ -180,7 +184,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
             <DataFreshness />
           </CardContent>
         </Card>
-        <Card className={`${GRADIENT_PANEL} bg-linear-to-br from-blue-50 to-purple-50 ring-blue-200 dark:from-blue-900/30 dark:to-purple-900/30 dark:ring-blue-800/50`}>
+        <Card className={`${GRADIENT_PANEL} bg-linear-to-br from-blue-100 to-purple-100 ring-blue-300 dark:from-blue-900/30 dark:to-purple-900/30 dark:ring-blue-800/50`}>
           <CardContent>
             <CollapsibleHeader
               title="AI Market Analysis"

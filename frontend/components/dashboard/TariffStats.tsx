@@ -24,24 +24,33 @@ import { Skeleton } from "@/components/ui/skeleton";
 type Tone = "neutral" | "escalation" | "relief";
 
 const TONE_STYLES: Record<Tone, { card: string; pill: string; icon: string }> = {
+  // Both stops are written out in both themes rather than setting a `bg-*`
+  // colour and overriding it with a `dark:` gradient: background-color and
+  // background-image are different properties, so the dark gradient (itself
+  // semi-transparent, /50 and /30) would only ever composite over a light
+  // background colour instead of replacing it.
+  //
+  // The light stops were `from-white to-white`, which satisfies that rule and
+  // means the card has no tone at all. Measured against the card it sits on,
+  // the dark stops render at 0.055-0.080 chroma and the light ones at exactly
+  // 0.000, so the tint that tells these four cards apart existed in one theme
+  // only. `-200 -> -50` is the closest light equivalent: 0.062 chroma, or about
+  // 77% of dark's, which is as far as the sRGB gamut stretches this close to
+  // white. Borders go to -300, because the -100 they used is lighter than the
+  // new fill and would have disappeared into it; dark's border is likewise
+  // lighter than its own fill.
   neutral: {
-    // A flat colour is expressed as a gradient with identical stops rather
-    // than bg-white + a dark:bg-linear-to-br override: background-color and
-    // background-image are different properties, so the dark gradient (itself
-    // semi-transparent, /50 and /30) would otherwise only ever composite over
-    // the light bg-white, never replace it, leaving the card washed-out pale
-    // in dark mode instead of the intended indigo tint.
-    card: "bg-linear-to-br from-white to-white border border-indigo-100 shadow-xs dark:from-indigo-900/50 dark:to-indigo-800/30 dark:border-indigo-700/50 dark:shadow-none",
+    card: "bg-linear-to-br from-indigo-200 to-indigo-50 border border-indigo-300 shadow-xs dark:from-indigo-900/50 dark:to-indigo-800/30 dark:border-indigo-700/50 dark:shadow-none",
     pill: "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300",
     icon: "text-indigo-400",
   },
   escalation: {
-    card: "bg-linear-to-br from-white to-white border border-red-100 shadow-xs dark:from-red-900/50 dark:to-red-800/30 dark:border-red-700/50 dark:shadow-none",
+    card: "bg-linear-to-br from-red-200 to-red-50 border border-red-300 shadow-xs dark:from-red-900/50 dark:to-red-800/30 dark:border-red-700/50 dark:shadow-none",
     pill: "bg-red-50 text-red-700 dark:bg-red-900/50 dark:text-red-300",
     icon: "text-red-400",
   },
   relief: {
-    card: "bg-linear-to-br from-white to-white border border-green-100 shadow-xs dark:from-green-900/50 dark:to-green-800/30 dark:border-green-700/50 dark:shadow-none",
+    card: "bg-linear-to-br from-green-200 to-green-50 border border-green-300 shadow-xs dark:from-green-900/50 dark:to-green-800/30 dark:border-green-700/50 dark:shadow-none",
     pill: "bg-green-50 text-green-700 dark:bg-green-900/50 dark:text-green-300",
     icon: "text-green-400",
   },
