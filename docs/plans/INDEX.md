@@ -5,28 +5,21 @@ Single source of truth for all plans in this repo.
 ## Architecture (long-lived)
 
 - [self-updating-tariff-data.md](architecture/self-updating-tariff-data.md): weekly autonomous tariff data refresh via scheduled Claude cloud agent, deterministic validator, CI backstop, frontend freshness stamp.
+- [frontend-design-system.md](architecture/frontend-design-system.md): Tailwind v4 config-in-CSS, the three-tier token layer and where it departs from the shadcn preset, the shadcn primitives as the control layer, and how visual work is verified.
 
 ## Completed implementation plans
 
-shadcn/ui adoption, planned 2026-07-31 against `7d2fba2`, all three merged 2026-08-01.
+shadcn/ui adoption, planned 2026-07-31 against `7d2fba2`, all three merged
+2026-08-01. The plan files have been deleted per the lifecycle in `CLAUDE.md`;
+their durable content is in
+[architecture/frontend-design-system.md](architecture/frontend-design-system.md),
+and what the work actually caught is recorded below.
 
-| Plan | Title | Priority | Effort | Risk | Depends on | Status |
-| --- | --- | --- | --- | --- | --- | --- |
-| [001](implementations/001-tailwind-v4-and-shadcn-foundation.md) | Upgrade to Tailwind v4 and install shadcn/ui with real theme tokens | P1 | M | MED | — | DONE — merged |
-| [002](implementations/002-retire-isdarkmode-ternaries.md) | Retire the isDarkMode ternaries for shadcn semantic tokens | P2 | L | MED | 001 | DONE — merged |
-| [003](implementations/003-frontend-logic-tests.md) | Test the frontend logic that screenshots cannot see | P2 | S | LOW | — | DONE — merged |
-
-Status values: TODO | IN PROGRESS | DONE | BLOCKED (one-line reason) | REJECTED (one-line rationale)
-
-### Dependency notes
-
-- **002 requires 001** because it consumes the CSS-variable tokens, the `dark`
-  class and the primitives that 001 installs.
-- **003 depends on nothing** and can run before, between or after the other two.
-  Its tests deliberately assert on no class names, so a restyle cannot break them.
-- 001 deliberately leaves all 371 `isDarkMode` ternaries untouched. Its done
-  criteria assert the count is unchanged, so a scope leak into 002's territory
-  fails the gate rather than passing silently.
+| Plan | Title | Effort | Risk | Status |
+| --- | --- | --- | --- | --- |
+| 001 | Upgrade to Tailwind v4 and install shadcn/ui with real theme tokens | M | MED | DONE — merged, plan deleted |
+| 002 | Retire the isDarkMode ternaries for shadcn semantic tokens | L | MED | DONE — merged, plan deleted |
+| 003 | Test the frontend logic that screenshots cannot see | S | LOW | DONE — merged, plan deleted |
 
 ### How these were verified, and what it caught
 
@@ -103,3 +96,4 @@ keeping:
 ## Completed
 
 - self-updating-tariff-data (2026-07-10): all 7 tasks shipped in PR #2; plan file deleted per lifecycle, insights folded into the architecture doc and docs/lessons.md.
+- shadcn/ui adoption 001-003 (2026-08-01): merged, plus the light-mode and primitive-adoption follow-up above. Plan files deleted per lifecycle, insights folded into architecture/frontend-design-system.md.

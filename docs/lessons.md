@@ -9,3 +9,20 @@ Rule: keep parsed rate cells to a single clean percentage (or `N/A`/`Restricted`
 ## GitHub Actions PR runs check out the merge ref
 
 Any CI logic keyed off `HEAD` commit messages (like the validator's `[churn-reviewed]` override) silently breaks on `pull_request` events, because the synthetic merge commit has an auto-generated message. Push events see real commits. The validate-data workflow sets `CHURN_OVERRIDE=1` for PR runs; the full churn guard applies on pushes, which is the autonomous agent's only path to main. Squash-merge messages for data-heavy PRs must include `[churn-reviewed]`.
+
+## Visual defects clear every automated gate this repo has
+
+Five have now shipped past `tsc`, `lint`, `build` and the jsdom suite and been
+caught only in a browser: a CSS layer inversion that killed all spacing, two
+`background-color` vs `background-image` mix-ups, a dialog that stopped
+restoring focus, and a dialog pinned to 384px because an unprefixed `max-w-4xl`
+could not override a baked-in `sm:max-w-sm` (tailwind-merge only collapses
+classes sharing a group *and* a modifier). jsdom does no layout and computes no
+styles, so a passing component test says nothing about any of them.
+
+Rule: for visual work, the oracle is a browser. Crawl contrast over rendered
+text nodes rather than eyeballing, sample colours through a canvas (Chrome
+returns `oklab()` from `getComputedStyle` verbatim, so regexes and probe
+elements both fail), run **both** themes, and open every dialog explicitly. A
+closed overlay is invisible to a screenshot pass and a DOM crawl alike, which is
+where the two most recent defects were hiding.
