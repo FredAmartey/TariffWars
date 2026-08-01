@@ -1,0 +1,62 @@
+name: verify
+
+# The two existing workflows both guard the tariff dataset: validate-data is
+# path-filtered to backend/src/data/**, and data-freshness is a cron. Nothing
+# checked application code, so a 45-commit push touching 30 source files was
+# invisible to CI and went straight to a Vercel production deploy. This runs the
+# same four frontend gates and the backend suite that are run locally.
+#
+# paths-ignore rather than an allowlist: a new source directory should be
+# covered the day it appears, without anyone remembering to add it here. Only
+# prose is excluded.
+on:
+  push:
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --no-audit --no-fund
+      # Kept as four separate steps so a failure names itself in the checks
+      # list, rather than reporting one opaque "verify" job.
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Lint
+        run: npm run lint
+      - name: Test
+        run: npm test
+      - name: Build
+        run: npm run build
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+        working-directory: backend
+      - name: Typecheck
+        run: npx tsc --noEmit
+        working-directory: backend
+      # `npm test` compiles first: the suite imports from dist/ so it exercises
+      # the same output the server runs, not a parallel ts-node view of it.
+      - name: Test
+        run: npm test
+        working-directory: backend
