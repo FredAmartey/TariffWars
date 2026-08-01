@@ -256,16 +256,27 @@ const SortableHeader = ({
 }) => {
   const active = activeField === field;
   return (
+    // The padding lives on the button, not the th, so the click target is the
+    // whole cell. With it on the th, the button sat inside a 16px horizontal
+    // and 12px vertical dead border that still lit up on hover (the hover
+    // style is on the th) but ignored clicks.
+    //
+    // `h-px` is doing real work: a button's `h-full` cannot resolve against a
+    // table cell that has no definite height, so only the tallest header (the
+    // one whose label wraps) was fully covered and the rest sat at 68%. Giving
+    // the th a nominal height that content immediately overrides is what lets
+    // `h-full` resolve. `display:flex` on the th also works but can strip its
+    // implicit columnheader role, and these carry scope and aria-sort.
     <th
       scope="col"
       aria-sort={active ? (direction === "asc" ? "ascending" : "descending") : "none"}
-      className="px-4 py-3 text-left text-sm font-semibold text-muted-foreground hover:bg-gray-700/50"
+      className="h-px p-0 text-left text-sm font-semibold text-muted-foreground hover:bg-gray-700/50"
       title={tooltip}
     >
       <button
         type="button"
         onClick={() => onSort(field)}
-        className="flex items-center w-full text-left font-semibold"
+        className="flex items-center w-full h-full px-4 py-3 text-left font-semibold"
       >
         {label}
         {active ? (
