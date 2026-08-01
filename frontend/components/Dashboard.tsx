@@ -65,7 +65,7 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
   const { addNotification } = useNotifications();
-  const { isDarkMode, toggleTheme } = useContext(ThemeContext);
+  const { theme, toggleTheme } = useContext(ThemeContext);
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportDataset, setExportDataset] = useState<"product" | "country">("product");
   const [showMarketAnalysis, setShowMarketAnalysis] = useState(false);
@@ -130,9 +130,13 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
           <button
             onClick={toggleTheme}
             className="p-2 rounded-full bg-muted hover:bg-accent text-gray-700 dark:text-yellow-300"
-            aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
           >
-            {isDarkMode ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
+            {theme === "dark" ? (
+              <SunIcon className="h-5 w-5" />
+            ) : (
+              <MoonIcon className="h-5 w-5" />
+            )}
           </button>
           <button
             onClick={() => setShowExportModal(true)}
