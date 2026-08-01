@@ -237,29 +237,29 @@ const SkeletonCard: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
     <div
       className={`h-96 rounded-xl overflow-hidden animate-pulse ${
         isDarkMode
-          ? "bg-gradient-to-r from-gray-700/50 to-gray-800/50"
-          : "bg-gradient-to-r from-gray-200 to-gray-300"
+          ? "bg-linear-to-r from-gray-700/50 to-gray-800/50"
+          : "bg-linear-to-r from-gray-200 to-gray-300"
       }`}
     >
       <div className="p-6 h-full flex flex-col">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <div className="h-8 w-16 bg-gray-700 rounded mb-2"></div>
-            <div className="h-4 w-32 bg-gray-700 rounded"></div>
+            <div className="h-8 w-16 bg-gray-700 rounded-sm mb-2"></div>
+            <div className="h-4 w-32 bg-gray-700 rounded-sm"></div>
           </div>
-          <div className="h-6 w-6 bg-gray-700 rounded"></div>
+          <div className="h-6 w-6 bg-gray-700 rounded-sm"></div>
         </div>
 
         <div className="mt-6">
-          <div className="h-10 w-24 bg-gray-700 rounded mb-2"></div>
-          <div className="h-4 w-40 bg-gray-700 rounded"></div>
+          <div className="h-10 w-24 bg-gray-700 rounded-sm mb-2"></div>
+          <div className="h-4 w-40 bg-gray-700 rounded-sm"></div>
         </div>
 
         <div className="mt-auto">
           <div className="bg-gray-800/50 rounded-lg p-4">
-            <div className="h-4 w-24 bg-gray-700 rounded mb-3"></div>
-            <div className="h-4 w-full bg-gray-700 rounded mb-2"></div>
-            <div className="h-4 w-3/4 bg-gray-700 rounded"></div>
+            <div className="h-4 w-24 bg-gray-700 rounded-sm mb-3"></div>
+            <div className="h-4 w-full bg-gray-700 rounded-sm mb-2"></div>
+            <div className="h-4 w-3/4 bg-gray-700 rounded-sm"></div>
           </div>
 
           <div className="mt-4">

@@ -72,7 +72,7 @@ export const AIInsights = ({ showDetailedAnalysis }: AIInsightsProps) => {
     switch (type) {
       case "alert":
         return isDarkMode
-          ? "bg-gradient-to-br from-red-900/20 to-red-800/10 border border-red-800/30"
+          ? "bg-linear-to-br from-red-900/20 to-red-800/10 border border-red-800/30"
           : "bg-red-50 border border-red-100";
       case "positive":
         return isDarkMode

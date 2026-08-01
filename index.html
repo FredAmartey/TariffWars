@@ -5,6 +5,30 @@
     <link rel="icon" type="image/png" href="/frontend/assets/tariffwars-logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TariffWars</title>
+    <script>
+      // Sets the `dark` class before first paint so shadcn's CSS-variable
+      // tokens (:root vs .dark in frontend/index.css) never flash the wrong
+      // theme while React mounts. Must mirror frontend/context/ThemeContext.tsx
+      // exactly: localStorage wins, then the OS preference, then dark.
+      (function () {
+        try {
+          var stored = window.localStorage.getItem("tariffwars-theme");
+          var isDark;
+          if (stored === "dark") {
+            isDark = true;
+          } else if (stored === "light") {
+            isDark = false;
+          } else if (typeof window.matchMedia === "function") {
+            isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          } else {
+            isDark = true;
+          }
+          if (isDark) document.documentElement.classList.add("dark");
+        } catch (e) {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

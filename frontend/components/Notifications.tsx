@@ -15,7 +15,7 @@ export const Notifications: React.FC = () => {
   // notifications passed silently for screen-reader users.
   return <div className="fixed bottom-4 right-4 z-50 flex flex-col space-y-2" role="status" aria-live="polite" aria-atomic="false">
       {notifications.map(notification => <div key={notification.id} className={`${isDarkMode ? 'bg-gray-800 border-gray-700 shadow-lg' : 'bg-white border-gray-200 shadow-md'} border rounded-lg p-4 max-w-md flex items-start`}>
-          <div className="flex-shrink-0 mr-3">
+          <div className="shrink-0 mr-3">
             {notification.type === 'success' && <CheckCircleIcon className="h-5 w-5 text-green-500" aria-hidden="true" />}
             {notification.type === 'error' && <XCircleIcon className="h-5 w-5 text-red-500" aria-hidden="true" />}
             {notification.type === 'warning' && <AlertCircleIcon className="h-5 w-5 text-yellow-500" aria-hidden="true" />}

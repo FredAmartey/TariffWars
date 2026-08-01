@@ -1,4 +1,4 @@
-import React, { useEffect, useState, createContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Route,
@@ -14,15 +14,15 @@ import Dashboard from "./components/Dashboard";
 import { TariffRates } from "./components/TariffRates";
 import { NewsFeed } from "./components/NewsFeed";
 import { NotificationsProvider } from "./context/NotificationsContext";
+import { ThemeContext, ThemeProvider } from "./context/ThemeContext";
 import { Notifications } from "./components/Notifications";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Footer } from "./components/Footer";
 import { MenuIcon, XIcon } from "lucide-react";
 
-export const ThemeContext = createContext({
-  isDarkMode: true,
-  toggleTheme: () => {},
-});
+// Re-exported so the existing `import { ThemeContext } from "../App"` /
+// `"../../App"` lines across 12 components keep working unchanged.
+export { ThemeContext };
 
 const getTabFromPathname = (pathname: string): string => {
   if (pathname.startsWith("/tariff-rates")) {
@@ -38,7 +38,7 @@ const AppContent: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(() => getTabFromPathname(location.pathname));
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const { isDarkMode } = useContext(ThemeContext);
   const isAuthenticated = true;
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -53,18 +53,6 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     setActiveTab(getTabFromPathname(location.pathname));
   }, [location.pathname]);
-
-  useEffect(() => {
-    if (isDarkMode) {
-      document.body.classList.add("dark-scrollbar");
-    } else {
-      document.body.classList.remove("dark-scrollbar");
-    }
-  }, [isDarkMode]);
-
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-  };
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -82,12 +70,7 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <ThemeContext.Provider
-      value={{
-        isDarkMode,
-        toggleTheme,
-      }}
-    >
+    <>
       <NotificationsProvider>
         <ErrorBoundary>
           <div
@@ -106,8 +89,8 @@ const AppContent: React.FC = () => {
                 <header
                   className={`md:hidden flex items-center justify-between p-4 sticky top-0 z-30 ${
                     isDarkMode
-                      ? "bg-gray-900/80 backdrop-blur-sm border-b border-gray-700/50"
-                      : "bg-white/80 backdrop-blur-sm border-b border-gray-200/50"
+                      ? "bg-gray-900/80 backdrop-blur-xs border-b border-gray-700/50"
+                      : "bg-white/80 backdrop-blur-xs border-b border-gray-200/50"
                   }`}
                 >
                   <button
@@ -174,7 +157,7 @@ const AppContent: React.FC = () => {
       </NotificationsProvider>
       <Analytics debug={true} />
       <SpeedInsights debug={true} />
-    </ThemeContext.Provider>
+    </>
   );
 };
 
@@ -187,9 +170,11 @@ const App: React.FC = () => {
   };
 
   return (
-    <Router basename={getBasename()}>
-      <AppContent />
-    </Router>
+    <ThemeProvider>
+      <Router basename={getBasename()}>
+        <AppContent />
+      </Router>
+    </ThemeProvider>
   );
 };
 

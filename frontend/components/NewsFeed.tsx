@@ -119,8 +119,8 @@ const ArticleImage: React.FC<{ article: NewsArticle; isDarkMode: boolean }> = ({
       <div
         className={`w-full h-full flex items-center justify-center ${
           isDarkMode
-            ? "bg-gradient-to-br from-gray-700 to-gray-800"
-            : "bg-gradient-to-br from-gray-100 to-gray-200"
+            ? "bg-linear-to-br from-gray-700 to-gray-800"
+            : "bg-linear-to-br from-gray-100 to-gray-200"
         }`}
         aria-hidden="true"
       >
@@ -183,7 +183,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
       } focus-within:ring-2 focus-within:ring-blue-500`}
     >
       {!compact && (
-        <div className="relative w-full h-48 flex-shrink-0">
+        <div className="relative w-full h-48 shrink-0">
           <ArticleImage article={article} isDarkMode={isDarkMode} />
           <button
             type="button"
@@ -204,7 +204,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
         </div>
       )}
 
-      <div className="p-4 flex flex-col flex-grow">
+      <div className="p-4 flex flex-col grow">
         <div className="flex items-start justify-between gap-2">
           <h3
             className={`text-lg font-semibold mb-2 ${isDarkMode ? "text-white" : "text-gray-900"}`}
@@ -216,7 +216,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
                 rel="noopener noreferrer"
                 // The stretched pseudo-element is what makes the whole card a
                 // single click target without nesting interactive elements.
-                className="after:absolute after:inset-0 after:content-[''] hover:underline group-hover:text-blue-400 outline-none"
+                className="after:absolute after:inset-0 after:content-[''] hover:underline group-hover:text-blue-400 outline-hidden"
               >
                 {article.title}
               </a>
@@ -228,7 +228,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
             <button
               type="button"
               onClick={() => onToggleBookmark(article)}
-              className={`relative z-10 flex-shrink-0 p-1.5 rounded-full ${
+              className={`relative z-10 shrink-0 p-1.5 rounded-full ${
                 isBookmarked
                   ? isDarkMode
                     ? "text-yellow-400 bg-yellow-900/30"
@@ -252,7 +252,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
 
         {summary && (
           <p
-            className={`mb-4 text-sm flex-grow ${isDarkMode ? "text-gray-300" : "text-gray-700"} ${
+            className={`mb-4 text-sm grow ${isDarkMode ? "text-gray-300" : "text-gray-700"} ${
               compact ? "line-clamp-2" : ""
             }`}
           >
@@ -266,10 +266,10 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
           }`}
         >
           <span className="flex items-center min-w-0">
-            <Globe className="h-3 w-3 mr-1 flex-shrink-0" aria-hidden="true" />
+            <Globe className="h-3 w-3 mr-1 shrink-0" aria-hidden="true" />
             <span className="truncate">{article.source.name}</span>
           </span>
-          <span className="flex items-center flex-shrink-0 ml-2">
+          <span className="flex items-center shrink-0 ml-2">
             <Calendar className="h-3 w-3 mr-1" aria-hidden="true" />
             {formatDate(article.date)}
           </span>
@@ -476,8 +476,8 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ preview = false }) => {
           <header
             className={`p-6 rounded-xl ${
               isDarkMode
-                ? "bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border border-blue-800/30"
-                : "bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100"
+                ? "bg-linear-to-r from-blue-900/30 to-indigo-900/30 border border-blue-800/30"
+                : "bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-100"
             }`}
           >
             <h1 className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-gray-800"}`}>

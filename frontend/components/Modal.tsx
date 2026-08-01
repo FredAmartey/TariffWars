@@ -95,7 +95,7 @@ export const Modal = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
       onMouseDown={(e) => {
         // Only a click that both starts and ends on the backdrop dismisses;
         // dragging a selection out of the panel should not close it.
@@ -108,7 +108,7 @@ export const Modal = ({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`rounded-xl w-full ${widthClass} outline-none ${
+        className={`rounded-xl w-full ${widthClass} outline-hidden ${
           isDarkMode ? "bg-gray-800 border border-gray-700" : "bg-white shadow-xl"
         }`}
       >
