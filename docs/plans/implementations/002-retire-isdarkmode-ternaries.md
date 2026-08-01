@@ -80,7 +80,7 @@ for f in sorted(pathlib.Path('frontend').rglob('*.tsx')):
 | `frontend/components/Notifications.tsx` | 4 | 10 |
 | `frontend/components/dashboard/DataFreshness.tsx` | 4 | 14 |
 | `frontend/components/Sidebar.tsx` | 6 | 20 |
-| `frontend/App.tsx` | 12 | 32 |
+| `frontend/App.tsx` + `frontend/context/ThemeContext.tsx` | 15 | 35 |
 | `frontend/components/dashboard/AIInsights.tsx` | 21 | 53 |
 | `frontend/components/dashboard/AffectedStocks.tsx` | 21 | 74 |
 | `frontend/components/TariffRates.tsx` | 24 | 98 |
@@ -88,7 +88,7 @@ for f in sorted(pathlib.Path('frontend').rglob('*.tsx')):
 | `frontend/components/NewsFeed.tsx` | 31 | 155 |
 | `frontend/components/Dashboard.tsx` | 44 | 199 |
 | `frontend/components/dashboard/DetailedMarketAnalysis.tsx` | 82 | 281 |
-| `frontend/components/dashboard/TariffTable.tsx` | 90 | 371 |
+| `frontend/components/dashboard/TariffTable.tsx` | 90 | 374 |
 
 ### The one genuinely hard part
 
@@ -192,11 +192,14 @@ custom tokens added in Step 5.
 
 ```bash
 npx tsc --noEmit && npm run lint && npm run build
-grep -rho "isDarkMode" frontend --include='*.tsx' | wc -l   # expect 371
+grep -rho "isDarkMode" frontend --include='*.tsx' | wc -l   # expect 374
 ```
 
-**Verify**: all green, count is 371. If it is not 371, plan 001 leaked scope —
-STOP and report.
+**Verify**: all green, count is 374. Note this is 374, not the 371 quoted
+elsewhere in this plan: plan 001 legitimately added three, moving the flag out
+of `App.tsx` (12 -> 7) and into the new `frontend/context/ThemeContext.tsx`
+(0 -> 8). No component's count changed, which is what "001 did not leak scope"
+means. If a component file's count differs from the table below, STOP.
 
 ### Step 2: Recapture reference screenshots
 

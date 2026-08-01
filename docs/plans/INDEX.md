@@ -12,9 +12,9 @@ shadcn/ui adoption, generated 2026-07-31 against commit `7d2fba2`.
 
 | Plan | Title | Priority | Effort | Risk | Depends on | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| [001](implementations/001-tailwind-v4-and-shadcn-foundation.md) | Upgrade to Tailwind v4 and install shadcn/ui with real theme tokens | P1 | M | MED | — | TODO |
+| [001](implementations/001-tailwind-v4-and-shadcn-foundation.md) | Upgrade to Tailwind v4 and install shadcn/ui with real theme tokens | P1 | M | MED | — | DONE — approved after 1 revision, awaiting merge (branch `advisor/001-tailwind-v4-shadcn`) |
 | [002](implementations/002-retire-isdarkmode-ternaries.md) | Retire the 371 isDarkMode ternaries for shadcn semantic tokens | P2 | L | MED | 001 | TODO |
-| [003](implementations/003-frontend-logic-tests.md) | Test the frontend logic that screenshots cannot see | P2 | S | LOW | — | TODO |
+| [003](implementations/003-frontend-logic-tests.md) | Test the frontend logic that screenshots cannot see | P2 | S | LOW | — | DONE — approved, awaiting merge (branch `advisor/003-frontend-logic-tests`) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (one-line reason) | REJECTED (one-line rationale)
 
