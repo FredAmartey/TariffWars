@@ -158,6 +158,20 @@ export function sortOptionsFor(
   ];
 }
 
+/**
+ * Frozen module-level default for an omitted `filters` prop.
+ *
+ * `filters = []` as a default parameter allocates a NEW array on every render.
+ * That reference is a dependency of `getCacheKey` -> `fetchData` ->
+ * `debouncedFetchData` -> the fetch effect, so every render invalidated the
+ * whole chain, and the effect's cleanup cancelled the pending request and
+ * started a fresh 500ms timer. While the dashboard's other panels (stocks,
+ * news, insights, metrics) resolved and re-rendered the tree, the table's
+ * fetch was starved: measured 3.6s from click to the request leaving, then
+ * three duplicates at once.
+ */
+const NO_FILTERS: Array<{ field: string; value: string }> = [];
+
 const COUNTRY_COLUMNS = [
   { key: "country", label: "COUNTRY" },
   { key: "rateDisplay", label: "RATE IMPOSED BY USA" },
@@ -299,7 +313,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
   searchTerm = "",
   sortField = "effectiveDate",
   sortDirection = "desc",
-  filters = [],
+  filters = NO_FILTERS,
   page,
   itemsPerPage = 5,
   onPageChange,
@@ -335,17 +349,23 @@ export const TariffTable: React.FC<TariffTableProps> = ({
     onSortChange?.(newField, newDirection);
   };
 
+  // Serialised once so everything downstream can depend on the VALUE of the
+  // filters rather than the array's identity. A caller that rebuilds its
+  // filter array each render (TariffRates does, via setState) would otherwise
+  // invalidate the fetch chain on every unrelated re-render.
+  const filtersKey = JSON.stringify(filters);
+
   const getCacheKey = useCallback(() => {
     return JSON.stringify({
       searchTerm,
       localSortField,
       localSortDirection,
-      filters,
+      filters: filtersKey,
       page,
       itemsPerPage,
       activeTab,
     });
-  }, [searchTerm, localSortField, localSortDirection, filters, page, itemsPerPage, activeTab]);
+  }, [searchTerm, localSortField, localSortDirection, filtersKey, page, itemsPerPage, activeTab]);
 
   const fetchData = useCallback(async () => {
     const now = Date.now();
@@ -422,11 +442,17 @@ export const TariffTable: React.FC<TariffTableProps> = ({
       console.error("Error fetching tariff data:", err);
       setIsLoading(false);
     }
+    // `filters` is read above but `filtersKey` is the dependency on purpose:
+    // the key is its serialised value, so it changes exactly when the filters
+    // meaningfully change, whereas the array's identity changes on every
+    // render of a caller that rebuilds it. Depending on the identity is what
+    // starved this fetch for seconds at a time.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     searchTerm,
     localSortField,
     localSortDirection,
-    filters,
+    filtersKey,
     page,
     itemsPerPage,
     onTotalPagesChange,
@@ -434,22 +460,31 @@ export const TariffTable: React.FC<TariffTableProps> = ({
     activeTab,
   ]);
 
-  // Debounced version of fetchData for search term changes only
-  const debouncedFetchData = useMemo(
-    () => debounce(fetchData, 500), // 500ms delay
-    [fetchData]
+  // Only the search box needs debouncing; it is the one input that changes on
+  // every keystroke. Routing tab switches, page turns and sorts through the
+  // same 500ms timer made each of them wait for a delay that exists to absorb
+  // typing, on top of the starvation described on NO_FILTERS above.
+  const fetchRef = useRef(fetchData);
+  fetchRef.current = fetchData;
+
+  const debouncedSearchFetch = useMemo(
+    // Reads through a ref so the debounced function keeps a stable identity;
+    // recreating it per render is what let the cleanup cancel pending work.
+    () => debounce(() => fetchRef.current(), 500),
+    []
   );
 
-  // Every query change routes through the debounced fetcher, so typing a search
-  // term costs one request after the user stops rather than one per keystroke.
-  // The cleanup cancels the superseded timer — without it each keystroke's
-  // pending call would still fire 500ms later and the debounce would be moot.
   useEffect(() => {
-    debouncedFetchData();
-    return () => {
-      debouncedFetchData.cancel();
-    };
-  }, [debouncedFetchData]);
+    if (searchTerm) {
+      debouncedSearchFetch();
+      return () => debouncedSearchFetch.cancel();
+    }
+    // Discrete actions fetch immediately.
+    fetchRef.current();
+  }, [searchTerm, filtersKey, localSortField, localSortDirection, page, itemsPerPage, activeTab, debouncedSearchFetch]);
+
+  // Any pending keystroke fetch dies with the component.
+  useEffect(() => () => debouncedSearchFetch.cancel(), [debouncedSearchFetch]);
 
   // Keep local sort in step when the owner drives it (its own dropdown).
   useEffect(() => {
