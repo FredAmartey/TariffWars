@@ -1,5 +1,4 @@
-import React, { useContext, useState, useEffect } from "react";
-import { ThemeContext } from "../../App";
+import React, { useState, useEffect } from "react";
 import {
   ArrowUpIcon,
   ArrowDownIcon,
@@ -21,29 +20,20 @@ import type { KeyMetrics } from "../../services/marketAnalysisApi";
  */
 type Tone = "neutral" | "escalation" | "relief";
 
-const TONE_STYLES: Record<Tone, { card: { dark: string; light: string }; pill: { dark: string; light: string }; icon: string }> = {
+const TONE_STYLES: Record<Tone, { card: string; pill: string; icon: string }> = {
   neutral: {
-    card: {
-      dark: "bg-linear-to-br from-indigo-900/50 to-indigo-800/30 border border-indigo-700/50",
-      light: "bg-white border border-indigo-100 shadow-xs",
-    },
-    pill: { dark: "bg-indigo-900/50 text-indigo-300", light: "bg-indigo-50 text-indigo-700" },
+    card: "bg-white border border-indigo-100 shadow-xs dark:bg-linear-to-br dark:from-indigo-900/50 dark:to-indigo-800/30 dark:border-indigo-700/50 dark:shadow-none",
+    pill: "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300",
     icon: "text-indigo-400",
   },
   escalation: {
-    card: {
-      dark: "bg-linear-to-br from-red-900/50 to-red-800/30 border border-red-700/50",
-      light: "bg-white border border-red-100 shadow-xs",
-    },
-    pill: { dark: "bg-red-900/50 text-red-300", light: "bg-red-50 text-red-700" },
+    card: "bg-white border border-red-100 shadow-xs dark:bg-linear-to-br dark:from-red-900/50 dark:to-red-800/30 dark:border-red-700/50 dark:shadow-none",
+    pill: "bg-red-50 text-red-700 dark:bg-red-900/50 dark:text-red-300",
     icon: "text-red-400",
   },
   relief: {
-    card: {
-      dark: "bg-linear-to-br from-green-900/50 to-green-800/30 border border-green-700/50",
-      light: "bg-white border border-green-100 shadow-xs",
-    },
-    pill: { dark: "bg-green-900/50 text-green-300", light: "bg-green-50 text-green-700" },
+    card: "bg-white border border-green-100 shadow-xs dark:bg-linear-to-br dark:from-green-900/50 dark:to-green-800/30 dark:border-green-700/50 dark:shadow-none",
+    pill: "bg-green-50 text-green-700 dark:bg-green-900/50 dark:text-green-300",
     icon: "text-green-400",
   },
 };
@@ -56,7 +46,6 @@ interface MetricCardProps {
   footnote?: React.ReactNode;
   icon: React.ElementType;
   tone: Tone;
-  isDarkMode: boolean;
 }
 
 /**
@@ -97,21 +86,12 @@ const MetricCard: React.FC<MetricCardProps> = ({
   footnote,
   icon: Icon,
   tone,
-  isDarkMode,
 }) => {
   const styles = TONE_STYLES[tone];
   return (
-    <div
-      className={`relative overflow-hidden rounded-xl ${
-        isDarkMode ? styles.card.dark : styles.card.light
-      }`}
-    >
+    <div className={`relative overflow-hidden rounded-xl ${styles.card}`}>
       <div className="absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8" aria-hidden="true">
-        <div
-          className={`w-full h-full rounded-full ${
-            isDarkMode ? "bg-white/4" : "bg-gray-900/4"
-          }`}
-        ></div>
+        <div className="w-full h-full rounded-full bg-gray-900/4 dark:bg-white/4"></div>
       </div>
       <div className="absolute top-4 right-4">
         <Icon className={`h-6 w-6 ${styles.icon}`} aria-hidden="true" />
@@ -120,23 +100,14 @@ const MetricCard: React.FC<MetricCardProps> = ({
           these four cards ran to roughly 2000px, so the phone view was two
           screens of headline figures before any tariff data. */}
       <div className="p-4 sm:p-6 relative">
-        <h3 className={`text-sm font-medium ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
-          {title}
-        </h3>
-        <div className={`text-3xl font-bold mt-2 ${isDarkMode ? "text-white" : "text-gray-800"}`}>
-          {value}
-        </div>
-        <p
-          className={`text-sm mt-1 line-clamp-2 ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}
-          title={detail}
-        >
+        <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
+        <div className="text-3xl font-bold mt-2 text-foreground">{value}</div>
+        <p className="text-sm mt-1 line-clamp-2 text-muted-foreground" title={detail}>
           {typeof detail === "string" ? shortCommodity(detail) : detail}
         </p>
         {footnote && (
           <div
-            className={`mt-4 inline-flex max-w-full items-center px-2 py-1 rounded-full text-xs ${
-              isDarkMode ? styles.pill.dark : styles.pill.light
-            }`}
+            className={`mt-4 inline-flex max-w-full items-center px-2 py-1 rounded-full text-xs ${styles.pill}`}
             title={typeof footnote === "string" ? footnote : undefined}
           >
             <span className="truncate">{footnote}</span>
@@ -148,7 +119,6 @@ const MetricCard: React.FC<MetricCardProps> = ({
 };
 
 export const TariffStats = () => {
-  const { isDarkMode } = useContext(ThemeContext);
   const [metrics, setMetrics] = useState<KeyMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -173,19 +143,11 @@ export const TariffStats = () => {
 
   if (isLoading) {
     return (
-      <div
-        className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 ${
-          isDarkMode ? "text-gray-400" : "text-gray-600"
-        }`}
-      >
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-muted-foreground">
         {[...Array(4)].map((_, i) => (
           <div
             key={i}
-            className={`relative overflow-hidden rounded-xl p-6 animate-pulse ${
-              isDarkMode
-                ? "bg-gray-800/50 border border-gray-700/50"
-                : "bg-gray-100 border border-gray-200"
-            }`}
+            className="relative overflow-hidden rounded-xl p-6 animate-pulse bg-muted border border-border dark:bg-muted/50"
           >
             <div className="h-4 bg-gray-600 rounded-sm w-1/2 mb-2"></div>
             <div className="h-8 bg-gray-500 rounded-sm w-1/3 mb-2"></div>
@@ -210,7 +172,7 @@ export const TariffStats = () => {
 
   if (!metrics) {
     return (
-      <div className={`p-4 text-center ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+      <div className="p-4 text-center text-muted-foreground">
         No key metrics data available.
       </div>
     );
@@ -249,18 +211,11 @@ export const TariffStats = () => {
         detail="Across active tariffs"
         icon={GlobeIcon}
         tone="neutral"
-        isDarkMode={isDarkMode}
         footnote={
           yoy !== null && yoyBaseline ? (
             <span
               className={`inline-flex items-center ${
-                yoyRose
-                  ? isDarkMode
-                    ? "text-red-300"
-                    : "text-red-700"
-                  : isDarkMode
-                  ? "text-green-300"
-                  : "text-green-700"
+                yoyRose ? "text-red-700 dark:text-red-300" : "text-green-700 dark:text-green-300"
               }`}
             >
               <YoyIcon className="h-3 w-3 mr-1" aria-hidden="true" />
@@ -281,7 +236,6 @@ export const TariffStats = () => {
         }`}
         icon={BarChart2Icon}
         tone="escalation"
-        isDarkMode={isDarkMode}
         footnote={highestStartedOn ? `Effective since ${highestStartedOn}` : undefined}
       />
 
@@ -290,10 +244,10 @@ export const TariffStats = () => {
         value={
           <span className="flex items-center">
             <ArrowUpIcon
-              className={`h-5 w-5 mr-1 ${isDarkMode ? "text-red-400" : "text-red-600"}`}
+              className="h-5 w-5 mr-1 text-red-600 dark:text-red-400"
               aria-hidden="true"
             />
-            <span className={isDarkMode ? "text-red-400" : "text-red-600"}>
+            <span className="text-red-600 dark:text-red-400">
               {metrics.biggestIncreaseValue !== null
                 ? `${metrics.biggestIncreaseValue.toFixed(2)}%`
                 : "N/A"}
@@ -303,7 +257,6 @@ export const TariffStats = () => {
         detail={metrics.biggestIncreaseCommodity}
         icon={TrendingUpIcon}
         tone="escalation"
-        isDarkMode={isDarkMode}
         footnote={commodityQualifier(metrics.biggestIncreaseCommodity)}
       />
 
@@ -312,10 +265,10 @@ export const TariffStats = () => {
         value={
           <span className="flex items-center">
             <ArrowDownIcon
-              className={`h-5 w-5 mr-1 ${isDarkMode ? "text-green-400" : "text-green-600"}`}
+              className="h-5 w-5 mr-1 text-green-600 dark:text-green-400"
               aria-hidden="true"
             />
-            <span className={isDarkMode ? "text-green-400" : "text-green-600"}>
+            <span className="text-green-600 dark:text-green-400">
               {decrease !== null ? `${Math.abs(decrease).toFixed(2)}%` : "0.00%"}
             </span>
           </span>
@@ -323,7 +276,6 @@ export const TariffStats = () => {
         detail={decrease !== null ? metrics.biggestDecreaseCommodity : "No recent decreases"}
         icon={TrendingDownIcon}
         tone="relief"
-        isDarkMode={isDarkMode}
         footnote={
           decrease !== null
             ? commodityQualifier(metrics.biggestDecreaseCommodity)
