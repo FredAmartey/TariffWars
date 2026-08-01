@@ -59,6 +59,37 @@ interface MetricCardProps {
   isDarkMode: boolean;
 }
 
+/**
+ * The headline name of a commodity, without its qualifying parenthetical.
+ *
+ * The dataset encodes scope inside the name, e.g. "Pharmaceuticals (patented;
+ * EU, Japan, South Korea, Switzerland capped at 15%)". At card width that
+ * clamped to "...Switzerland capped at…", cutting immediately before the
+ * number and reading as though something were capped at an unstated value.
+ * The card is a summary, so it shows the head of the name; the full string
+ * stays on the element's `title` for hover.
+ */
+const shortCommodity = (name: string): string => {
+  const head = name.split(" (")[0].trim();
+  return head || name;
+};
+
+/**
+ * The qualifying clause the headline drops: scope, caps, expiry.
+ *
+ * This is the informative half of a commodity string, so it becomes the pill.
+ * The pills used to render the API's `biggest*Description`, which is built as
+ * `Largest increase imposed on ${commodity}.` — the line directly above with a
+ * prefix, under a card already titled "Biggest Increase". This says something
+ * the card does not already say.
+ */
+const commodityQualifier = (name: string): string | undefined => {
+  const open = name.indexOf(" (");
+  if (open === -1) return undefined;
+  const inner = name.slice(open + 2).replace(/\)\s*$/, "").trim();
+  return inner || undefined;
+};
+
 const MetricCard: React.FC<MetricCardProps> = ({
   title,
   value,
@@ -99,15 +130,16 @@ const MetricCard: React.FC<MetricCardProps> = ({
           className={`text-sm mt-1 line-clamp-2 ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}
           title={detail}
         >
-          {detail}
+          {typeof detail === "string" ? shortCommodity(detail) : detail}
         </p>
         {footnote && (
           <div
-            className={`mt-4 inline-flex items-center px-2 py-1 rounded-full text-xs ${
+            className={`mt-4 inline-flex max-w-full items-center px-2 py-1 rounded-full text-xs ${
               isDarkMode ? styles.pill.dark : styles.pill.light
             }`}
+            title={typeof footnote === "string" ? footnote : undefined}
           >
-            {footnote}
+            <span className="truncate">{footnote}</span>
           </div>
         )}
       </div>
@@ -272,7 +304,7 @@ export const TariffStats = () => {
         icon={TrendingUpIcon}
         tone="escalation"
         isDarkMode={isDarkMode}
-        footnote={metrics.biggestIncreaseDescription}
+        footnote={commodityQualifier(metrics.biggestIncreaseCommodity)}
       />
 
       <MetricCard
@@ -292,7 +324,11 @@ export const TariffStats = () => {
         icon={TrendingDownIcon}
         tone="relief"
         isDarkMode={isDarkMode}
-        footnote={decrease !== null ? metrics.biggestDecreaseDescription : "No decrease found"}
+        footnote={
+          decrease !== null
+            ? commodityQualifier(metrics.biggestDecreaseCommodity)
+            : "No decrease in any active tariff"
+        }
       />
     </div>
   );
