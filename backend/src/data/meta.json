@@ -1,24 +1,48 @@
 {
-  "lastUpdated": "2026-08-10",
+  "lastUpdated": "2026-08-31",
   "sources": [
     {
-      "name": "White House: Adjusting Imports of Polysilicon and its Derivatives into the United States",
-      "url": "https://www.whitehouse.gov/presidential-actions/2026/08/adjusting-imports-of-polysilicon-and-its-derivatives-into-the-united-states/"
+      "name": "White House: Temporary Suspension of Additional Duties to Offset Canadian Discrimination Against the Commerce of the United States with Respect to Alcoholic Beverages, Dairy, and Motor Vehicles",
+      "url": "https://www.whitehouse.gov/presidential-actions/2026/08/temporary-suspension-of-additional-duties-to-offset-canadian-discrimination-against-the-commerce-of-the-united-states-with-respect-to-alcoholic-beverages-dairy-and-motor-vehicles/"
     },
     {
-      "name": "GHY International: U.S. Imposes 15% Section 232 Tariff on Polysilicon and Its Derivatives Effective December 4, 2026",
-      "url": "https://www.ghy.com/trade-compliance/us-section-232-polysilicon-tariff/"
+      "name": "GHY International: U.S. Imposes 50% Section 338 Tariffs on Canadian Imports (Dairy, Alcoholic Beverages, and Motor Vehicles)",
+      "url": "https://www.ghy.com/trade-compliance/us-imposes-50-section-338-tariffs-on-canadian-imports-dairy-alcoholic-beverages-and-motor-vehicles/"
     },
     {
-      "name": "KPMG: United States adopts minimum import prices, duties, and investment incentives for polysilicon (solar) sector",
-      "url": "https://kpmg.com/us/en/taxnewsflash/news/2026/08/united-states-polysilicon-import-prices-duties-incentives.html"
+      "name": "Holland & Knight: 50 Percent Opening Bid — Canadian Imports Subject to Section 338 Tariffs Amid USMCA Talks",
+      "url": "https://www.hklaw.com/en/insights/publications/2026/07/50-percent-opening-bid-canadian-imports-subject-to-section-338-tariffs"
     },
     {
-      "name": "EY: US Section 232 proclamation establishes minimum import prices and a 15% tariff on polysilicon and derivative products",
-      "url": "https://taxnews.ey.com/news/2026-1695-us-section-232-proclamation-establishes-minimum-import-prices-and-a-15-percent-tariff-on-polysilicon-and-derivative-products"
+      "name": "White House: Adjusting Imports of Unmanned Aircraft Systems and Unmanned Aircraft Systems Components into the United States",
+      "url": "https://www.whitehouse.gov/presidential-actions/2026/08/adjusting-imports-of-unmanned-aircraft-systems-and-unmanned-aircraft-systems-components-into-the-united-states/"
     },
     {
-      "name": "White House: Presidential Actions (checked for any other tariff/trade proclamations Aug 3-10, 2026)",
+      "name": "KPMG: United States imposes Section 232 tariffs on unmanned aircraft systems (drones) and components",
+      "url": "https://kpmg.com/us/en/taxnewsflash/news/2026/08/united-states-section-232-tariffs-drones-components.html"
+    },
+    {
+      "name": "White House: To Facilitate Positive Adjustment to Competition from Imports of Quartz Surface Products",
+      "url": "https://www.whitehouse.gov/presidential-actions/2026/07/to-facilitate-positive-adjustment-to-competition-from-imports-of-quartz-surface-products/"
+    },
+    {
+      "name": "KPMG: United States adopts safeguard tariff-rate quota on imports of quartz surface products",
+      "url": "https://kpmg.com/us/en/taxnewsflash/news/2026/08/united-states-quartz-surface-products-safeguard-trq.html"
+    },
+    {
+      "name": "Stone World: Trump imposes four-year tariff-rate quota on imported quartz surface products",
+      "url": "https://www.stoneworld.com/articles/95779-trump-imposes-four-year-tariff-rate-quota-on-imported-quartz-surface-products"
+    },
+    {
+      "name": "Bloomberg: US Eyes China Overcapacity Tariffs of 7.5% Before Xi-Trump Talks",
+      "url": "https://www.bloomberg.com/news/articles/2026-08-24/us-eyes-china-overcapacity-tariffs-of-7-5-before-xi-trump-talks"
+    },
+    {
+      "name": "USTR: Initiation of Section 301 Investigation — Germany's Persistent Underpayment for Innovative Pharmaceutical Products",
+      "url": "https://ustr.gov/about/policy-offices/press-office/press-releases/2026/june/ustr-announces-initiation-section-301-investigation-germanys-persistent-underpayment-innovative"
+    },
+    {
+      "name": "White House: Presidential Actions (checked for tariff/trade proclamations Aug 10-31, 2026)",
       "url": "https://www.whitehouse.gov/presidential-actions/"
     },
     {
@@ -28,6 +52,10 @@
     {
       "name": "Yale Budget Lab: The State of U.S. Tariffs",
       "url": "https://budgetlab.yale.edu/research/state-us-tariffs"
+    },
+    {
+      "name": "PIIE: Trump's Tariff Revenue Tracker — How Much Is the US Collecting? Which Imports Are Hit?",
+      "url": "https://www.piie.com/research/piie-charts/2025/trumps-tariff-revenue-tracker-how-much-us-collecting-which-imports-are"
     }
   ]
 }

@@ -23,18 +23,19 @@ Semiconductors,USA,Global,25%,+25%,Active,New,"January 14, 2026"
 "Japanese Automobiles & Parts (Section 232 reduced under framework)",USA,Japan,15%,-10%,Active,Additional,"September 16, 2025"
 "South Korean Automobiles & Parts (Section 232 reduced under deal)",USA,South Korea,15%,-10%,Active,Additional,"November 2025"
 "Imports from 60 Economies (Section 301 forced-labor: 10% for 17 committed economies incl. Canada/Mexico/UK/India, 12.5% default; EU/Japan/Korea/Taiwan/Switzerland compound-capped)",USA,"60 Economies (99.4% of US imports; replaced expired Sec. 122 baseline)",12.5%,—,Active,New,"July 24, 2026"
-"Manufactured Goods (Section 301 excess-capacity investigation)",USA,"EU, Japan, Mexico, Vietnam, India + 11 others",N/A,—,Under Investigation,New,TBD
+"Manufactured Goods (Section 301 excess-capacity investigation; ~7.5% China-specific rate reported pending ahead of Sept. 24 Xi-Trump summit)",USA,"China, EU, Japan, Mexico, Vietnam, India + 10 others",N/A,—,Under Investigation,New,TBD
 "Pharmaceuticals (Section 301: German drug pricing)",USA,Germany,N/A,—,Under Investigation,New,TBD
 "All Goods from DST-Enacting Countries",USA,"Countries enacting digital services taxes",100%,+100%,Threatened,New,TBD
 "Brazilian Goods (Section 301: digital trade, IP, deforestation)",USA,Brazil,25%,+25%,Active,New,"July 22, 2026"
-"Canadian Motor Vehicles, Alcohol & Dairy (Section 338, overrides USMCA)",USA,Canada,50%,+50%,Proposed,New,"August 19, 2026"
+"Canadian Motor Vehicles, Alcohol & Dairy (Section 338, overrides USMCA; took effect Aug 22, 2026 after talks collapsed)",USA,Canada,50%,+50%,Active,New,"August 22, 2026"
 "Nicaraguan Goods (Section 301; 10% in 2027, 15% in 2028)",USA,Nicaragua,0%,—,Active,New,"January 1, 2026"
 "Small-Value Imports (<$800; de minimis suspended)",USA,Global,N/A,—,Active,Additional,"August 29, 2025"
 "Dairy Products (threat lapsed)",USA,Canada,250%,—,Withdrawn,New,TBD
 "Wine, Champagne & Spirits (superseded by EU deal)",USA,"France, Italy, Spain",200%,—,Withdrawn,New,TBD
 "Venezuela Oil Secondary Tariffs (IEEPA, terminated)",USA,"Countries buying Venezuelan oil",25%,—,Ended,New,"April 2, 2025"
-"Robotics, Wind Turbines, Drones, PPE (Section 232 probes)",USA,Global,N/A,—,Under Investigation,New,TBD
+"Robotics, Wind Turbines, PPE (Section 232 probes)",USA,Global,N/A,—,Under Investigation,New,TBD
+"Unmanned Aircraft Systems / Drones (Section 232; 100% on UAS over 25kg or with thermal imaging/docking stations/critical components, 25% on UAS 25kg or under)",USA,Global,100%,+100%,Proposed,New,"September 3, 2026"
 "Polysilicon & Derivatives (Section 232; MIP floor $21/kg polysilicon, $100/kg ingots/wafers, $0.22/watt cells, $0.38/watt modules; UK capped at 10%)",USA,Global,15%,+15%,Proposed,New,"December 4, 2026"
 "Critical Minerals (Section 232: negotiations directed)",USA,Global,N/A,—,Under Investigation,New,"January 14, 2026"
 "Generic Pharmaceuticals (0% for 2 years from Aug 2026, then 100%, then 200% from 2028)",USA,Global,0%,—,Active,New,"August 1, 2026"
-"Quartz Surface Products (Section 201 safeguard TRQ; 25% in-quota, 40% above-quota in Year 1, both declining 1pp/yr over 4 years; Australia/Canada/CAFTA-DR/Colombia/Israel/Mexico/Panama/Peru/South Korea/Singapore excluded)",USA,Global,40%,+40%,Proposed,New,"August 15, 2026"
+"Quartz Surface Products (Section 201 safeguard TRQ; 25% in-quota/50% above-quota in Year 1, declining to 19%/47% by Year 4; Australia/Canada/CAFTA-DR/Colombia/Israel/Jordan/Mexico/Panama/Peru/South Korea/Singapore/CBERA and eligible developing countries excluded)",USA,Global,50%,+50%,Active,New,"August 15, 2026"

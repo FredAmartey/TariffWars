@@ -40,5 +40,11 @@
     "activeAverageRate": 25.13,
     "activeCount": 21,
     "totalCount": 39
+  },
+  {
+    "date": "2026-08-31",
+    "activeAverageRate": 27.39,
+    "activeCount": 23,
+    "totalCount": 40
   }
 ]
