@@ -1,56 +1,60 @@
 {
-  "lastUpdated": "2026-09-07",
+  "lastUpdated": "2026-09-14",
   "sources": [
     {
-      "name": "White House: Further Ensuring Affordable Beef for the American Consumer",
-      "url": "https://www.whitehouse.gov/presidential-actions/2026/08/further-ensuring-affordable-beef-for-the-american-consumer/"
+      "name": "White House: Modifying the Scope of Products of Canada Subject to the Additional Duties Imposed to Offset Canadian Discrimination Against the United States with Respect to Motor Vehicles",
+      "url": "https://www.whitehouse.gov/presidential-actions/2026/09/modifying-the-scope-of-products-of-canada-subject-to-the-additional-duties-imposed-to-offset-canadian-discrimination-against-the-united-states-with-respect-to-motor-vehicles/"
     },
     {
-      "name": "Federal Register: Further Ensuring Affordable Beef for the American Consumer",
-      "url": "https://www.federalregister.gov/documents/2026/08/31/2026-17842/further-ensuring-affordable-beef-for-the-american-consumer"
+      "name": "White House: Presidential Actions (Sept 8, 2026 Canada proclamations on motor vehicles, alcoholic beverages, and dairy)",
+      "url": "https://www.whitehouse.gov/presidential-actions/"
     },
     {
-      "name": "Reuters/Newsweek: Trump Appears to Exclude Argentina From Cheap Beef Imports Plan",
-      "url": "https://www.newsweek.com/trump-appears-to-exclude-argentina-cheap-beef-imports-plan-12376199"
+      "name": "GHY: US Imposes 50% Section 338 Tariffs on Canadian Imports — Dairy, Alcoholic Beverages, and Motor Vehicles",
+      "url": "https://www.ghy.com/trade-compliance/us-imposes-50-section-338-tariffs-on-canadian-imports-dairy-alcoholic-beverages-and-motor-vehicles/"
+    },
+    {
+      "name": "KPMG: Canada announces counter-tariffs on U.S. goods",
+      "url": "https://kpmg.com/us/en/taxnewsflash/news/2026/08/canada-counter-tariffs-us-goods.html"
+    },
+    {
+      "name": "Blakes: Canada Imposes Counter-Tariffs on C$27.6-Billion of U.S. Imports, Effective September 8, 2026",
+      "url": "https://www.blakes.com/insights/canada-imposes-counter-tariffs-on-27-6-billion-of-u-s-imports-effective-september-8-2026/"
     },
     {
       "name": "Government of Canada: List of products from the United States subject to counter-tariffs effective September 8, 2026",
       "url": "https://www.canada.ca/en/department-finance/news/2026/08/list-of-products-from-the-united-states-subject-to-counter-tariffs-effective-september-8-2026.html"
     },
     {
-      "name": "Gowling WLG: Ottawa Unveils Calibrated Retaliatory Tariffs — What Canadian Businesses Need to Know",
-      "url": "https://gowlingwlg.com/en/insights-resources/articles/2026/ottawa-calibrated-retaliatory-tariffs"
+      "name": "CNBC: Canada's retaliatory tariffs worth CA$27.6 billion take effect as trade rift with U.S. deepens",
+      "url": "https://www.cnbc.com/2026/09/08/canada-retaliatory-tariffs.html"
     },
     {
-      "name": "Manufacturing Dive: Canada targets US steel and aluminum as part of retaliatory tariffs",
-      "url": "https://www.manufacturingdive.com/news/canada-targets-us-steel-aluminum-retaliatory-tariffs-september-2026/828812/"
+      "name": "Yahoo Finance/Bloomberg: US plans 7.5% China overcapacity tariff before Sept. 24 Xi-Trump summit",
+      "url": "https://finance.yahoo.com/economy/policy/articles/us-plans-7-5-china-161734641.html"
     },
     {
-      "name": "White House: Adjusting Imports of Unmanned Aircraft Systems and Unmanned Aircraft Systems Components into the United States",
-      "url": "https://www.whitehouse.gov/presidential-actions/2026/08/adjusting-imports-of-unmanned-aircraft-systems-and-unmanned-aircraft-systems-components-into-the-united-states/"
+      "name": "Yahoo Finance: China hopes to agree with US on tariff reductions 'at an early date'",
+      "url": "https://www.yahoo.com/news/articles/china-confirms-xi-trump-meeting-102132316.html"
     },
     {
-      "name": "KPMG: United States imposes Section 232 tariffs on unmanned aircraft systems (drones) and components",
-      "url": "https://kpmg.com/us/en/taxnewsflash/news/2026/08/united-states-section-232-tariffs-drones-components.html"
+      "name": "Mexico Business News: Mexico, US Set Fourth Round of USMCA Review Talks for September",
+      "url": "https://mexicobusiness.news/trade-and-investment/news/mexico-us-set-fourth-round-usmca-review-talks-september"
     },
     {
-      "name": "Mohawk Global: New Section 232 Tariffs on Drones and Drone Components Take Effect September 3",
-      "url": "https://mohawkglobal.com/word-from-the-white-house/new-section-232-tariffs-on-drones-and-drone-components-take-effect-september-3/"
+      "name": "India Briefing: US-India Strike Interim Trade Deal, Cut Tariffs to 18% (superseded — reciprocal tariff struck down by SCOTUS; India now under the July 24, 2026 Section 301 forced-labor baseline)",
+      "url": "https://www.india-briefing.com/news/us-india-interim-trade-agreement-18-percent-tariff-42514.html/"
     },
     {
-      "name": "Bloomberg: US Eyes China Overcapacity Tariffs of 7.5% Before Xi-Trump Talks",
-      "url": "https://www.bloomberg.com/news/articles/2026-08-24/us-eyes-china-overcapacity-tariffs-of-7-5-before-xi-trump-talks"
+      "name": "The Indian EYE: India-US trade pact hinges on preferential tariffs — Piyush Goyal",
+      "url": "https://theindianeye.com/2026/09/04/india-us-trade-pact-hinges-on-preferential-tariffs-piyush-goyal/"
     },
     {
-      "name": "USTR: Initiation of Section 301 Investigation — Germany's Persistent Underpayment for Innovative Pharmaceutical Products",
-      "url": "https://ustr.gov/about/policy-offices/press-office/press-releases/2026/june/ustr-announces-initiation-section-301-investigation-germanys-persistent-underpayment-innovative"
+      "name": "Trade Compliance Resource Hub: Trump 2.0 Tariff Tracker (updated Sept 10, 2026)",
+      "url": "https://www.tradecomplianceresourcehub.com/2026/09/10/trump-2-0-tariff-tracker/"
     },
     {
-      "name": "Trade Compliance Resource Hub: Trump 2.0 Tariff Tracker (updated Sept 2, 2026)",
-      "url": "https://www.tradecomplianceresourcehub.com/2026/09/02/trump-2-0-tariff-tracker/"
-    },
-    {
-      "name": "White House: Presidential Actions (checked for tariff/trade proclamations Aug 31 - Sept 7, 2026)",
+      "name": "White House: Presidential Actions",
       "url": "https://www.whitehouse.gov/presidential-actions/"
     },
     {
