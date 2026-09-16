@@ -4,6 +4,10 @@ name: data-freshness
 # notice: its prompt opens a GitHub issue when validation fails, so a run that
 # dies earlier (or never fires) leaves no trace. This job watches the dataset
 # from outside so silence can't be mistaken for success.
+#
+# It also clears its own alert. The first real one (#4) was filed on
+# 2026-08-20, the routine caught up on 2026-08-31, and the issue then sat open
+# through three more refreshes because nothing here ever closed it.
 
 on:
   schedule:
@@ -69,3 +73,17 @@ jobs:
             gh issue create --title "tariff data is stale (${AGE} days)" \
               --label stale-data --body "${BODY}"
           fi
+
+      - name: Close a resolved alert
+        if: steps.age.outputs.stale == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LAST: ${{ steps.age.outputs.last }}
+          AGE: ${{ steps.age.outputs.age }}
+        run: |
+          set -euo pipefail
+          # The alert step only ever keeps one open, but close every match so
+          # a hand-filed duplicate cannot keep the label lit after a refresh.
+          for NUMBER in $(gh issue list --state open --label stale-data --json number --jq '.[].number'); do
+            gh issue close "${NUMBER}" --reason completed --comment "Dataset refreshed: \`backend/src/data/meta.json\` lastUpdated is now **${LAST}** (${AGE} days ago). Closing."
+          done

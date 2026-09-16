@@ -98,7 +98,7 @@ Research the tariff landscape as of July 2026 and rebuild both CSVs with cited c
 | Validator fails in agent run | No push, GitHub issue with reason |
 | Sources inconclusive / contradictory | No push, GitHub issue |
 | Bad data pushed anyway | CI workflow fails on the push, visible in repo |
-| Agent run does not fire | Site keeps serving last good data; stamp date ages visibly |
+| Agent run does not fire | Site keeps serving last good data; stamp date ages visibly. `data-freshness.yml` checks `meta.json` daily and files one `stale-data` issue once the date is more than 9 days old (comments on it daily after that), then closes it on the first run that finds fresh data |
 
 ## Testing
 
