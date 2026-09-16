@@ -5,6 +5,7 @@ import { describe, test, expect, beforeEach, vi } from "vitest";
 import { isSafeUrl, readBookmarks, cleanSummary } from "../components/NewsFeed";
 import { isInactive } from "../components/dashboard/TariffTable";
 import { sortOptionsFor } from "../components/dashboard/TariffTable";
+import { filterParams } from "../lib/filterParams";
 
 const BOOKMARK_KEY = "tariffNewsBookmarks";
 
@@ -235,5 +236,26 @@ describe("sortOptionsFor", () => {
       value: "commodity-asc",
       label: "Commodity (A-Z)",
     });
+  });
+});
+
+describe("filterParams", () => {
+  test("flattens the filter list into the field/value pairs the API takes", () => {
+    expect(
+      filterParams([
+        { field: "status", value: "Active" },
+        { field: "type", value: "product" },
+      ])
+    ).toEqual({ status: "Active", type: "product" });
+  });
+
+  test("is empty with no filters, and the last value wins for a repeated field", () => {
+    expect(filterParams([])).toEqual({});
+    expect(
+      filterParams([
+        { field: "status", value: "Active" },
+        { field: "status", value: "Ended" },
+      ])
+    ).toEqual({ status: "Ended" });
   });
 });

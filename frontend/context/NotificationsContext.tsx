@@ -1,4 +1,4 @@
-import React, { useCallback, useState, createContext, useContext } from 'react';
+import React, { useCallback, useMemo, useState, createContext, useContext } from 'react';
 interface Notification {
   id: string;
   message: string;
@@ -41,12 +41,12 @@ export const NotificationsProvider: React.FC<{
       removeNotification(id);
     }, 5000);
   }, [removeNotification]);
-  return <NotificationsContext.Provider value={{
-    notifications,
-    addNotification,
-    removeNotification
-  }}>
-      {children}
-    </NotificationsContext.Provider>;
+  // Same reasoning as ThemeContext: the callbacks are already stable, so the
+  // value only needs to change when the list does.
+  const value = useMemo(
+    () => ({ notifications, addNotification, removeNotification }),
+    [notifications, addNotification, removeNotification]
+  );
+  return <NotificationsContext.Provider value={value}>{children}</NotificationsContext.Provider>;
 };
 export const useNotifications = () => useContext(NotificationsContext);
