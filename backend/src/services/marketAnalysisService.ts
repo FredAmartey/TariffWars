@@ -362,8 +362,13 @@ export class MarketAnalysisService {
 
   async getMarketOverview(): Promise<MarketOverview> {
     return this.getCachedData("marketOverview", async () => {
-      const tariffRates = await this.tariffService.getTariffRates({ itemsPerPage: 1000 });
-      const news = await this.newsService.getTariffNews();
+      // The tariff read and the news read do not depend on each other, so
+      // they run together here and in the other builders below. Awaiting them
+      // in turn made every cold analysis wait for both, one after the other.
+      const [tariffRates, news] = await Promise.all([
+        this.tariffService.getTariffRates({ itemsPerPage: 1000 }),
+        this.newsService.getTariffNews(),
+      ]);
 
       // Active-only, matching the Key Metrics card and the copy that renders it.
       const collected = this.collected(tariffRates.data);
@@ -441,12 +446,11 @@ export class MarketAnalysisService {
     return this.getCachedData("commodityAnalysis", async () => {
       const tariffRates = await this.tariffService.getTariffRates({ itemsPerPage: 1000 });
 
-      const uniqueCommodities = Array.from(new Set(tariffRates.data.map((t) => t.commodity))).slice(
-        0,
-        10
+      const sampledCommodities = new Set(
+        Array.from(new Set(tariffRates.data.map((t) => t.commodity))).slice(0, 10)
       );
       const commodityDataSample = tariffRates.data.filter((t) =>
-        uniqueCommodities.includes(t.commodity)
+        sampledCommodities.has(t.commodity)
       );
 
       const prompt = `Based on the following tariff data sample for the current period (${this.dataGrounding()}), generate a detailed commodity analysis for 5-7 major commodities mentioned or implied:
@@ -476,8 +480,10 @@ export class MarketAnalysisService {
 
   async getRegionalAnalysis(): Promise<RegionalAnalysis[]> {
     return this.getCachedData("regionalAnalysis", async () => {
-      const tariffRates = await this.tariffService.getTariffRates({ itemsPerPage: 1000 });
-      const news = await this.newsService.getTariffNews();
+      const [tariffRates, news] = await Promise.all([
+        this.tariffService.getTariffRates({ itemsPerPage: 1000 }),
+        this.newsService.getTariffNews(),
+      ]);
 
       // Only tariffs actually being collected. Averaging every row reported
       // North America at 108.3%, which was a withdrawn 250% dairy threat and a
@@ -551,8 +557,10 @@ export class MarketAnalysisService {
 
   async getMarketPredictions(): Promise<MarketPrediction[]> {
     return this.getCachedData("marketPredictions", async () => {
-      const tariffRates = await this.tariffService.getTariffRates({ itemsPerPage: 1000 });
-      const news = await this.newsService.getTariffNews();
+      const [tariffRates, news] = await Promise.all([
+        this.tariffService.getTariffRates({ itemsPerPage: 1000 }),
+        this.newsService.getTariffNews(),
+      ]);
 
       const collected = this.collected(tariffRates.data);
 
@@ -673,8 +681,10 @@ export class MarketAnalysisService {
     return this.getCachedData(
       "aiInsights",
       async () => {
-        const tariffRates = await this.tariffService.getTariffRates({ itemsPerPage: 50 });
-        const news = await this.newsService.getTariffNews();
+        const [tariffRates, news] = await Promise.all([
+          this.tariffService.getTariffRates({ itemsPerPage: 50 }),
+          this.newsService.getTariffNews(),
+        ]);
 
         const collected = this.collected(tariffRates.data);
 

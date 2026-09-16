@@ -12,6 +12,7 @@ import {
 import { apiService } from "../../services/api";
 import type { TariffEntry } from "../../types/index";
 import debounce from "lodash/debounce";
+import { filterParams } from "@/lib/filterParams";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -429,6 +430,96 @@ const PRODUCT_COLUMNS: Array<{
     { key: "effectiveDate", label: "EFFECTIVE DATE", compact: true, width: 12 },
   ];
 
+// Module scope, not inside TariffTable: defined there it was a new component
+// type on every render, so React unmounted and remounted every card each time
+// the table re-rendered.
+const MobileTariffCard: React.FC<{
+  entry: TariffEntry;
+  activeTab: TabType;
+}> = ({ entry, activeTab }) => {
+  const cardBg = "bg-card border-border";
+  const labelColor = "text-muted-foreground";
+  const valueColor = "text-foreground";
+  return (
+    <div className={`border rounded-lg p-4 ${cardBg}`}>
+      {activeTab === "products" ? (
+        <>
+          <div className="mb-2">
+            <span className={`text-xs font-medium ${labelColor}`}>Commodity</span>
+            <p className={`font-semibold ${valueColor}`}>{entry.commodity}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            <div>
+              <span className={`block text-xs ${labelColor}`}>Rate</span>
+              <RateBadge entry={entry} />
+            </div>
+            <div>
+              <span className={`block text-xs ${labelColor}`}>Status</span>
+              <StatusBadge status={entry.status} />
+            </div>
+            <div>
+              <span className={`block text-xs ${labelColor}`}>Effective Date</span>
+              <p className={valueColor}>{entry.effectiveDate || "N/A"}</p>
+            </div>
+            <div>
+              <span className={`block text-xs ${labelColor}`}>To</span>
+              <p className={valueColor}>{entry.to || "N/A"}</p>
+            </div>
+            <div>
+              <span className={`block text-xs ${labelColor}`}>Tariff From</span>
+              <p className={valueColor}>{entry.tariffOrigin || "N/A"}</p>
+            </div>
+            <div>
+              <span className={`block text-xs ${labelColor}`}>Type</span>
+              <p className={valueColor} title={TARIFF_TYPE_TOOLTIP}>
+                {entry.nature || "N/A"}
+              </p>
+            </div>
+            {entry.changeDisplay && entry.changeDisplay !== "–" && (
+              <div>
+                <span className={`block text-xs ${labelColor}`}>Change</span>
+                <ChangeCell display={entry.changeDisplay} />
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="mb-2">
+            <span className={`text-xs font-medium ${labelColor}`}>Country</span>
+            <p className={`font-semibold ${valueColor}`}>{entry.country}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            <div>
+              <span className={`block text-xs ${labelColor}`}>Rate (by USA)</span>
+              <RateBadge entry={entry} />
+            </div>
+            <div>
+              <span className={`block text-xs ${labelColor}`}>Status</span>
+              <StatusBadge status={entry.status} />
+            </div>
+            <div>
+              <span className={`block text-xs ${labelColor}`}>Rate (on USA)</span>
+              <CountryTariffBadge value={entry.countrysTariffOnUS} />
+            </div>
+            <div>
+              <span className={`block text-xs ${labelColor}`}>Key Sectors</span>
+              <p className={valueColor}>{entry.keyAffectedSectors}</p>
+            </div>
+
+            {entry.marketImpact && (
+              <div className="col-span-2">
+                <span className={`block text-xs ${labelColor}`}>Market Impact</span>
+                <MarketImpactBadge entry={entry} />
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 export const TariffTable: React.FC<TariffTableProps> = ({
   searchTerm = "",
   sortField = "effectiveDate",
@@ -520,13 +611,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
         page,
         itemsPerPage,
         type: (activeTab === "countries" ? "country" : "product") as "country" | "product",
-        ...filters.reduce(
-          (acc, filter) => ({
-            ...acc,
-            [filter.field]: filter.value,
-          }),
-          {}
-        ),
+        ...filterParams(filters),
       };
 
       const response = await apiService.getTariffRates(apiParams);
@@ -554,12 +639,14 @@ export const TariffTable: React.FC<TariffTableProps> = ({
         setTotalItems(0);
         onTotalPagesChange?.(1);
       }
-      setIsLoading(false);
     } catch (err) {
       if (isStale()) return;
       setError("Failed to load tariff data. Please try again.");
       console.error("Error fetching tariff data:", err);
-      setIsLoading(false);
+    } finally {
+      // Cleared on both paths from one place. A superseded request leaves the
+      // flag to the newer one still in flight.
+      if (!isStale()) setIsLoading(false);
     }
     // `filters` is read above but `filtersKey` is the dependency on purpose:
     // the key is its serialised value, so it changes exactly when the filters
@@ -584,7 +671,13 @@ export const TariffTable: React.FC<TariffTableProps> = ({
   // same 500ms timer made each of them wait for a delay that exists to absorb
   // typing, on top of the starvation described on NO_FILTERS above.
   const fetchRef = useRef(fetchData);
-  fetchRef.current = fetchData;
+  // Written from an effect, not during render: React may replay or throw away
+  // a render, and a ref assigned there could point at a `fetchData` from a
+  // render that never committed. Declared ahead of the effects that read it;
+  // effects run in declaration order, so it is current by the time they do.
+  useEffect(() => {
+    fetchRef.current = fetchData;
+  });
 
   const debouncedSearchFetch = useMemo(
     // Reads through a ref so the debounced function keeps a stable identity;
@@ -611,16 +704,6 @@ export const TariffTable: React.FC<TariffTableProps> = ({
     setLocalSortDirection(sortDirection);
   }, [sortField, sortDirection]);
 
-  // Switching tabs returns to page 1. `page` is read but deliberately not a
-  // dependency: including it would re-run this on every page change and pin
-  // the user to page 1.
-  useEffect(() => {
-    if (page !== 1) {
-      onPageChange(1);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, onPageChange]);
-
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
@@ -630,92 +713,6 @@ export const TariffTable: React.FC<TariffTableProps> = ({
 
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
 
-  const MobileTariffCard: React.FC<{
-    entry: TariffEntry;
-    activeTab: TabType;
-  }> = ({ entry, activeTab }) => {
-    const cardBg = "bg-card border-border";
-    const labelColor = "text-muted-foreground";
-    const valueColor = "text-foreground";
-    return (
-      <div className={`border rounded-lg p-4 ${cardBg}`}>
-        {activeTab === "products" ? (
-          <>
-            <div className="mb-2">
-              <span className={`text-xs font-medium ${labelColor}`}>Commodity</span>
-              <p className={`font-semibold ${valueColor}`}>{entry.commodity}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-              <div>
-                <span className={`block text-xs ${labelColor}`}>Rate</span>
-                <RateBadge entry={entry} />
-              </div>
-              <div>
-                <span className={`block text-xs ${labelColor}`}>Status</span>
-                <StatusBadge status={entry.status} />
-              </div>
-              <div>
-                <span className={`block text-xs ${labelColor}`}>Effective Date</span>
-                <p className={valueColor}>{entry.effectiveDate || "N/A"}</p>
-              </div>
-              <div>
-                <span className={`block text-xs ${labelColor}`}>To</span>
-                <p className={valueColor}>{entry.to || "N/A"}</p>
-              </div>
-              <div>
-                <span className={`block text-xs ${labelColor}`}>Tariff From</span>
-                <p className={valueColor}>{entry.tariffOrigin || "N/A"}</p>
-              </div>
-              <div>
-                <span className={`block text-xs ${labelColor}`}>Type</span>
-                <p className={valueColor} title={TARIFF_TYPE_TOOLTIP}>
-                  {entry.nature || "N/A"}
-                </p>
-              </div>
-              {entry.changeDisplay && entry.changeDisplay !== "–" && (
-                <div>
-                  <span className={`block text-xs ${labelColor}`}>Change</span>
-                  <ChangeCell display={entry.changeDisplay} />
-                </div>
-              )}
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="mb-2">
-              <span className={`text-xs font-medium ${labelColor}`}>Country</span>
-              <p className={`font-semibold ${valueColor}`}>{entry.country}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-              <div>
-                <span className={`block text-xs ${labelColor}`}>Rate (by USA)</span>
-                <RateBadge entry={entry} />
-              </div>
-              <div>
-                <span className={`block text-xs ${labelColor}`}>Status</span>
-                <StatusBadge status={entry.status} />
-              </div>
-              <div>
-                <span className={`block text-xs ${labelColor}`}>Rate (on USA)</span>
-                <CountryTariffBadge value={entry.countrysTariffOnUS} />
-              </div>
-              <div>
-                <span className={`block text-xs ${labelColor}`}>Key Sectors</span>
-                <p className={valueColor}>{entry.keyAffectedSectors}</p>
-              </div>
-
-              {entry.marketImpact && (
-                <div className="col-span-2">
-                  <span className={`block text-xs ${labelColor}`}>Market Impact</span>
-                  <MarketImpactBadge entry={entry} />
-                </div>
-              )}
-            </div>
-          </>
-        )}
-      </div>
-    );
-  };
 
   if (isLoading && !data.length) {
     return (
@@ -804,6 +801,7 @@ export const TariffTable: React.FC<TariffTableProps> = ({
           const next = value as TabType;
           setActiveTab(next);
           onDatasetChange?.(next === "products" ? "product" : "country");
+          // Switching datasets returns to page 1.
           onPageChange(1);
         }}
         className="mb-4"
