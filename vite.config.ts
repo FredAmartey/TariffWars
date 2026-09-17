@@ -11,7 +11,7 @@ export default defineConfig({
   resolve: {
     alias: {
       // Source root is `frontend/`, not the `src/` shadcn docs assume.
-      "@": path.resolve(__dirname, "./frontend"),
+      "@": path.resolve(import.meta.dirname, "./frontend"),
     },
   },
   // Tailwind v4 CSS is handled entirely by the @tailwindcss/vite plugin above,
