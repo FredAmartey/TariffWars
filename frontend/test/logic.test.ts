@@ -6,6 +6,7 @@ import { isSafeUrl, readBookmarks, cleanSummary } from "../components/NewsFeed";
 import { isInactive } from "../components/dashboard/TariffTable";
 import { sortOptionsFor } from "../components/dashboard/TariffTable";
 import { filterParams } from "../lib/filterParams";
+import { dedupeSources } from "../lib/sources";
 
 const BOOKMARK_KEY = "tariffNewsBookmarks";
 
@@ -257,5 +258,25 @@ describe("filterParams", () => {
         { field: "status", value: "Ended" },
       ])
     ).toEqual({ status: "Ended" });
+  });
+});
+
+describe("dedupeSources", () => {
+  test("keeps the first entry for a repeated url and preserves order", () => {
+    const sources = [
+      { name: "A", url: "https://example.com/a" },
+      { name: "B", url: "https://example.com/b" },
+      { name: "A again", url: "https://example.com/a" },
+    ];
+    expect(dedupeSources(sources)).toEqual([sources[0], sources[1]]);
+  });
+
+  test("leaves a list with distinct urls untouched", () => {
+    const sources = [
+      { name: "A", url: "https://example.com/a" },
+      { name: "B", url: "https://example.com/b" },
+    ];
+    expect(dedupeSources(sources)).toEqual(sources);
+    expect(dedupeSources([])).toEqual([]);
   });
 });
