@@ -217,12 +217,24 @@ try {
   if (!Array.isArray(meta.sources) || meta.sources.length === 0) {
     fail("meta.json: sources must be a non-empty array");
   } else {
+    const seenUrls = new Map();
     meta.sources.forEach((s, i) => {
       if (!s || typeof s.name !== "string" || s.name.trim() === "") {
         fail(`meta.json: sources[${i}].name missing`);
       }
       if (!s || typeof s.url !== "string" || !s.url.startsWith("https://")) {
         fail(`meta.json: sources[${i}].url must be https`);
+      }
+      // A warning, not a failure: the frontend collapses repeats, and blocking
+      // a whole weekly refresh over a duplicated link would cost more than the
+      // duplicate does. The September 2026 refresh listed
+      // whitehouse.gov/presidential-actions/ twice under two names.
+      if (s && typeof s.url === "string") {
+        if (seenUrls.has(s.url)) {
+          console.warn(`warn: meta.json: sources[${i}] repeats the url of sources[${seenUrls.get(s.url)}] (${s.url})`);
+        } else {
+          seenUrls.set(s.url, i);
+        }
       }
     });
   }

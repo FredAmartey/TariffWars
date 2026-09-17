@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { apiService } from "../../services/api";
 import { Badge } from "@/components/ui/badge";
+import { dedupeSources } from "@/lib/sources";
 
 interface TariffMeta {
   lastUpdated: string;
@@ -41,6 +42,7 @@ export const DataFreshness: React.FC = () => {
 
   if (!meta) return null;
 
+  const sources = dedupeSources(meta.sources);
   const parsed = new Date(`${meta.lastUpdated}T00:00:00`);
   const formatted = isNaN(parsed.getTime())
     ? meta.lastUpdated
@@ -51,17 +53,17 @@ export const DataFreshness: React.FC = () => {
       <Badge className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
         Data updated {formatted}
       </Badge>
-      {meta.sources.length > 0 && (
+      {sources.length > 0 && (
         // Every source's full headline used to be rendered inline, as one run
         // of a dozen underlined sentences. On a phone that block ran ~700px:
         // longer than the table it was annotating. Publisher names, folded
         // away, carry the same provenance in a line.
         <details className="mt-2">
           <summary className="cursor-pointer underline hover:no-underline w-fit">
-            {meta.sources.length} source{meta.sources.length === 1 ? "" : "s"}
+            {sources.length} source{sources.length === 1 ? "" : "s"}
           </summary>
           <ul className="mt-1 space-y-1">
-            {meta.sources.map((s) => (
+            {sources.map((s) => (
               <li key={s.url}>
                 <a
                   href={s.url}
