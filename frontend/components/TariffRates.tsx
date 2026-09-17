@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { TariffTable, sortOptionsFor } from "./dashboard/TariffTable";
+import { TariffTable } from "./dashboard/TariffTable";
+import { sortOptionsFor } from "@/lib/tariffs";
 import { Modal } from "./Modal";
 import { DialogFooter } from "@/components/ui/dialog";
 import { SearchIcon, FilterIcon, XIcon, SlidersIcon } from "lucide-react";
@@ -100,8 +101,9 @@ export const TariffRates = () => {
     }
   };
 
-  const handleRemoveFilter = (index: number) => {
-    setFilters(filters.filter((_, i) => i !== index));
+  // One filter per field (see handleAddFilter), so the field is the identity.
+  const handleRemoveFilter = (field: string) => {
+    setFilters(filters.filter((f) => f.field !== field));
     setCurrentPage(1);
   };
 
@@ -201,9 +203,9 @@ export const TariffRates = () => {
             </div>
             {filters.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
-                {filters.map((filter, index) => (
+                {filters.map((filter) => (
                   <Badge
-                    key={index}
+                    key={filter.field}
                     className="h-7 gap-1 border-purple-400 bg-purple-100 pr-1 pl-3 text-sm text-purple-900 dark:border-purple-700/50 dark:bg-purple-800/50 dark:text-purple-100"
                   >
                     <span className="capitalize">
@@ -214,7 +216,7 @@ export const TariffRates = () => {
                     <Button
                       variant="ghost"
                       size="icon-xs"
-                      onClick={() => handleRemoveFilter(index)}
+                      onClick={() => handleRemoveFilter(filter.field)}
                       aria-label={`Remove filter ${filter.field}: ${filter.value}`}
                       className="rounded-full hover:bg-purple-300 dark:hover:bg-purple-700/70"
                     >

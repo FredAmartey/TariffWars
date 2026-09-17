@@ -381,7 +381,7 @@ export const AffectedStocks: React.FC = () => {
             const isDuplicate = animate && index >= filteredData.length;
             return (
               <a
-                key={`${stock.symbol}-${index}`}
+                key={`${stock.symbol}-${isDuplicate ? "loop" : "first"}`}
                 href={quoteUrl(stock.symbol)}
                 target="_blank"
                 rel="noopener noreferrer"

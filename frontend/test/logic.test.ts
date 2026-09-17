@@ -2,9 +2,8 @@
 // no render, no layout, just the functions that decide what data reaches the
 // user and how it is shaped once it does.
 import { describe, test, expect, beforeEach, vi } from "vitest";
-import { isSafeUrl, readBookmarks, cleanSummary } from "../components/NewsFeed";
-import { isInactive } from "../components/dashboard/TariffTable";
-import { sortOptionsFor } from "../components/dashboard/TariffTable";
+import { isSafeUrl, readBookmarks, cleanSummary } from "../lib/news";
+import { isInactive, sortOptionsFor } from "../lib/tariffs";
 import { filterParams } from "../lib/filterParams";
 
 const BOOKMARK_KEY = "tariffNewsBookmarks";

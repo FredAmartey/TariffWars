@@ -14,17 +14,13 @@ import Dashboard from "./components/Dashboard";
 import { TariffRates } from "./components/TariffRates";
 import { NewsFeed } from "./components/NewsFeed";
 import { NotificationsProvider } from "./context/NotificationsContext";
-import { ThemeContext, ThemeProvider } from "./context/ThemeContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { Notifications } from "./components/Notifications";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Footer } from "./components/Footer";
 import { MenuIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
-
-// Re-exported so the existing `import { ThemeContext } from "../App"` /
-// `"../../App"` lines across 12 components keep working unchanged.
-export { ThemeContext };
 
 const getTabFromPathname = (pathname: string): string => {
   if (pathname.startsWith("/tariff-rates")) {

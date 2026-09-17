@@ -5,7 +5,7 @@ import { DataFreshness } from "./dashboard/DataFreshness";
 import { NewsFeed } from "./NewsFeed";
 import { AIInsights } from "./dashboard/AIInsights";
 import { DetailedMarketAnalysis } from "./dashboard/DetailedMarketAnalysis";
-import { ThemeContext } from "../App";
+import { ThemeContext } from "../context/theme";
 import { useNotifications } from "../context/NotificationsContext";
 import {
   DownloadIcon,
