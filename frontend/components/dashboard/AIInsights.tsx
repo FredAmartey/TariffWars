@@ -130,8 +130,8 @@ export const AIInsights = ({ showDetailedAnalysis }: AIInsightsProps) => {
 
       {!isLoading && !error && (
         <div className="space-y-4">
-          {aiInsights.map((insight, index) => (
-            <div key={index} className={`p-4 rounded-lg ${getStyle(insight.type)}`}>
+          {aiInsights.map((insight) => (
+            <div key={`${insight.type}-${insight.text}`} className={`p-4 rounded-lg ${getStyle(insight.type)}`}>
               <div className="flex items-start">
                 <div className={`p-1.5 rounded-full ${getIconBgStyle(insight.type)} mt-0.5 mr-3`}>
                   {getIcon(insight.type)}

@@ -188,8 +188,8 @@ const OverviewTab = ({ data }: { data: MarketOverview | null }) => {
                 </h4>
                 <ul className="list-disc pl-5 text-sm space-y-1 text-muted-foreground">
                   {highRiskSectors.length > 0 ? (
-                    highRiskSectors.map((sector, index) => (
-                      <li key={index}>
+                    highRiskSectors.map((sector) => (
+                      <li key={sector.name}>
                         {sector.name} ({sector.tariffIncrease}% tariff increase)
                       </li>
                     ))
@@ -211,8 +211,8 @@ const OverviewTab = ({ data }: { data: MarketOverview | null }) => {
                 </h4>
                 <ul className="list-disc pl-5 text-sm space-y-1 text-muted-foreground">
                   {growthOpportunities.length > 0 ? (
-                    growthOpportunities.map((opportunity, index) => (
-                      <li key={index}>
+                    growthOpportunities.map((opportunity) => (
+                      <li key={opportunity.name}>
                         {opportunity.name} ({opportunity.tariffReduction}% tariff reduction)
                       </li>
                     ))
@@ -307,8 +307,8 @@ const CommoditiesTab = ({ data }: { data: CommodityAnalysis[] }) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((item, index) => (
-              <TableRow key={index}>
+            {data.map((item) => (
+              <TableRow key={item.name}>
                 {/* px-3, not the px-6 this carried while it lived in a
                     full-width page: five columns at 48px of horizontal padding
                     each overflowed the dialog and clipped the Outlook column
@@ -342,10 +342,10 @@ const RegionsTab = ({ data }: { data: RegionalAnalysis[] }) => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {data.map((region, index) => {
+        {data.map((region) => {
           const theme = getRegionTheme(region.region);
           return (
-          <div key={index} className={`p-5 rounded-lg ${theme.card}`}>
+          <div key={region.region} className={`p-5 rounded-lg ${theme.card}`}>
             <div className="flex items-center mb-4">
               <div className={`p-2 rounded-full ${theme.chip}`}>
                 <Globe2Icon className={`h-5 w-5 ${theme.icon}`} aria-hidden="true" />
@@ -415,10 +415,10 @@ const PredictionsTab = ({ data }: { data: MarketPrediction[] }) => {
           model predicts the following tariff developments over the next 12 months:
         </p>
         <div className="space-y-4">
-          {data.map((prediction, index) => {
+          {data.map((prediction) => {
             const style = TIMEFRAME_STYLES[prediction.timeframe];
             return (
-              <div key={index} className="flex items-start">
+              <div key={prediction.timeframe} className="flex items-start">
                 <div className={`p-1.5 rounded-full ${style.chip} mt-0.5 mr-3`}>
                   {prediction.timeframe === "long-term" ? (
                     <TrendingDownIcon className={`h-4 w-4 ${style.icon}`} />
@@ -432,8 +432,8 @@ const PredictionsTab = ({ data }: { data: MarketPrediction[] }) => {
                     Predictions
                   </h4>
                   <ul className="list-disc pl-5 text-sm space-y-1 text-muted-foreground">
-                    {prediction.predictions.map((p, i) => (
-                      <li key={i}>{p}</li>
+                    {prediction.predictions.map((p) => (
+                      <li key={p}>{p}</li>
                     ))}
                   </ul>
                   <p className="text-xs mt-2 text-muted-foreground">

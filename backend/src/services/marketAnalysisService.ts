@@ -500,9 +500,11 @@ export class MarketAnalysisService {
         "Global",
         "Other",
       ];
+      // Each row's regions are resolved once, not once per region bucket.
+      const regionSets = collected.map((t) => new Set(this.regionsFor(t)));
       const regionalData = regions
         .map((region) => {
-          const regionTariffs = collected.filter((t) => this.regionsFor(t).includes(region));
+          const regionTariffs = collected.filter((_, i) => regionSets[i].has(region));
           return {
             region,
             avgRate: +this.calculateAverageTariffRate(regionTariffs).toFixed(2),

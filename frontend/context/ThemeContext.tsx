@@ -1,18 +1,7 @@
-import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ThemeContext, type Theme } from './theme';
 
 const STORAGE_KEY = 'tariffwars-theme';
-
-type Theme = 'light' | 'dark';
-
-interface ThemeContextType {
-  theme: Theme;
-  toggleTheme: () => void;
-}
-
-export const ThemeContext = createContext<ThemeContextType>({
-  theme: 'dark',
-  toggleTheme: () => {},
-});
 
 function getInitialTheme(): Theme {
   if (typeof window === 'undefined') return 'dark';

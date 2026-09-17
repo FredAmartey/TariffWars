@@ -1,19 +1,5 @@
-import React, { useCallback, useMemo, useState, createContext, useContext } from 'react';
-interface Notification {
-  id: string;
-  message: string;
-  type: 'success' | 'error' | 'info' | 'warning';
-}
-interface NotificationsContextType {
-  notifications: Notification[];
-  addNotification: (message: string, type: Notification['type']) => void;
-  removeNotification: (id: string) => void;
-}
-export const NotificationsContext = createContext<NotificationsContextType>({
-  notifications: [],
-  addNotification: () => {},
-  removeNotification: () => {}
-});
+import React, { useCallback, useMemo, useState, useContext } from 'react';
+import { NotificationsContext, type Notification } from './notifications';
 export const NotificationsProvider: React.FC<{
   children: React.ReactNode;
 }> = ({

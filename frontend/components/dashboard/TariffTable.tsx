@@ -13,6 +13,7 @@ import { apiService } from "../../services/api";
 import type { TariffEntry } from "../../types/index";
 import debounce from "lodash/debounce";
 import { filterParams } from "@/lib/filterParams";
+import { isInactive } from "@/lib/tariffs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -55,17 +56,6 @@ interface TariffTableProps {
 }
 
 type TabType = "countries" | "products";
-
-/**
- * Statuses where no duty is actually being collected.
- *
- * Their recorded rate is history, not a price: a withdrawn 250% threat was
- * rendered in the same alarm-red as a live 250% tariff, and under the default
- * "Highest Rate First" sort two withdrawn rows led the page.
- */
-const INACTIVE_STATUSES = new Set(["Withdrawn", "Ended", "Suspended", "Paused", "Expired"]);
-
-export const isInactive = (status: string | undefined) => INACTIVE_STATUSES.has(status ?? "");
 
 // Carries a border because `--muted` is within 1.09:1 of the card it sits on,
 // so without one the chip has no visible edge and an inactive status reads as
@@ -141,54 +131,6 @@ const marketImpactClass = (entry: TariffEntry): string => {
   }
   return MUTED_BADGE;
 };
-
-/** Human labels for every sortable field, shared by the table and its owners. */
-const COLUMN_LABELS: Record<string, string> = {
-  commodity: "Commodity",
-  tariffOrigin: "Tariff from",
-  to: "Target",
-  rate: "Rate",
-  changeDisplay: "Change",
-  status: "Status",
-  nature: "Type",
-  effectiveDate: "Effective date",
-  country: "Country",
-  rateDisplay: "Rate imposed by USA",
-  countrysTariffOnUS: "Rate imposed on USA",
-  keyAffectedSectors: "Key sectors",
-  marketImpact: "Market impact",
-  responseType: "Response type",
-};
-
-const SORT_PRESETS = [
-  { value: "rate-desc", label: "Highest Rate First" },
-  { value: "rate-asc", label: "Lowest Rate First" },
-  { value: "changeDisplay-desc", label: "Biggest Change First" },
-  { value: "changeDisplay-asc", label: "Smallest Change First" },
-  { value: "effectiveDate-desc", label: "Newest First" },
-  { value: "effectiveDate-asc", label: "Oldest First" },
-];
-
-/**
- * The preset list, plus the current order when a column header picked
- * something outside it.
- *
- * A `<select>` whose value matches no option silently displays its first one,
- * so sorting by, say, Commodity from a header would have left the control
- * claiming "Highest Rate First".
- */
-export function sortOptionsFor(
-  field: string,
-  direction: "asc" | "desc"
-): Array<{ value: string; label: string }> {
-  const current = `${field}-${direction}`;
-  if (SORT_PRESETS.some((option) => option.value === current)) return SORT_PRESETS;
-  const label = COLUMN_LABELS[field] ?? field;
-  return [
-    ...SORT_PRESETS,
-    { value: current, label: `${label} (${direction === "asc" ? "A-Z" : "Z-A"})` },
-  ];
-}
 
 /**
  * Frozen module-level default for an omitted `filters` prop.
