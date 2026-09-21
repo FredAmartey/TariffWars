@@ -1,57 +1,57 @@
 {
-  "lastUpdated": "2026-09-14",
+  "lastUpdated": "2026-09-21",
   "sources": [
     {
-      "name": "White House: Modifying the Scope of Products of Canada Subject to the Additional Duties Imposed to Offset Canadian Discrimination Against the United States with Respect to Motor Vehicles",
-      "url": "https://www.whitehouse.gov/presidential-actions/2026/09/modifying-the-scope-of-products-of-canada-subject-to-the-additional-duties-imposed-to-offset-canadian-discrimination-against-the-united-states-with-respect-to-motor-vehicles/"
+      "name": "White House: Congressional Bill H.R. 5334 Signed into Law (Lindsey O. Graham Sanctioning Russia and Iran Act of 2026)",
+      "url": "https://www.whitehouse.gov/briefings-statements/2026/09/congressional-bill-h-r-5334-signed-into-law/"
     },
     {
-      "name": "White House: Presidential Actions (Sept 8, 2026 Canada proclamations on motor vehicles, alcoholic beverages, and dairy)",
-      "url": "https://www.whitehouse.gov/presidential-actions/"
+      "name": "Congress.gov: H.R.5334 — Lindsey O. Graham Sanctioning Russia and Iran Act of 2026",
+      "url": "https://www.congress.gov/bill/119th-congress/house-bill/5334"
     },
     {
-      "name": "GHY: US Imposes 50% Section 338 Tariffs on Canadian Imports — Dairy, Alcoholic Beverages, and Motor Vehicles",
-      "url": "https://www.ghy.com/trade-compliance/us-imposes-50-section-338-tariffs-on-canadian-imports-dairy-alcoholic-beverages-and-motor-vehicles/"
+      "name": "Baker McKenzie Global Import Blog: US President Signs Russia and Iran Sanctions Bill with New Tariff Powers",
+      "url": "https://globalimportblog.bakermckenzie.com/2026/09/20/us-president-signs-russia-and-iran-sanctions-bill-with-new-tariff-powers/"
     },
     {
-      "name": "KPMG: Canada announces counter-tariffs on U.S. goods",
-      "url": "https://kpmg.com/us/en/taxnewsflash/news/2026/08/canada-counter-tariffs-us-goods.html"
+      "name": "RFE/RL: Trump Signs Russia-Iran Sanctions Bill, Putting New Pressure Tools At His Disposal",
+      "url": "https://www.rferl.org/a/33859294.html"
     },
     {
-      "name": "Blakes: Canada Imposes Counter-Tariffs on C$27.6-Billion of U.S. Imports, Effective September 8, 2026",
-      "url": "https://www.blakes.com/insights/canada-imposes-counter-tariffs-on-27-6-billion-of-u-s-imports-effective-september-8-2026/"
-    },
-    {
-      "name": "Government of Canada: List of products from the United States subject to counter-tariffs effective September 8, 2026",
-      "url": "https://www.canada.ca/en/department-finance/news/2026/08/list-of-products-from-the-united-states-subject-to-counter-tariffs-effective-september-8-2026.html"
-    },
-    {
-      "name": "CNBC: Canada's retaliatory tariffs worth CA$27.6 billion take effect as trade rift with U.S. deepens",
-      "url": "https://www.cnbc.com/2026/09/08/canada-retaliatory-tariffs.html"
+      "name": "Taipei Times: US holds off tariffs until Xi summit",
+      "url": "https://www.taipeitimes.com/News/biz/archives/2026/09/19/2003864507"
     },
     {
       "name": "Yahoo Finance/Bloomberg: US plans 7.5% China overcapacity tariff before Sept. 24 Xi-Trump summit",
       "url": "https://finance.yahoo.com/economy/policy/articles/us-plans-7-5-china-161734641.html"
     },
     {
-      "name": "Yahoo Finance: China hopes to agree with US on tariff reductions 'at an early date'",
-      "url": "https://www.yahoo.com/news/articles/china-confirms-xi-trump-meeting-102132316.html"
-    },
-    {
       "name": "Mexico Business News: Mexico, US Set Fourth Round of USMCA Review Talks for September",
       "url": "https://mexicobusiness.news/trade-and-investment/news/mexico-us-set-fourth-round-usmca-review-talks-september"
     },
     {
-      "name": "India Briefing: US-India Strike Interim Trade Deal, Cut Tariffs to 18% (superseded — reciprocal tariff struck down by SCOTUS; India now under the July 24, 2026 Section 301 forced-labor baseline)",
-      "url": "https://www.india-briefing.com/news/us-india-interim-trade-agreement-18-percent-tariff-42514.html/"
+      "name": "CSIS: Inside the Mechanics of the 2026 USMCA Review",
+      "url": "https://www.csis.org/analysis/inside-mechanics-2026-usmca-review"
     },
     {
-      "name": "The Indian EYE: India-US trade pact hinges on preferential tariffs — Piyush Goyal",
-      "url": "https://theindianeye.com/2026/09/04/india-us-trade-pact-hinges-on-preferential-tariffs-piyush-goyal/"
+      "name": "Dailypioneer: India-US BTA to be finalised once US offers preferential rate (Piyush Goyal)",
+      "url": "https://dailypioneer.com/news/india-us-bta-to-be-finalised-once-us-offers-preferential-rate"
     },
     {
-      "name": "Trade Compliance Resource Hub: Trump 2.0 Tariff Tracker (updated Sept 10, 2026)",
-      "url": "https://www.tradecomplianceresourcehub.com/2026/09/10/trump-2-0-tariff-tracker/"
+      "name": "GHY: US Imposes 50% Section 338 Tariffs on Canadian Imports — Dairy, Alcoholic Beverages, and Motor Vehicles",
+      "url": "https://www.ghy.com/trade-compliance/us-imposes-50-section-338-tariffs-on-canadian-imports-dairy-alcoholic-beverages-and-motor-vehicles/"
+    },
+    {
+      "name": "CNBC: As U.S.-Canada trade talks collapse, Carney says retaliatory tariffs will start Sept. 8",
+      "url": "https://www.cnbc.com/2026/08/22/us-canada-trade-talks-collapse-ushering-in-wave-of-new-tariffs.html"
+    },
+    {
+      "name": "Yale Budget Lab: The State of U.S. Tariffs",
+      "url": "https://budgetlab.yale.edu/research/state-us-tariffs"
+    },
+    {
+      "name": "PIIE: Trump's Tariff Revenue Tracker — How Much Is the US Collecting? Which Imports Are Hit?",
+      "url": "https://www.piie.com/research/piie-charts/2025/trumps-tariff-revenue-tracker-how-much-us-collecting-which-imports-are"
     },
     {
       "name": "White House: Presidential Actions",
@@ -62,12 +62,8 @@
       "url": "https://ustr.gov/trade-topics/presidential-tariff-actions"
     },
     {
-      "name": "Yale Budget Lab: The State of U.S. Tariffs",
-      "url": "https://budgetlab.yale.edu/research/state-us-tariffs"
-    },
-    {
-      "name": "PIIE: Trump's Tariff Revenue Tracker — How Much Is the US Collecting? Which Imports Are Hit?",
-      "url": "https://www.piie.com/research/piie-charts/2025/trumps-tariff-revenue-tracker-how-much-us-collecting-which-imports-are"
+      "name": "USTR: Federal Register Notices",
+      "url": "https://ustr.gov/federal-register-notices"
     }
   ]
 }
