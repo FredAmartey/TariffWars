@@ -1,49 +1,45 @@
 {
-  "lastUpdated": "2026-09-21",
+  "lastUpdated": "2026-09-28",
   "sources": [
     {
-      "name": "White House: Congressional Bill H.R. 5334 Signed into Law (Lindsey O. Graham Sanctioning Russia and Iran Act of 2026)",
-      "url": "https://www.whitehouse.gov/briefings-statements/2026/09/congressional-bill-h-r-5334-signed-into-law/"
+      "name": "CNBC: U.S.-China trade truce extended for two months, Bessent says, as Xi begins state visit",
+      "url": "https://www.cnbc.com/2026/09/24/us-china-trade-truce-bessent-trump-xi.html"
     },
     {
-      "name": "Congress.gov: H.R.5334 — Lindsey O. Graham Sanctioning Russia and Iran Act of 2026",
-      "url": "https://www.congress.gov/bill/119th-congress/house-bill/5334"
+      "name": "Bloomberg: US, China to Extend Trade Truce to Jan. 10, Bessent Says",
+      "url": "https://www.bloomberg.com/news/articles/2026-09-23/bessent-says-us-china-agreed-to-extend-trade-truce-to-jan-10"
+    },
+    {
+      "name": "NBC News: U.S. and China agree to extend trade truce through Jan. 10, Bessent says",
+      "url": "https://www.nbcnews.com/business/economy/us-china-extend-trade-truce-trump-rcna599525"
+    },
+    {
+      "name": "Bloomberg: US Said to Delay Excess Capacity Tariffs Until After Xi Summit",
+      "url": "https://www.bloomberg.com/news/articles/2026-09-17/us-said-to-delay-excess-capacity-tariffs-until-after-xi-summit"
+    },
+    {
+      "name": "Penn Wharton Budget Model: Effective Tariff Rates and Revenues (Updated September 9, 2026)",
+      "url": "https://budgetmodel.wharton.upenn.edu/p/2026-09-09-effective-tariff-rates-and-revenues-updated-september-9-2026/"
+    },
+    {
+      "name": "Federal Register: Guidance and Procedures for Implementing Tariff Adjustments for Specialty Pharmaceuticals (Proclamation 11020)",
+      "url": "https://www.federalregister.gov/documents/2026/09/23/2026-19498/guidance-and-procedures-for-implementing-tariff-adjustments-for-specialty-pharmaceuticals-and"
+    },
+    {
+      "name": "Bloomberg: India Says US Trade Deal Hinges on Preferential Tariff Rate",
+      "url": "https://www.bloomberg.com/news/articles/2026-09-04/india-says-us-trade-deal-hinges-on-preferential-tariff-rate"
     },
     {
       "name": "Baker McKenzie Global Import Blog: US President Signs Russia and Iran Sanctions Bill with New Tariff Powers",
       "url": "https://globalimportblog.bakermckenzie.com/2026/09/20/us-president-signs-russia-and-iran-sanctions-bill-with-new-tariff-powers/"
     },
     {
-      "name": "RFE/RL: Trump Signs Russia-Iran Sanctions Bill, Putting New Pressure Tools At His Disposal",
-      "url": "https://www.rferl.org/a/33859294.html"
-    },
-    {
-      "name": "Taipei Times: US holds off tariffs until Xi summit",
-      "url": "https://www.taipeitimes.com/News/biz/archives/2026/09/19/2003864507"
-    },
-    {
-      "name": "Yahoo Finance/Bloomberg: US plans 7.5% China overcapacity tariff before Sept. 24 Xi-Trump summit",
-      "url": "https://finance.yahoo.com/economy/policy/articles/us-plans-7-5-china-161734641.html"
-    },
-    {
-      "name": "Mexico Business News: Mexico, US Set Fourth Round of USMCA Review Talks for September",
-      "url": "https://mexicobusiness.news/trade-and-investment/news/mexico-us-set-fourth-round-usmca-review-talks-september"
-    },
-    {
-      "name": "CSIS: Inside the Mechanics of the 2026 USMCA Review",
-      "url": "https://www.csis.org/analysis/inside-mechanics-2026-usmca-review"
-    },
-    {
-      "name": "Dailypioneer: India-US BTA to be finalised once US offers preferential rate (Piyush Goyal)",
-      "url": "https://dailypioneer.com/news/india-us-bta-to-be-finalised-once-us-offers-preferential-rate"
+      "name": "VATupdate: United States Enacts Tariffs of Up to 500% on Russian Goods and 100% on Goods from Certain Russian Energy Buyers",
+      "url": "https://www.vatupdate.com/2026/09/23/united-states-enacts-tariffs-of-up-to-500-on-russian-goods-and-100-on-goods-from-certain-russian-energy-buyers/"
     },
     {
       "name": "GHY: US Imposes 50% Section 338 Tariffs on Canadian Imports — Dairy, Alcoholic Beverages, and Motor Vehicles",
       "url": "https://www.ghy.com/trade-compliance/us-imposes-50-section-338-tariffs-on-canadian-imports-dairy-alcoholic-beverages-and-motor-vehicles/"
-    },
-    {
-      "name": "CNBC: As U.S.-Canada trade talks collapse, Carney says retaliatory tariffs will start Sept. 8",
-      "url": "https://www.cnbc.com/2026/08/22/us-canada-trade-talks-collapse-ushering-in-wave-of-new-tariffs.html"
     },
     {
       "name": "Yale Budget Lab: The State of U.S. Tariffs",
