@@ -1,45 +1,25 @@
 {
-  "lastUpdated": "2026-09-28",
+  "lastUpdated": "2026-10-05",
   "sources": [
     {
-      "name": "CNBC: U.S.-China trade truce extended for two months, Bessent says, as Xi begins state visit",
-      "url": "https://www.cnbc.com/2026/09/24/us-china-trade-truce-bessent-trump-xi.html"
+      "name": "KPMG TaxNewsFlash: United States-Canada import bans and tariffs",
+      "url": "https://kpmg.com/us/en/taxnewsflash/news/2026/09/united-states-canada-import-bans-tariffs.html"
     },
     {
-      "name": "Bloomberg: US, China to Extend Trade Truce to Jan. 10, Bessent Says",
-      "url": "https://www.bloomberg.com/news/articles/2026-09-23/bessent-says-us-china-agreed-to-extend-trade-truce-to-jan-10"
+      "name": "McCarthy Tétrault: Gloves off — Canada answers U.S. Section 338 tariffs dollar-for-dollar as Washington escalates with import bans",
+      "url": "https://www.mccarthy.ca/en/insights/blogs/terms-trade/gloves-off-canada-answers-u-s-section-338-tariffs-dollar-for-dollar-as-washington-escalates-with-import-bans"
     },
     {
-      "name": "NBC News: U.S. and China agree to extend trade truce through Jan. 10, Bessent says",
-      "url": "https://www.nbcnews.com/business/economy/us-china-extend-trade-truce-trump-rcna599525"
+      "name": "Fox 35 Orlando (AP): US bans Canadian motorcycle, dairy, alcohol imports amid trade war",
+      "url": "https://www.fox35orlando.com/news/us-ban-canadian-motorcycle-dairy-alcohol-imports"
     },
     {
-      "name": "Bloomberg: US Said to Delay Excess Capacity Tariffs Until After Xi Summit",
-      "url": "https://www.bloomberg.com/news/articles/2026-09-17/us-said-to-delay-excess-capacity-tariffs-until-after-xi-summit"
+      "name": "Manatt: White House Announces MFN Deal With Pfizer, Previews Additional Regulatory Action on Drug Prices",
+      "url": "https://www.manatt.com/insights/insight/white-house-announces-mfn-deal-with-pfizer-previews-additional-regulatory-action-on-drug-prices"
     },
     {
-      "name": "Penn Wharton Budget Model: Effective Tariff Rates and Revenues (Updated September 9, 2026)",
-      "url": "https://budgetmodel.wharton.upenn.edu/p/2026-09-09-effective-tariff-rates-and-revenues-updated-september-9-2026/"
-    },
-    {
-      "name": "Federal Register: Guidance and Procedures for Implementing Tariff Adjustments for Specialty Pharmaceuticals (Proclamation 11020)",
-      "url": "https://www.federalregister.gov/documents/2026/09/23/2026-19498/guidance-and-procedures-for-implementing-tariff-adjustments-for-specialty-pharmaceuticals-and"
-    },
-    {
-      "name": "Bloomberg: India Says US Trade Deal Hinges on Preferential Tariff Rate",
-      "url": "https://www.bloomberg.com/news/articles/2026-09-04/india-says-us-trade-deal-hinges-on-preferential-tariff-rate"
-    },
-    {
-      "name": "Baker McKenzie Global Import Blog: US President Signs Russia and Iran Sanctions Bill with New Tariff Powers",
-      "url": "https://globalimportblog.bakermckenzie.com/2026/09/20/us-president-signs-russia-and-iran-sanctions-bill-with-new-tariff-powers/"
-    },
-    {
-      "name": "VATupdate: United States Enacts Tariffs of Up to 500% on Russian Goods and 100% on Goods from Certain Russian Energy Buyers",
-      "url": "https://www.vatupdate.com/2026/09/23/united-states-enacts-tariffs-of-up-to-500-on-russian-goods-and-100-on-goods-from-certain-russian-energy-buyers/"
-    },
-    {
-      "name": "GHY: US Imposes 50% Section 338 Tariffs on Canadian Imports — Dairy, Alcoholic Beverages, and Motor Vehicles",
-      "url": "https://www.ghy.com/trade-compliance/us-imposes-50-section-338-tariffs-on-canadian-imports-dairy-alcoholic-beverages-and-motor-vehicles/"
+      "name": "Carra Globe: Section 232 Pharmaceutical Tariffs 2026 — The Complete Guide for Importers Before September 29",
+      "url": "https://carraglobe.com/section-232-pharmaceutical-tariffs-2026/"
     },
     {
       "name": "Yale Budget Lab: The State of U.S. Tariffs",
