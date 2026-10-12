@@ -1,25 +1,29 @@
 {
-  "lastUpdated": "2026-10-05",
+  "lastUpdated": "2026-10-12",
   "sources": [
     {
-      "name": "KPMG TaxNewsFlash: United States-Canada import bans and tariffs",
-      "url": "https://kpmg.com/us/en/taxnewsflash/news/2026/09/united-states-canada-import-bans-tariffs.html"
+      "name": "AP via ABC30: Trump says US to get diesel from Russia, relaxing pressure on Moscow to ease prices before midterms",
+      "url": "https://abc30.com/post/trump-says-us-get-diesel-russia-relaxing-pressure-moscow-ease-prices-before-midterms/19925563/"
     },
     {
-      "name": "McCarthy Tétrault: Gloves off — Canada answers U.S. Section 338 tariffs dollar-for-dollar as Washington escalates with import bans",
-      "url": "https://www.mccarthy.ca/en/insights/blogs/terms-trade/gloves-off-canada-answers-u-s-section-338-tariffs-dollar-for-dollar-as-washington-escalates-with-import-bans"
+      "name": "Baker Botts: President Trump Signs Graham Sanctions Act Expanding Russia Sanctions and Tariff Authorities",
+      "url": "https://www.bakerbotts.com/thought-leadership/publications/2026/september/president-trump-signs-graham-sanctions-act-expanding-russia-sanctions-and-tariff-authorities"
     },
     {
-      "name": "Fox 35 Orlando (AP): US bans Canadian motorcycle, dairy, alcohol imports amid trade war",
-      "url": "https://www.fox35orlando.com/news/us-ban-canadian-motorcycle-dairy-alcohol-imports"
+      "name": "Akin Gump: Newly Enacted Law Targeting Russia Creates Novel Tariff Authority Over Third-Country Imports",
+      "url": "https://www.akingump.com/en/insights/alerts/newly-enacted-law-targeting-russia-creates-novel-tariff-authority-over-third-country-imports-while-reinforcing-existing-us-sanctions-framework"
     },
     {
-      "name": "Manatt: White House Announces MFN Deal With Pfizer, Previews Additional Regulatory Action on Drug Prices",
-      "url": "https://www.manatt.com/insights/insight/white-house-announces-mfn-deal-with-pfizer-previews-additional-regulatory-action-on-drug-prices"
+      "name": "Congressional Research Service: Active Presidential Tariff Actions in 2026 (R49481, Oct. 8, 2026)",
+      "url": "https://www.everycrsreport.com/reports/R49481.html"
     },
     {
-      "name": "Carra Globe: Section 232 Pharmaceutical Tariffs 2026 — The Complete Guide for Importers Before September 29",
-      "url": "https://carraglobe.com/section-232-pharmaceutical-tariffs-2026/"
+      "name": "KPMG TaxNewsFlash: United States imposes Section 301 tariffs on 60 economies failing to address forced labor",
+      "url": "https://kpmg.com/us/en/taxnewsflash/news/2026/07/tnf-united-states-imposes-section-301-tariffs-on-60-economies-failing-to-address-forced-labor.html"
+    },
+    {
+      "name": "Osler: Elbows Back Up — U.S. Section 338 Tariffs, Canada Retaliatory Surtaxes, Current Landscape",
+      "url": "https://www.osler.com/en/insights/updates/elbows-back-up-u-s-section-338-tariffs-canada-retaliatory-surtaxes-current-landscape/"
     },
     {
       "name": "Yale Budget Lab: The State of U.S. Tariffs",
